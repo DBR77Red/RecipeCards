@@ -6,7 +6,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "EXPO_PACKAGER_PROXY_URL=http://0.0.0.0:5000 RCT_METRO_PORT=5000 expo start --web --host lan"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
@@ -26,6 +26,7 @@
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
+    "@expo/cli": "^55.0.14",
     "@types/react": "~19.2.2",
     "typescript": "~5.9.2"
   },
