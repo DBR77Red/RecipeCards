@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
@@ -12,6 +13,7 @@ import {
 export interface RecipeData {
   title: string;
   creator: string;
+  photo?: string;
   servings: string;
   prepTime: string;
   cookTime: string;
@@ -51,7 +53,16 @@ const RADIUS  = 18;
 
 // ─── Photo placeholder ────────────────────────────────────────────────────────
 
-function PhotoArea() {
+function PhotoArea({ uri }: { uri?: string }) {
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={styles.photoArea}
+        resizeMode="cover"
+      />
+    );
+  }
   return (
     <View style={styles.photoArea}>
       <View style={styles.guideRing}>
@@ -88,7 +99,7 @@ function CardFront({ recipe }: { recipe: RecipeData }) {
   return (
     <View style={styles.face}>
       {/* Full-bleed photo — no margin, clips to card's top border-radius */}
-      <PhotoArea />
+      <PhotoArea uri={recipe.photo} />
 
       {/* 1 px hairline divider separating photo from text */}
       <View style={styles.photoDivider} />

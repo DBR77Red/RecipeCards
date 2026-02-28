@@ -4,32 +4,28 @@ import {
   DMSans_500Medium,
   DMSans_600SemiBold,
 } from '@expo-google-fonts/dm-sans';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { RecipeCard, RecipeData } from './src/components/RecipeCard';
+import { RecipeForm } from './src/components/RecipeForm';
 
-const SAMPLE_RECIPE: RecipeData = {
-  title: 'Classic Carbonara',
-  creator: 'Marco Romano',
-  servings: '4',
-  prepTime: '15 min',
-  cookTime: '20 min',
-  difficulty: 'Medium',
-  ingredients: [
-    '400 g spaghetti',
-    '200 g guanciale, diced',
-    '4 large egg yolks',
-    '60 g Pecorino Romano, grated',
-    'Freshly cracked black pepper',
-    'Coarse salt, for pasta water',
-  ],
-  steps: [
-    'Bring a large pot of salted water to a boil and cook spaghetti until al dente.',
-    'Render guanciale in a cold skillet over medium heat until golden and crispy.',
-    'Whisk yolks with Pecorino and a generous amount of black pepper.',
-    'Off heat, toss hot pasta in the skillet, add egg mixture, and loosen with pasta water until silky.',
-  ],
+const STORAGE_KEY = '@recipecards/draft';
+
+const EMPTY_RECIPE: RecipeData = {
+  title: '',
+  creator: '',
+  photo: undefined,
+  servings: '',
+  prepTime: '',
+  cookTime: '',
+  difficulty: '',
+  ingredients: [''],
+  steps: [''],
 };
+
+type AppView = 'form' | 'preview';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -39,21 +35,70 @@ export default function App() {
     DMSans_600SemiBold,
   });
 
-  if (!fontsLoaded) return null;
+  const [view, setView]         = useState<AppView>('form');
+  const [recipe, setRecipe]     = useState<RecipeData>(EMPTY_RECIPE);
+  const [hydrated, setHydrated] = useState(false);
 
+  // Load saved draft on first mount
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then(raw => {
+      if (raw) {
+        try { setRecipe(JSON.parse(raw)); } catch { /* ignore bad data */ }
+      }
+      setHydrated(true);
+    });
+  }, []);
+
+  // Auto-save on every change
+  const handleChange = (next: RecipeData) => {
+    setRecipe(next);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  };
+
+  if (!fontsLoaded || !hydrated) return null;
+
+  // ── Preview ─────────────────────────────────────────────────────────────────
+  if (view === 'preview') {
+    return (
+      <View style={styles.previewScreen}>
+        <StatusBar style="light" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => setView('form')}>
+          <Text style={styles.backBtnText}>← Edit Recipe</Text>
+        </TouchableOpacity>
+        <RecipeCard recipe={recipe} />
+      </View>
+    );
+  }
+
+  // ── Form ────────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.screen}>
-      <StatusBar style="light" />
-      <RecipeCard recipe={SAMPLE_RECIPE} />
-    </View>
+    <>
+      <StatusBar style="dark" />
+      <RecipeForm
+        recipe={recipe}
+        onChange={handleChange}
+        onPreview={() => setView('preview')}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  previewScreen: {
     flex: 1,
     backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 52,
+    left: 24,
+  },
+  backBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 0.3,
   },
 });
