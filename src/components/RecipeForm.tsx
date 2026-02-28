@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,7 +14,7 @@ import {
 } from 'react-native';
 import { RecipeData } from './RecipeCard';
 
-// ─── Tokens (mirrors the card palette) ───────────────────────────────────────
+// ─── Tokens ───────────────────────────────────────────────────────────────────
 
 const C = {
   bg:          '#F7F5F2',
@@ -38,10 +39,12 @@ const C = {
 interface RecipeFormProps {
   recipe: RecipeData;
   onChange: (recipe: RecipeData) => void;
+  onSaveDraft: () => Promise<void>;
   onPreview: () => void;
+  onBack: () => void;
 }
 
-// ─── Small reusable pieces ────────────────────────────────────────────────────
+// ─── Small pieces ─────────────────────────────────────────────────────────────
 
 function FormSectionHeader({ label, accent }: { label: string; accent: string }) {
   return (
@@ -78,17 +81,10 @@ function MetaField({
 }
 
 function IngredientRow({
-  value,
-  onChange,
-  onRemove,
-  index,
-  canRemove,
+  value, onChange, onRemove, index, canRemove,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  onRemove: () => void;
-  index: number;
-  canRemove: boolean;
+  value: string; onChange: (v: string) => void; onRemove: () => void;
+  index: number; canRemove: boolean;
 }) {
   return (
     <View style={styles.listRow}>
@@ -102,10 +98,7 @@ function IngredientRow({
         returnKeyType="next"
       />
       {canRemove && (
-        <TouchableOpacity
-          onPress={onRemove}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
+        <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Text style={styles.removeBtn}>×</Text>
         </TouchableOpacity>
       )}
@@ -113,18 +106,11 @@ function IngredientRow({
   );
 }
 
-function StepRow({
-  value,
-  onChange,
-  onRemove,
-  index,
-  canRemove,
+function DirectionRow({
+  value, onChange, onRemove, index, canRemove,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  onRemove: () => void;
-  index: number;
-  canRemove: boolean;
+  value: string; onChange: (v: string) => void; onRemove: () => void;
+  index: number; canRemove: boolean;
 }) {
   return (
     <View style={styles.listRow}>
@@ -141,10 +127,7 @@ function StepRow({
         returnKeyType="next"
       />
       {canRemove && (
-        <TouchableOpacity
-          onPress={onRemove}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
+        <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Text style={styles.removeBtn}>×</Text>
         </TouchableOpacity>
       )}
@@ -160,34 +143,29 @@ function AddRowButton({ label, onPress }: { label: string; onPress: () => void }
   );
 }
 
-// ─── Main form component ──────────────────────────────────────────────────────
+// ─── Main form ────────────────────────────────────────────────────────────────
 
-export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
-  // Convenience updater — merges a partial update into the recipe
+export function RecipeForm({ recipe, onChange, onSaveDraft, onPreview, onBack }: RecipeFormProps) {
   const update = <K extends keyof RecipeData>(key: K, value: RecipeData[K]) =>
     onChange({ ...recipe, [key]: value });
 
   // Ingredients
   const updateIngredient = (i: number, v: string) => {
-    const next = [...recipe.ingredients];
-    next[i] = v;
-    update('ingredients', next);
+    const next = [...recipe.ingredients]; next[i] = v; update('ingredients', next);
   };
   const addIngredient    = () => update('ingredients', [...recipe.ingredients, '']);
   const removeIngredient = (i: number) =>
     update('ingredients', recipe.ingredients.filter((_, idx) => idx !== i));
 
-  // Steps
-  const updateStep = (i: number, v: string) => {
-    const next = [...recipe.steps];
-    next[i] = v;
-    update('steps', next);
+  // Directions
+  const updateDirection = (i: number, v: string) => {
+    const next = [...recipe.directions]; next[i] = v; update('directions', next);
   };
-  const addStep    = () => update('steps', [...recipe.steps, '']);
-  const removeStep = (i: number) =>
-    update('steps', recipe.steps.filter((_, idx) => idx !== i));
+  const addDirection    = () => update('directions', [...recipe.directions, '']);
+  const removeDirection = (i: number) =>
+    update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
-  // Photo picker
+  // Photo
   const pickPhoto = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -199,10 +177,41 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
       aspect: [4, 3],
       quality: 0.85,
     });
-    if (!result.canceled) {
-      update('photo', result.assets[0].uri);
-    }
+    if (!result.canceled) update('photo', result.assets[0].uri);
   };
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+
+  const toastAnim = useRef(new Animated.Value(0)).current;
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+  }, []);
+
+  const showToast = () => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    toastAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(toastAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1600),
+      Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await onSaveDraft();
+      showToast();
+    } catch { /* silent */ }
+  };
+
+  const toastTranslateY = toastAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-6, 0],
+  });
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <KeyboardAvoidingView
@@ -214,10 +223,14 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Form label */}
-        <Text style={styles.formLabel}>NEW RECIPE</Text>
+        <View style={styles.topRow}>
+          <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.backLink}>← Home</Text>
+          </TouchableOpacity>
+          <Text style={styles.formLabel}>NEW RECIPE</Text>
+        </View>
 
-        {/* ── Title & creator ─────────────────────────────────────────────── */}
+        {/* Title + creator */}
         <View style={styles.heroGroup}>
           <TextInput
             style={styles.titleInput}
@@ -226,19 +239,18 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
             placeholder="Recipe title"
             placeholderTextColor={C.placeholder}
             multiline
-            returnKeyType="next"
           />
           <TextInput
             style={styles.creatorInput}
-            value={recipe.creator}
-            onChangeText={v => update('creator', v)}
+            value={recipe.creatorName}
+            onChangeText={v => update('creatorName', v)}
             placeholder="Your name"
             placeholderTextColor={C.placeholder}
             returnKeyType="next"
           />
         </View>
 
-        {/* ── Photo picker ─────────────────────────────────────────────────── */}
+        {/* Photo */}
         <TouchableOpacity style={styles.photoPicker} onPress={pickPhoto} activeOpacity={0.8}>
           {recipe.photo ? (
             <Image source={{ uri: recipe.photo }} style={styles.photoPreview} resizeMode="cover" />
@@ -250,67 +262,43 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
           )}
         </TouchableOpacity>
 
-        {/* ── Meta: servings / prep / cook ─────────────────────────────────── */}
+        {/* Meta */}
         <View style={styles.metaRow}>
-          <MetaField
-            label="SERVES"
-            value={recipe.servings}
-            placeholder="4"
-            onChangeText={v => update('servings', v)}
-          />
+          <MetaField label="SERVES" value={recipe.servings} placeholder="4"
+            onChangeText={v => update('servings', v)} />
           <View style={styles.metaSep} />
-          <MetaField
-            label="PREP"
-            value={recipe.prepTime}
-            placeholder="15 min"
-            onChangeText={v => update('prepTime', v)}
-          />
+          <MetaField label="PREP" value={recipe.prepTime} placeholder="15 min"
+            onChangeText={v => update('prepTime', v)} />
           <View style={styles.metaSep} />
-          <MetaField
-            label="COOK"
-            value={recipe.cookTime}
-            placeholder="20 min"
-            onChangeText={v => update('cookTime', v)}
-          />
+          <MetaField label="COOK" value={recipe.cookTime} placeholder="20 min"
+            onChangeText={v => update('cookTime', v)} />
         </View>
 
         <View style={styles.sectionDivider} />
 
-        {/* ── Ingredients ──────────────────────────────────────────────────── */}
+        {/* Ingredients */}
         <FormSectionHeader label="INGREDIENTS" accent={C.terracotta} />
-
         {recipe.ingredients.map((ing, i) => (
-          <IngredientRow
-            key={i}
-            index={i}
-            value={ing}
+          <IngredientRow key={i} index={i} value={ing}
             onChange={v => updateIngredient(i, v)}
             onRemove={() => removeIngredient(i)}
-            canRemove={recipe.ingredients.length > 1}
-          />
+            canRemove={recipe.ingredients.length > 1} />
         ))}
-
         <AddRowButton label="+ Add ingredient" onPress={addIngredient} />
 
         <View style={styles.sectionGap} />
 
-        {/* ── Directions ───────────────────────────────────────────────────── */}
+        {/* Directions */}
         <FormSectionHeader label="DIRECTIONS" accent={C.sage} />
-
-        {recipe.steps.map((step, i) => (
-          <StepRow
-            key={i}
-            index={i}
-            value={step}
-            onChange={v => updateStep(i, v)}
-            onRemove={() => removeStep(i)}
-            canRemove={recipe.steps.length > 1}
-          />
+        {recipe.directions.map((step, i) => (
+          <DirectionRow key={i} index={i} value={step}
+            onChange={v => updateDirection(i, v)}
+            onRemove={() => removeDirection(i)}
+            canRemove={recipe.directions.length > 1} />
         ))}
+        <AddRowButton label="+ Add step" onPress={addDirection} />
 
-        <AddRowButton label="+ Add step" onPress={addStep} />
-
-        {/* ── Preview button ───────────────────────────────────────────────── */}
+        {/* Actions */}
         <TouchableOpacity
           style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
           onPress={onPreview}
@@ -320,7 +308,22 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
           <Text style={styles.previewBtnText}>Preview Card</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.saveDraftBtn} onPress={handleSaveDraft}>
+          <Text style={styles.saveDraftBtnText}>Save draft</Text>
+        </TouchableOpacity>
+
       </ScrollView>
+
+      {/* Toast — floats above scroll, never blocks taps */}
+      <Animated.View
+        style={[
+          styles.toast,
+          { opacity: toastAnim, transform: [{ translateY: toastTranslateY }] },
+        ]}
+        pointerEvents="none"
+      >
+        <Text style={styles.toastText}>✓  Draft saved</Text>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 }
@@ -328,29 +331,34 @@ export function RecipeForm({ recipe, onChange, onPreview }: RecipeFormProps) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-
   screen: {
     flex: 1,
     backgroundColor: C.bg,
   },
-
   scrollContent: {
     paddingTop: 56,
     paddingBottom: 48,
     paddingHorizontal: 26,
   },
 
-  // ── Form label ──────────────────────────────────────────────────────────────
-
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  backLink: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: C.muted,
+    letterSpacing: 0.2,
+  },
   formLabel: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 9,
     letterSpacing: 3,
     color: C.terracotta,
-    marginBottom: 20,
   },
-
-  // ── Hero group: title + creator ─────────────────────────────────────────────
 
   heroGroup: {
     marginBottom: 22,
@@ -358,7 +366,6 @@ const styles = StyleSheet.create({
     borderBottomColor: C.divider,
     paddingBottom: 18,
   },
-
   titleInput: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 28,
@@ -366,9 +373,7 @@ const styles = StyleSheet.create({
     color: C.title,
     letterSpacing: -0.3,
     marginBottom: 10,
-    // no border — parent group handles it
   },
-
   creatorInput: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
@@ -376,8 +381,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
     paddingVertical: 4,
   },
-
-  // ── Photo picker ────────────────────────────────────────────────────────────
 
   photoPicker: {
     width: '100%',
@@ -387,26 +390,22 @@ const styles = StyleSheet.create({
     backgroundColor: C.photoBg,
     marginBottom: 24,
   },
-
   photoPreview: {
     width: '100%',
     height: '100%',
   },
-
   photoPlaceholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-
   photoIcon: {
     fontSize: 28,
     color: C.photoMark,
     lineHeight: 32,
     fontFamily: 'DMSans_400Regular',
   },
-
   photoLabel: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 11,
@@ -415,18 +414,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // ── Meta row ────────────────────────────────────────────────────────────────
-
   metaRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginBottom: 32,
   },
-
-  metaField: {
-    flex: 1,
-  },
-
+  metaField: { flex: 1 },
   metaFieldLabel: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 8,
@@ -434,7 +427,6 @@ const styles = StyleSheet.create({
     color: C.label,
     marginBottom: 8,
   },
-
   metaFieldInput: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
@@ -443,7 +435,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.divider,
   },
-
   metaSep: {
     width: 1,
     height: 28,
@@ -452,31 +443,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
   },
 
-  // ── Section header ──────────────────────────────────────────────────────────
-
   sectionDivider: {
     height: 1,
     backgroundColor: C.divider,
     marginBottom: 28,
   },
-
   sectionHeader: {
     borderLeftWidth: 2.5,
     paddingLeft: 8,
     marginBottom: 14,
   },
-
   sectionLabel: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 9,
     letterSpacing: 3,
   },
-
-  sectionGap: {
-    height: 28,
-  },
-
-  // ── List rows ────────────────────────────────────────────────────────────────
+  sectionGap: { height: 28 },
 
   listRow: {
     flexDirection: 'row',
@@ -484,7 +466,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 10,
   },
-
   ingredientBullet: {
     width: 4,
     height: 4,
@@ -493,7 +474,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     flexShrink: 0,
   },
-
   stepCircle: {
     width: 20,
     height: 20,
@@ -504,14 +484,12 @@ const styles = StyleSheet.create({
     marginTop: 9,
     flexShrink: 0,
   },
-
   stepCircleNum: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 9.5,
     color: C.bg,
     lineHeight: 12,
   },
-
   listInput: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
@@ -522,11 +500,7 @@ const styles = StyleSheet.create({
     borderBottomColor: C.divider,
     lineHeight: 20,
   },
-
-  listInputMultiline: {
-    lineHeight: 22,
-  },
-
+  listInputMultiline: { lineHeight: 22 },
   removeBtn: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 18,
@@ -534,14 +508,10 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     paddingLeft: 4,
   },
-
-  // ── Add row button ───────────────────────────────────────────────────────────
-
   addRowBtn: {
     paddingVertical: 10,
     paddingLeft: 4,
   },
-
   addRowBtnText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
@@ -549,8 +519,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  // ── Preview button ───────────────────────────────────────────────────────────
-
+  // Primary action
   previewBtn: {
     backgroundColor: C.btnBg,
     borderRadius: 12,
@@ -559,15 +528,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 36,
   },
-
-  previewBtnDisabled: {
-    opacity: 0.35,
-  },
-
+  previewBtnDisabled: { opacity: 0.35 },
   previewBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 14,
     letterSpacing: 0.8,
     color: C.btnText,
+  },
+
+  // Secondary action
+  saveDraftBtn: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  saveDraftBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: C.muted,
+    letterSpacing: 0.3,
+  },
+
+  // Toast
+  toast: {
+    position: 'absolute',
+    top: 58,
+    alignSelf: 'center',
+    backgroundColor: '#1C1917',
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 100,
+  },
+  toastText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: '#F7F5F2',
+    letterSpacing: 0.2,
   },
 });

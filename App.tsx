@@ -1,31 +1,21 @@
-import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import {
   DMSans_400Regular,
   DMSans_500Medium,
   DMSans_600SemiBold,
 } from '@expo-google-fonts/dm-sans';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { RecipeCard, RecipeData } from './src/components/RecipeCard';
-import { RecipeForm } from './src/components/RecipeForm';
+import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { enableScreens } from 'react-native-screens';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { FormScreen }    from './src/screens/FormScreen';
+import { HomeScreen }    from './src/screens/HomeScreen';
+import { PreviewScreen } from './src/screens/PreviewScreen';
+import { RootStackParamList } from './src/types/navigation';
 
-const STORAGE_KEY = '@recipecards/draft';
+enableScreens();
 
-const EMPTY_RECIPE: RecipeData = {
-  title: '',
-  creator: '',
-  photo: undefined,
-  servings: '',
-  prepTime: '',
-  cookTime: '',
-  difficulty: '',
-  ingredients: [''],
-  steps: [''],
-};
-
-type AppView = 'form' | 'preview';
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -35,70 +25,17 @@ export default function App() {
     DMSans_600SemiBold,
   });
 
-  const [view, setView]         = useState<AppView>('form');
-  const [recipe, setRecipe]     = useState<RecipeData>(EMPTY_RECIPE);
-  const [hydrated, setHydrated] = useState(false);
+  if (!fontsLoaded) return null;
 
-  // Load saved draft on first mount
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(raw => {
-      if (raw) {
-        try { setRecipe(JSON.parse(raw)); } catch { /* ignore bad data */ }
-      }
-      setHydrated(true);
-    });
-  }, []);
-
-  // Auto-save on every change
-  const handleChange = (next: RecipeData) => {
-    setRecipe(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
-
-  if (!fontsLoaded || !hydrated) return null;
-
-  // ── Preview ─────────────────────────────────────────────────────────────────
-  if (view === 'preview') {
-    return (
-      <View style={styles.previewScreen}>
-        <StatusBar style="light" />
-        <TouchableOpacity style={styles.backBtn} onPress={() => setView('form')}>
-          <Text style={styles.backBtnText}>← Edit Recipe</Text>
-        </TouchableOpacity>
-        <RecipeCard recipe={recipe} />
-      </View>
-    );
-  }
-
-  // ── Form ────────────────────────────────────────────────────────────────────
   return (
-    <>
-      <StatusBar style="dark" />
-      <RecipeForm
-        recipe={recipe}
-        onChange={handleChange}
-        onPreview={() => setView('preview')}
-      />
-    </>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Home"    component={HomeScreen}    />
+          <Stack.Screen name="Form"    component={FormScreen}    />
+          <Stack.Screen name="Preview" component={PreviewScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  previewScreen: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 52,
-    left: 24,
-  },
-  backBtnText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.3,
-  },
-});
