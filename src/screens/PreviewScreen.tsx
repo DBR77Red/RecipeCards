@@ -3,7 +3,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import QRCode from 'react-native-qrcode-svg';
 import {
-  Alert,
   ScrollView,
   Share,
   StyleSheet,
@@ -13,7 +12,6 @@ import {
 } from 'react-native';
 import { RecipeCard } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
-import { uploadRecipe } from '../utils/api';
 import { publishRecipe, saveDraft } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
@@ -36,18 +34,7 @@ export function PreviewScreen({ route, navigation }: Props) {
     try {
       const base = recipe.id ? recipe : await saveDraft(recipe);
       const published = await publishRecipe(base.id);
-      let withUrl = published;
-      try {
-        const url = await uploadRecipe(published);
-        withUrl = { ...published, shareUrl: url };
-        await saveDraft(withUrl);
-      } catch {
-        Alert.alert(
-          'Sharing unavailable',
-          'Recipe published locally, but could not be uploaded for QR sharing. Check your connection and try again.'
-        );
-      }
-      setRecipe(withUrl);
+      setRecipe(published);
     } finally {
       setPublishing(false);
     }
