@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import QRCode from 'react-native-qrcode-svg';
 import {
+  Alert,
   ScrollView,
   Share,
   StyleSheet,
@@ -12,7 +13,7 @@ import {
 } from 'react-native';
 import { RecipeCard } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
-import { publishRecipe, saveDraft } from '../utils/storage';
+import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 
@@ -32,9 +33,23 @@ export function PreviewScreen({ route, navigation }: Props) {
     if (publishing) return;
     setPublishing(true);
     try {
+      // Step 1: mark published locally — QR appears immediately
       const base = recipe.id ? recipe : await saveDraft(recipe);
-      const published = await publishRecipe(base.id);
-      setRecipe(published);
+      const local = await markPublishedLocally(base.id);
+      setRecipe(local);
+
+      // Step 2: sync photo + recipe to Supabase
+      try {
+        const synced = await syncToCloud(local);
+        setRecipe(synced);
+      } catch (cloudErr: any) {
+        Alert.alert(
+          'Cloud sync failed',
+          `Your card is saved locally and the QR works on this device, but other phones won't be able to load it.\n\nError: ${cloudErr?.message ?? 'Unknown error'}\n\nCheck that the "recipes" table and "recipe-photos" bucket exist in Supabase and that the bucket is set to Public.`
+        );
+      }
+    } catch (err: any) {
+      Alert.alert('Publish failed', err?.message ?? 'Something went wrong.');
     } finally {
       setPublishing(false);
     }

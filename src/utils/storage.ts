@@ -64,72 +64,79 @@ export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
   return saved;
 }
 
-/** Sets a recipe's status to 'published', uploads photo + data to Supabase, and returns the updated object. */
-export async function publishRecipe(id: string): Promise<RecipeData> {
+/**
+ * Step 1 of publishing: marks the recipe as published in local storage only.
+ * Always succeeds — guarantees the QR code appears even if cloud sync fails.
+ */
+export async function markPublishedLocally(id: string): Promise<RecipeData> {
   const now = new Date().toISOString();
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);
   const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
   const idx = drafts.findIndex(d => d.id === id);
   if (idx < 0) throw new Error('Recipe not found');
-  const recipe = drafts[idx];
+  const published: RecipeData = {
+    ...drafts[idx],
+    status: 'published',
+    updatedAt: now,
+    shareUrl: `recipecards://card/${id}`,
+  };
+  drafts[idx] = published;
+  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  return published;
+}
 
-  // Upload photo to Supabase Storage if it's a local device URI
+/**
+ * Step 2 of publishing: uploads photo to Supabase Storage and upserts the
+ * recipe row. Throws a descriptive error on failure so the caller can alert
+ * the user. On success, updates local storage with the public photo URL.
+ */
+export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
+  const now = new Date().toISOString();
+
   let photoUrl: string | null = recipe.photo;
   const isLocalUri =
     recipe.photo &&
     (recipe.photo.startsWith('file://') || recipe.photo.startsWith('content://'));
 
   if (isLocalUri && recipe.photo) {
-    try {
-      const response = await fetch(recipe.photo);
-      const blob = await response.blob();
-      const path = `${id}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('recipe-photos')
-        .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-      if (uploadError) {
-        console.warn('Photo upload failed:', uploadError.message);
-      } else {
-        const { data: urlData } = supabase.storage
-          .from('recipe-photos')
-          .getPublicUrl(path);
-        photoUrl = urlData.publicUrl;
-      }
-    } catch (e) {
-      console.warn('Photo upload error:', e);
-    }
+    const response = await fetch(recipe.photo);
+    const blob = await response.blob();
+    const { error: uploadError } = await supabase.storage
+      .from('recipe-photos')
+      .upload(`${recipe.id}.jpg`, blob, { contentType: 'image/jpeg', upsert: true });
+    if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
+    const { data: urlData } = supabase.storage
+      .from('recipe-photos')
+      .getPublicUrl(`${recipe.id}.jpg`);
+    photoUrl = urlData.publicUrl;
   }
 
-  const shareUrl = `recipecards://card/${id}`;
-  const published: RecipeData = {
-    ...recipe,
-    photo: photoUrl,
-    status: 'published',
-    updatedAt: now,
-    shareUrl,
-  };
-
-  // Upsert recipe row to Supabase
   const { error: dbError } = await supabase.from('recipes').upsert({
-    id: published.id,
-    title: published.title,
-    creator_name: published.creatorName,
+    id: recipe.id,
+    title: recipe.title,
+    creator_name: recipe.creatorName,
     photo_url: photoUrl,
-    servings: published.servings,
-    prep_time: published.prepTime,
-    cook_time: published.cookTime,
-    ingredients: published.ingredients,
-    directions: published.directions,
-    created_at: published.createdAt,
+    servings: recipe.servings,
+    prep_time: recipe.prepTime,
+    cook_time: recipe.cookTime,
+    ingredients: recipe.ingredients,
+    directions: recipe.directions,
+    created_at: recipe.createdAt,
     updated_at: now,
-    share_url: shareUrl,
+    share_url: recipe.shareUrl,
   });
-  if (dbError) throw new Error(dbError.message);
+  if (dbError) throw new Error(`Database sync failed: ${dbError.message}`);
 
-  // Keep local storage in sync
-  drafts[idx] = published;
-  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
-  return published;
+  // Update local storage with the public cloud photo URL
+  const synced: RecipeData = { ...recipe, photo: photoUrl, updatedAt: now };
+  const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+  const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
+  const idx = drafts.findIndex(d => d.id === recipe.id);
+  if (idx >= 0) {
+    drafts[idx] = synced;
+    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  }
+  return synced;
 }
 
 /** Removes a draft by id. Silently does nothing if the id is not found. */
