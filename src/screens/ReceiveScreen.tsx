@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,7 +27,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
   useEffect(() => {
     fetchSharedRecipe(route.params.url)
       .then(setRecipe)
-      .catch(() => setError('This recipe could not be found or is no longer available.'))
+      .catch((err: Error) => setError(err.message || 'This recipe could not be found or is no longer available.'))
       .finally(() => setLoading(false));
   }, [route.params.url]);
 
@@ -39,6 +40,8 @@ export function ReceiveScreen({ route, navigation }: Props) {
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }, 900);
+    } catch (err) {
+      Alert.alert('Save failed', 'Could not save the recipe. Please try again.');
     } finally {
       setSaving(false);
     }

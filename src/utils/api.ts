@@ -21,7 +21,10 @@ export async function uploadRecipe(recipe: RecipeData): Promise<string> {
 }
 
 export async function fetchSharedRecipe(url: string): Promise<RecipeData> {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    throw new Error('This QR code does not contain a shareable recipe link.');
+  }
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Recipe not found');
+  if (!res.ok) throw new Error('Recipe not found on the server.');
   return res.json();
 }

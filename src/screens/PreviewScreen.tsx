@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import QRCode from 'react-native-qrcode-svg';
 import {
+  Alert,
   ScrollView,
   Share,
   StyleSheet,
@@ -41,7 +42,10 @@ export function PreviewScreen({ route, navigation }: Props) {
         withUrl = { ...published, shareUrl: url };
         await saveDraft(withUrl);
       } catch {
-        // Upload failure is non-fatal — QR code falls back to recipecards:// scheme
+        Alert.alert(
+          'Sharing unavailable',
+          'Recipe published locally, but could not be uploaded for QR sharing. Check your connection and try again.'
+        );
       }
       setRecipe(withUrl);
     } finally {
