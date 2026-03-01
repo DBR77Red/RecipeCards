@@ -1,6 +1,7 @@
 # RecipeCards
 
-<img width="393" height="596" alt="app-screen-shot5" src="https://github.com/user-attachments/assets/d7b7e112-5636-448a-a58d-df7c2e60a644" />
+<img width="319" height="626" alt="app-screen-shot2" src="https://github.com/user-attachments/assets/00ea8d0a-86d2-45c4-8479-2452722ddc50" />
+
 
 
 
