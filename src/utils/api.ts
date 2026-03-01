@@ -1,27 +1,26 @@
-import { Platform } from 'react-native';
 import { RecipeData } from '../components/RecipeCard';
+import { supabase } from '../lib/supabase';
 
-export function getApiBase(): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:3001`;
-  }
-  return process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001';
-}
-
-export async function uploadRecipe(recipe: RecipeData): Promise<string> {
-  const res = await fetch(`${getApiBase()}/api/recipes`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(recipe),
-  });
-  if (!res.ok) throw new Error('Failed to upload recipe');
-  const data = await res.json();
-  return data.shareUrl as string;
-}
-
-export async function fetchSharedRecipe(url: string): Promise<RecipeData> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Recipe not found');
-  return res.json();
+export async function fetchSharedRecipe(cardId: string): Promise<RecipeData> {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('id', cardId)
+    .single();
+  if (error || !data) throw new Error('Recipe not found');
+  return {
+    id: data.id,
+    status: 'published',
+    title: data.title,
+    creatorName: data.creator_name,
+    photo: data.photo_url,
+    servings: data.servings ?? '',
+    prepTime: data.prep_time ?? '',
+    cookTime: data.cook_time ?? '',
+    ingredients: data.ingredients ?? [],
+    directions: data.directions ?? [],
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    shareUrl: data.share_url,
+  };
 }

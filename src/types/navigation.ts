@@ -5,4 +5,5 @@ export type RootStackParamList = {
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData };
   CardView: { cardId: string };
+  Receive: { cardId: string };
 };

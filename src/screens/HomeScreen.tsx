@@ -343,7 +343,7 @@ export function HomeScreen({ navigation }: Props) {
                 const id = cardCode.trim();
                 setShowCodeModal(false);
                 setCardCode('');
-                navigation.navigate('CardView', { cardId: id });
+                navigation.navigate('Receive', { cardId: id });
               }}
               disabled={!cardCode.trim()}
             >

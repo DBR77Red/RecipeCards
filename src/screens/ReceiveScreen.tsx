@@ -16,6 +16,7 @@ import { saveDraft } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Receive'>;
 
+
 export function ReceiveScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,11 +25,11 @@ export function ReceiveScreen({ route, navigation }: Props) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchSharedRecipe(route.params.url)
+    fetchSharedRecipe(route.params.cardId)
       .then(setRecipe)
       .catch(() => setError('This recipe could not be found or is no longer available.'))
       .finally(() => setLoading(false));
-  }, [route.params.url]);
+  }, [route.params.cardId]);
 
   const handleAdd = async () => {
     if (!recipe || saving) return;
