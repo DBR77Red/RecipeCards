@@ -42,7 +42,7 @@ export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
 
   let saved: RecipeData;
   if (recipe.id) {
-    saved = { ...recipe, status: 'draft', updatedAt: now };
+    saved = { ...recipe, updatedAt: now };
     const idx = drafts.findIndex(d => d.id === saved.id);
     if (idx >= 0) drafts[idx] = saved;
     else drafts.push(saved);
