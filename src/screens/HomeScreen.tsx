@@ -3,10 +3,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  FlatList,
   Image,
   Modal,
   Platform,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -198,16 +198,25 @@ export function HomeScreen({ navigation }: Props) {
     getUserName().then(setUserNameState);
   }, []);
 
+  const [key, setKey] = useState(0);
+
+  const loadData = useCallback(async () => {
+    const all = await getDrafts();
+    const draftsList = all.filter(r => r.status === 'draft');
+    const publishedList = all.filter(r => r.status === 'published');
+    console.log('Loaded:', draftsList.length, 'drafts,', publishedList.length, 'published');
+    setDrafts(draftsList);
+    setPublished(publishedList);
+    setKey(k => k + 1);
+  }, []);
+
   // Reload list every time this screen comes into focus
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      getDrafts().then(all => {
-        if (active) {
-          setDrafts(all.filter(r => r.status === 'draft'));
-          setPublished(all.filter(r => r.status === 'published'));
-        }
-      });
+      if (active) {
+        loadData();
+      }
       return () => { active = false; };
     }, [])
   );
@@ -250,30 +259,21 @@ export function HomeScreen({ navigation }: Props) {
     />
   );
 
-  const ListHeader = (
-    <>
-      <TouchableOpacity
-        style={styles.newBtn}
-        onPress={() => navigation.navigate('Form', {})}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.newBtnText}>New Recipe</Text>
-      </TouchableOpacity>
-      {drafts.length > 0 && (
-        <Text style={styles.sectionLabel}>YOUR DRAFTS</Text>
-      )}
-    </>
-  );
+  type ListSection = { title: string; data: RecipeData[] };
 
-  const ListFooter = (
-    <>
-      {drafts.length > 0 && published.length > 0 && (
-        <View style={styles.sectionSpacer} />
-      )}
-      {published.length > 0 && (
-        <Text style={styles.sectionLabel}>PUBLISHED</Text>
-      )}
-    </>
+  const sections: ListSection[] = [
+    ...(drafts.length > 0 ? [{ title: 'YOUR DRAFTS', data: drafts }] : []),
+    ...(published.length > 0 ? [{ title: 'PUBLISHED', data: published }] : []),
+  ];
+
+  const ListHeader = (
+    <TouchableOpacity
+      style={styles.newBtn}
+      onPress={() => navigation.navigate('Form', {})}
+      activeOpacity={0.85}
+    >
+      <Text style={styles.newBtnText}>New Recipe</Text>
+    </TouchableOpacity>
   );
 
   const isEmpty = drafts.length === 0 && published.length === 0;
@@ -287,17 +287,23 @@ export function HomeScreen({ navigation }: Props) {
       </View>
       <View style={styles.headerDivider} />
 
-      {/* Draft list */}
-      <FlatList
-        data={[...drafts, ...published]}
+      {/* Recipe list */}
+      <SectionList
+        sections={sections}
         keyExtractor={item => item.id}
         renderItem={renderItem}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={[styles.sectionLabel, title === 'PUBLISHED' && drafts.length > 0 && styles.sectionLabelSpaced]}>
+            {title}
+          </Text>
+        )}
         ListHeaderComponent={ListHeader}
-        ListFooterComponent={ListFooter}
         ListEmptyComponent={isEmpty ? <EmptyState /> : null}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        extraData={key}
+        stickySectionHeadersEnabled={false}
       />
 
       <NameModal
@@ -459,8 +465,8 @@ const styles = StyleSheet.create({
     color: C.label,
     marginBottom: 4,
   },
-  sectionSpacer: {
-    height: 32,
+  sectionLabelSpaced: {
+    marginTop: 32,
   },
 
   // Draft row
