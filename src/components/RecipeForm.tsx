@@ -216,6 +216,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   // ── Publish confirmation modal ──────────────────────────────────────────
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
 
   const openConfirm = () => {
@@ -230,6 +231,8 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   };
 
   const handlePublish = async () => {
+    if (publishing) return;
+    setPublishing(true);
     closeConfirm();
     await onPublish();
   };
@@ -318,6 +321,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           style={[styles.publishBtn, !recipe.title.trim() && styles.publishBtnDisabled]}
           onPress={openConfirm}
           disabled={!recipe.title.trim()}
+          accessibilityState={{ disabled: !recipe.title.trim() }}
           activeOpacity={0.85}
         >
           <Text style={styles.publishBtnText}>Publish</Text>
@@ -328,6 +332,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
             onPress={onPreview}
             disabled={!recipe.title.trim()}
+            accessibilityState={{ disabled: !recipe.title.trim() }}
           >
             <Text style={styles.previewBtnText}>Preview Card</Text>
           </TouchableOpacity>
@@ -343,9 +348,8 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       <Animated.View
         style={[
           styles.toast,
-          { opacity: toastAnim, transform: [{ translateY: toastTranslateY }] },
+          { opacity: toastAnim, transform: [{ translateY: toastTranslateY }], pointerEvents: 'none' },
         ]}
-        pointerEvents="none"
       >
         <Text style={styles.toastText}>✓  Draft saved</Text>
       </Animated.View>
@@ -371,10 +375,15 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             <Text style={styles.confirmBody}>
               Once published, this card is permanent. No edits, no take-backs. This is your recipe, exactly as it is right now.
             </Text>
-            <TouchableOpacity style={styles.confirmBtn} onPress={handlePublish}>
+            <TouchableOpacity
+              style={[styles.confirmBtn, publishing && { opacity: 0.5 }]}
+              onPress={handlePublish}
+              disabled={publishing}
+              accessibilityState={{ disabled: publishing }}
+            >
               <Text style={styles.confirmBtnText}>Publish forever</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={closeConfirm}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={closeConfirm} disabled={publishing}>
               <Text style={styles.cancelBtnText}>Not yet</Text>
             </TouchableOpacity>
           </Animated.View>

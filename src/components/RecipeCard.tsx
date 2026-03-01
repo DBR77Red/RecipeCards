@@ -2,9 +2,10 @@ import React, { useRef, useState } from 'react';
 import {
   Animated,
   Image,
+  Platform,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
@@ -180,7 +181,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
   const P = 1400;
 
   return (
-    <TouchableWithoutFeedback onPress={handleFlip}>
+    <Pressable onPress={handleFlip}>
       <View style={styles.wrapper}>
         <Animated.View style={[styles.faceShell, {
           backfaceVisibility: 'hidden',
@@ -198,7 +199,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
           <CardBack recipe={recipe} />
         </Animated.View>
       </View>
-    </TouchableWithoutFeedback>
+    </Pressable>
   );
 }
 
@@ -209,11 +210,16 @@ const styles = StyleSheet.create({
     width: CARD_W,
     height: CARD_H,
     borderRadius: RADIUS,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 24 },
-    shadowOpacity: 0.22,
-    shadowRadius: 48,
-    elevation: 24,
+    ...Platform.select({
+      web: { boxShadow: '0px 24px 48px rgba(0,0,0,0.22)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 24 },
+        shadowOpacity: 0.22,
+        shadowRadius: 48,
+        elevation: 24,
+      },
+    }),
   },
   faceShell: {
     width: CARD_W,
@@ -221,11 +227,16 @@ const styles = StyleSheet.create({
     backgroundColor: C.card,
     borderRadius: RADIUS,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Platform.select({
+      web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.08)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+      },
+    }),
   },
   faceShellBack: {
     position: 'absolute',
