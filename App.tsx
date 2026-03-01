@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { FormScreen }    from './src/screens/FormScreen';
 import { HomeScreen }    from './src/screens/HomeScreen';
 import { PreviewScreen } from './src/screens/PreviewScreen';
+import { ReceiveScreen } from './src/screens/ReceiveScreen';
 import { RootStackParamList } from './src/types/navigation';
 
 enableScreens();
@@ -34,6 +35,7 @@ export default function App() {
           <Stack.Screen name="Home"    component={HomeScreen}    />
           <Stack.Screen name="Form"    component={FormScreen}    />
           <Stack.Screen name="Preview" component={PreviewScreen} />
+          <Stack.Screen name="Receive" component={ReceiveScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

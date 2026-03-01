@@ -1,10 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
   Modal,
+  Platform,
   SectionList,
   StyleSheet,
   Text,
@@ -198,6 +200,38 @@ export function HomeScreen({ navigation }: Props) {
   }, []);
 
   const [key, setKey] = useState(0);
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [webScanUrl, setWebScanUrl] = useState('');
+  const scannedRef = useRef(false);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+
+  const handleScanPress = async () => {
+    if (Platform.OS === 'web') {
+      setScannerVisible(true);
+      return;
+    }
+    if (!cameraPermission?.granted) {
+      const result = await requestCameraPermission();
+      if (!result.granted) {
+        Alert.alert(
+          'Camera Access Needed',
+          'Please allow camera access to scan recipe QR codes.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+    scannedRef.current = false;
+    setScannerVisible(true);
+  };
+
+  const handleBarcodeScanned = (url: string) => {
+    if (scannedRef.current) return;
+    scannedRef.current = true;
+    setScannerVisible(false);
+    setWebScanUrl('');
+    navigation.navigate('Receive', { url });
+  };
 
   const loadData = useCallback(async () => {
     const all = await getDrafts();
@@ -288,7 +322,11 @@ export function HomeScreen({ navigation }: Props) {
 
       {/* Fixed footer bar */}
       <View style={styles.footer}>
-        <View style={styles.footerSide} />
+        <View style={styles.footerLeft}>
+          <TouchableOpacity style={styles.scanBtn} onPress={handleScanPress} activeOpacity={0.7}>
+            <Text style={styles.scanBtnIcon}>⊞</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           style={styles.newBtn}
           onPress={() => navigation.navigate('Form', {})}
@@ -300,6 +338,57 @@ export function HomeScreen({ navigation }: Props) {
           <AccountButton userName={userName} onPress={() => setShowNameModal(true)} />
         </View>
       </View>
+
+      {/* QR Scanner modal */}
+      <Modal
+        visible={scannerVisible}
+        animationType="slide"
+        onRequestClose={() => setScannerVisible(false)}
+      >
+        <View style={styles.scannerScreen}>
+          {Platform.OS !== 'web' ? (
+            <>
+              <CameraView
+                style={styles.scannerCamera}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                onBarcodeScanned={(result) => handleBarcodeScanned(result.data)}
+              />
+              <View style={styles.scannerOverlay}>
+                <View style={styles.scannerFrame} />
+                <Text style={styles.scannerHint}>Point at a recipe QR code</Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.webScanFallback}>
+              <Text style={styles.webScanTitle}>Enter Recipe URL</Text>
+              <Text style={styles.webScanSub}>Paste the recipe link from the QR code</Text>
+              <TextInput
+                style={styles.webScanInput}
+                value={webScanUrl}
+                onChangeText={setWebScanUrl}
+                placeholder="https://…"
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                autoCapitalize="none"
+                autoFocus
+              />
+              <TouchableOpacity
+                style={[styles.webScanBtn, !webScanUrl.trim() && styles.webScanBtnDisabled]}
+                onPress={() => webScanUrl.trim() && handleBarcodeScanned(webScanUrl.trim())}
+                disabled={!webScanUrl.trim()}
+              >
+                <Text style={styles.webScanBtnText}>Open Recipe</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.scannerClose}
+            onPress={() => setScannerVisible(false)}
+          >
+            <Text style={styles.scannerCloseText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       <NameModal
         visible={showNameModal}
@@ -429,9 +518,117 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: C.divider,
   },
+  footerLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
   footerSide: {
     flex: 1,
     alignItems: 'flex-end',
+  },
+  scanBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.photoBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanBtnIcon: {
+    fontSize: 20,
+    color: C.muted,
+    lineHeight: 24,
+  },
+
+  // Scanner modal
+  scannerScreen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerCamera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  },
+  scannerFrame: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.7)',
+  },
+  scannerHint: {
+    marginTop: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 0.3,
+  },
+  scannerClose: {
+    position: 'absolute',
+    bottom: 52,
+    alignSelf: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  scannerCloseText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: '#fff',
+  },
+  webScanFallback: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  webScanTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 24,
+    color: '#fff',
+  },
+  webScanSub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.45)',
+    textAlign: 'center',
+  },
+  webScanInput: {
+    width: '100%',
+    maxWidth: 360,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    marginTop: 8,
+  },
+  webScanBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    marginTop: 4,
+  },
+  webScanBtnDisabled: {
+    opacity: 0.35,
+  },
+  webScanBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: '#0F172A',
   },
 
   // New Recipe button (circle FAB)

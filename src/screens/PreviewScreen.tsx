@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { RecipeCard } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
+import { uploadRecipe } from '../utils/api';
 import { publishRecipe, saveDraft } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
@@ -34,7 +35,15 @@ export function PreviewScreen({ route, navigation }: Props) {
     try {
       const base = recipe.id ? recipe : await saveDraft(recipe);
       const published = await publishRecipe(base.id);
-      setRecipe(published);
+      let withUrl = published;
+      try {
+        const url = await uploadRecipe(published);
+        withUrl = { ...published, shareUrl: url };
+        await saveDraft(withUrl);
+      } catch {
+        // Upload failure is non-fatal — QR code falls back to recipecards:// scheme
+      }
+      setRecipe(withUrl);
     } finally {
       setPublishing(false);
     }

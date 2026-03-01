@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Home: undefined;
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData };
+  Receive: { url: string };
 };
