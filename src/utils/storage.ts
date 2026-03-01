@@ -48,6 +48,19 @@ export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
   return saved;
 }
 
+/** Sets a recipe's status to 'published' and returns the updated object. */
+export async function publishRecipe(id: string): Promise<RecipeData> {
+  const now = new Date().toISOString();
+  const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+  const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
+  const idx = drafts.findIndex(d => d.id === id);
+  if (idx < 0) throw new Error('Recipe not found');
+  const published = { ...drafts[idx], status: 'published' as const, updatedAt: now };
+  drafts[idx] = published;
+  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  return published;
+}
+
 /** Removes a draft by id. Silently does nothing if the id is not found. */
 export async function deleteDraft(id: string): Promise<void> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);

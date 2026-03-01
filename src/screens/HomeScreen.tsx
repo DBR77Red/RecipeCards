@@ -100,9 +100,15 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
         <Text style={styles.draftSub}>
           {ingredientLabel} · {formatDate(recipe.updatedAt)}
         </Text>
-        <View style={styles.draftBadge}>
-          <Text style={styles.draftBadgeText}>DRAFT</Text>
-        </View>
+        {recipe.status === 'published' ? (
+          <View style={[styles.draftBadge, styles.publishedBadgeHome]}>
+            <Text style={[styles.draftBadgeText, styles.publishedBadgeHomeText]}>PUBLISHED</Text>
+          </View>
+        ) : (
+          <View style={styles.draftBadge}>
+            <Text style={styles.draftBadgeText}>DRAFT</Text>
+          </View>
+        )}
       </View>
 
       {/* Chevron */}
@@ -190,7 +196,11 @@ export function HomeScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <DraftListItem
             recipe={item}
-            onPress={() => navigation.navigate('Form', { recipe: item })}
+            onPress={() =>
+              item.status === 'published'
+                ? navigation.navigate('Preview', { recipe: item })
+                : navigation.navigate('Form', { recipe: item })
+            }
             onLongPress={() => confirmDelete(item)}
           />
         )}
@@ -355,6 +365,12 @@ const styles = StyleSheet.create({
     fontSize: 8,
     letterSpacing: 2.5,
     color: C.terracotta,
+  },
+  publishedBadgeHome: {
+    backgroundColor: 'rgba(79,122,100,0.12)',
+  },
+  publishedBadgeHomeText: {
+    color: '#4F7A64',
   },
   chevron: {
     fontFamily: 'DMSans_400Regular',
