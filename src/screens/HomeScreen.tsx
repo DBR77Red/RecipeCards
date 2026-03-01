@@ -190,6 +190,7 @@ function EmptyState() {
 
 export function HomeScreen({ navigation }: Props) {
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
+  const [published, setPublished] = useState<RecipeData[]>([]);
   const [userName, setUserNameState] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
 
@@ -201,7 +202,12 @@ export function HomeScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      getDrafts().then(d => { if (active) setDrafts(d); });
+      getDrafts().then(all => {
+        if (active) {
+          setDrafts(all.filter(r => r.status === 'draft'));
+          setPublished(all.filter(r => r.status === 'published'));
+        }
+      });
       return () => { active = false; };
     }, [])
   );
@@ -223,13 +229,26 @@ export function HomeScreen({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             await deleteDraft(recipe.id);
-            const updated = await getDrafts();
-            setDrafts(updated);
+            const all = await getDrafts();
+            setDrafts(all.filter(r => r.status === 'draft'));
+            setPublished(all.filter(r => r.status === 'published'));
           },
         },
       ]
     );
   };
+
+  const renderItem = ({ item }: { item: RecipeData }) => (
+    <DraftListItem
+      recipe={item}
+      onPress={() =>
+        item.status === 'published'
+          ? navigation.navigate('Preview', { recipe: item })
+          : navigation.navigate('Form', { recipe: item })
+      }
+      onLongPress={item.status === 'draft' ? () => confirmDelete(item) : () => {}}
+    />
+  );
 
   const ListHeader = (
     <>
@@ -246,6 +265,19 @@ export function HomeScreen({ navigation }: Props) {
     </>
   );
 
+  const ListFooter = (
+    <>
+      {drafts.length > 0 && published.length > 0 && (
+        <View style={styles.sectionSpacer} />
+      )}
+      {published.length > 0 && (
+        <Text style={styles.sectionLabel}>PUBLISHED</Text>
+      )}
+    </>
+  );
+
+  const isEmpty = drafts.length === 0 && published.length === 0;
+
   return (
     <SafeAreaView style={styles.screen}>
       {/* Header */}
@@ -257,21 +289,12 @@ export function HomeScreen({ navigation }: Props) {
 
       {/* Draft list */}
       <FlatList
-        data={drafts}
+        data={[...drafts, ...published]}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <DraftListItem
-            recipe={item}
-            onPress={() =>
-              item.status === 'published'
-                ? navigation.navigate('Preview', { recipe: item })
-                : navigation.navigate('Form', { recipe: item })
-            }
-            onLongPress={() => confirmDelete(item)}
-          />
-        )}
+        renderItem={renderItem}
         ListHeaderComponent={ListHeader}
-        ListEmptyComponent={<EmptyState />}
+        ListFooterComponent={ListFooter}
+        ListEmptyComponent={isEmpty ? <EmptyState /> : null}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -435,6 +458,9 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     color: C.label,
     marginBottom: 4,
+  },
+  sectionSpacer: {
+    height: 32,
   },
 
   // Draft row
