@@ -27,7 +27,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow RecipeCards to use your camera to scan recipe QR codes."
+        }
+      ]
     ]
   }
 }

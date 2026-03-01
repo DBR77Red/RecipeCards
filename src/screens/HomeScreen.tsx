@@ -1,5 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -13,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { RecipeData } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
 import { deleteDraft, getDrafts, getUserName, setUserName } from '../utils/storage';
@@ -43,6 +45,22 @@ function formatDate(iso: string): string {
     day:   'numeric',
     year:  'numeric',
   });
+}
+
+// ─── Camera icon ──────────────────────────────────────────────────────────────
+
+function CameraIcon() {
+  return (
+    <Svg width={20} height={18} viewBox="0 0 20 18" fill="none">
+      <Path
+        d="M19 16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2.5L6 3h8l1.5 2H18a1 1 0 0 1 1 1z"
+        stroke={C.muted}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <Circle cx="10" cy="10.5" r="3" stroke={C.muted} strokeWidth={1.5} />
+    </Svg>
+  );
 }
 
 // ─── Account button ───────────────────────────────────────────────────────────
@@ -103,6 +121,77 @@ function NameModal({ visible, currentName, onSave, onClose }: {
             <Text style={styles.modalCancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── QR scanner modal ─────────────────────────────────────────────────────────
+
+function QRScannerModal({ visible, onScanned, onClose, onEnterManually }: {
+  visible: boolean;
+  onScanned: (data: string) => void;
+  onClose: () => void;
+  onEnterManually: () => void;
+}) {
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanned, setScanned] = useState(false);
+
+  useEffect(() => {
+    if (visible) setScanned(false);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  if (!permission?.granted) {
+    return (
+      <Modal visible animationType="slide" onRequestClose={onClose}>
+        <View style={qrStyles.permScreen}>
+          <Text style={qrStyles.permTitle}>Camera Access Needed</Text>
+          <Text style={qrStyles.permSub}>
+            Grant camera access to scan recipe QR codes.
+          </Text>
+          {permission && !permission.canAskAgain ? (
+            <Text style={qrStyles.permSub}>Please enable camera in your device Settings.</Text>
+          ) : (
+            <TouchableOpacity style={qrStyles.permBtn} onPress={requestPermission}>
+              <Text style={qrStyles.permBtnText}>Allow Camera</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={qrStyles.permCancel} onPress={onClose}>
+            <Text style={qrStyles.permCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={qrStyles.screen}>
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={scanned ? undefined : ({ data }) => {
+            setScanned(true);
+            onScanned(data);
+          }}
+        />
+        <TouchableOpacity style={qrStyles.cancelBtn} onPress={onClose}>
+          <Text style={qrStyles.cancelText}>← Cancel</Text>
+        </TouchableOpacity>
+        <View style={qrStyles.overlay} pointerEvents="none">
+          <Text style={qrStyles.overlayTitle}>Scan Recipe Card</Text>
+          <View style={qrStyles.viewfinder} />
+          <Text style={qrStyles.overlayHint}>Align the QR code within the frame</Text>
+        </View>
+        <TouchableOpacity
+          style={qrStyles.manualBtn}
+          onPress={() => { onClose(); onEnterManually(); }}
+        >
+          <Text style={qrStyles.manualText}>Enter code manually</Text>
+        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -193,6 +282,7 @@ export function HomeScreen({ navigation }: Props) {
   const [userName, setUserNameState] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
 
   useEffect(() => {
@@ -224,6 +314,15 @@ export function HomeScreen({ navigation }: Props) {
   const handleSaveName = async (name: string) => {
     await setUserName(name);
     setUserNameState(name);
+  };
+
+  const handleQRScanned = (data: string) => {
+    const match = data.match(/recipecards:\/\/card\/(.+)/);
+    if (match) {
+      navigation.navigate('Receive', { cardId: match[1] });
+    } else {
+      Alert.alert('Invalid QR Code', "This doesn't look like a RecipeCards QR code.");
+    }
   };
 
   const confirmDelete = (recipe: RecipeData) => {
@@ -290,9 +389,13 @@ export function HomeScreen({ navigation }: Props) {
 
       {/* Fixed footer bar */}
       <View style={styles.footer}>
-        <View style={styles.footerSide}>
-          <TouchableOpacity onPress={() => setShowCodeModal(true)} activeOpacity={0.7}>
-            <Text style={styles.enterCodeText}>Enter code</Text>
+        <View style={[styles.footerSide, styles.footerLeft]}>
+          <TouchableOpacity
+            style={styles.cameraBtn}
+            onPress={() => setShowQRScanner(true)}
+            activeOpacity={0.7}
+          >
+            <CameraIcon />
           </TouchableOpacity>
         </View>
         <TouchableOpacity
@@ -314,7 +417,14 @@ export function HomeScreen({ navigation }: Props) {
         onClose={() => setShowNameModal(false)}
       />
 
-      {/* Enter card code modal */}
+      <QRScannerModal
+        visible={showQRScanner}
+        onScanned={(data) => { setShowQRScanner(false); handleQRScanned(data); }}
+        onClose={() => setShowQRScanner(false)}
+        onEnterManually={() => setShowCodeModal(true)}
+      />
+
+      {/* Enter card code modal (manual fallback) */}
       <Modal
         visible={showCodeModal}
         transparent
@@ -484,6 +594,19 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-end',
   },
+  footerLeft: {
+    alignItems: 'flex-start',
+  },
+
+  // Camera scan button
+  cameraBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.photoBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // New Recipe button (circle FAB)
   newBtn: {
@@ -500,13 +623,6 @@ const styles = StyleSheet.create({
     color: C.btnText,
     lineHeight: 32,
     marginTop: -2,
-  },
-
-  enterCodeText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 12,
-    color: C.muted,
-    letterSpacing: 0.2,
   },
 
   sectionLabel: {
@@ -639,5 +755,110 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: C.muted,
     marginTop: 6,
+  },
+});
+
+// ─── QR scanner styles ────────────────────────────────────────────────────────
+
+const qrStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  cancelBtn: {
+    position: 'absolute',
+    top: 52,
+    left: 24,
+    zIndex: 10,
+  },
+  cancelText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 20,
+    color: '#fff',
+    marginBottom: 32,
+  },
+  viewfinder: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  overlayHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.45)',
+    marginTop: 20,
+  },
+  manualBtn: {
+    position: 'absolute',
+    bottom: 52,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  manualText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.55)',
+  },
+
+  // Permission screen
+  permScreen: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    gap: 16,
+  },
+  permTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 24,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  permSub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+  },
+  permBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+  permBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  permCancel: {
+    paddingVertical: 14,
+  },
+  permCancelText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
   },
 });
