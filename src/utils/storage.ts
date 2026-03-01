@@ -99,11 +99,15 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
     (recipe.photo.startsWith('file://') || recipe.photo.startsWith('content://'));
 
   if (isLocalUri && recipe.photo) {
-    const response = await fetch(recipe.photo);
-    const blob = await response.blob();
+    const formData = new FormData();
+    formData.append('file', {
+      uri: recipe.photo,
+      name: `${recipe.id}.jpg`,
+      type: 'image/jpeg',
+    } as any);
     const { error: uploadError } = await supabase.storage
       .from('recipe-photos')
-      .upload(`${recipe.id}.jpg`, blob, { contentType: 'image/jpeg', upsert: true });
+      .upload(`${recipe.id}.jpg`, formData, { upsert: true });
     if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
     const { data: urlData } = supabase.storage
       .from('recipe-photos')
