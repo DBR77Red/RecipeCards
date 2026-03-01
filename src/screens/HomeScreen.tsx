@@ -184,7 +184,7 @@ export function HomeScreen({ navigation }: Props) {
     <SafeAreaView style={styles.screen}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.appTitle}>RecipeCards</Text>
+        <Text style={styles.appTitle}>Recipe Cards</Text>
         <AccountButton />
       </View>
       <View style={styles.headerDivider} />
