@@ -5,7 +5,6 @@ import {
   Alert,
   Image,
   Modal,
-  Platform,
   SectionList,
   StyleSheet,
   Text,
@@ -46,7 +45,7 @@ function formatDate(iso: string): string {
   });
 }
 
-// ─── Account placeholder ──────────────────────────────────────────────────────
+// ─── Account button ───────────────────────────────────────────────────────────
 
 function AccountButton({ userName, onPress }: { userName: string; onPress: () => void }) {
   return (
@@ -109,7 +108,7 @@ function NameModal({ visible, currentName, onSave, onClose }: {
   );
 }
 
-// ─── Draft list item ──────────────────────────────────────────────────────────
+// ─── Recipe list item ─────────────────────────────────────────────────────────
 
 interface DraftListItemProps {
   recipe: RecipeData;
@@ -204,7 +203,6 @@ export function HomeScreen({ navigation }: Props) {
     const all = await getDrafts();
     const draftsList = all.filter(r => r.status === 'draft');
     const publishedList = all.filter(r => r.status === 'published');
-    console.log('Loaded:', draftsList.length, 'drafts,', publishedList.length, 'published');
     setDrafts(draftsList);
     setPublished(publishedList);
     setKey(k => k + 1);
@@ -266,27 +264,10 @@ export function HomeScreen({ navigation }: Props) {
     ...(published.length > 0 ? [{ title: 'PUBLISHED', data: published }] : []),
   ];
 
-  const ListHeader = (
-    <TouchableOpacity
-      style={styles.newBtn}
-      onPress={() => navigation.navigate('Form', {})}
-      activeOpacity={0.85}
-    >
-      <Text style={styles.newBtnText}>New Recipe</Text>
-    </TouchableOpacity>
-  );
-
   const isEmpty = drafts.length === 0 && published.length === 0;
 
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>Recipe Cards</Text>
-        <AccountButton userName={userName} onPress={() => setShowNameModal(true)} />
-      </View>
-      <View style={styles.headerDivider} />
-
       {/* Recipe list */}
       <SectionList
         sections={sections}
@@ -297,7 +278,6 @@ export function HomeScreen({ navigation }: Props) {
             {title}
           </Text>
         )}
-        ListHeaderComponent={ListHeader}
         ListEmptyComponent={isEmpty ? <EmptyState /> : null}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
@@ -305,6 +285,21 @@ export function HomeScreen({ navigation }: Props) {
         extraData={key}
         stickySectionHeadersEnabled={false}
       />
+
+      {/* Fixed footer bar */}
+      <View style={styles.footer}>
+        <View style={styles.footerSide} />
+        <TouchableOpacity
+          style={styles.newBtn}
+          onPress={() => navigation.navigate('Form', {})}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.newBtnPlus}>+</Text>
+        </TouchableOpacity>
+        <View style={styles.footerSide}>
+          <AccountButton userName={userName} onPress={() => setShowNameModal(true)} />
+        </View>
+      </View>
 
       <NameModal
         visible={showNameModal}
@@ -324,51 +319,31 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
   },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 18,
-  },
-  appTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 28,
-    color: C.title,
-    letterSpacing: -0.3,
-  },
-  headerDivider: {
-    height: 1,
-    backgroundColor: C.divider,
-  },
-
-  // Account button placeholder
+  // Account button
   accountBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: C.terracotta,
     alignItems: 'center',
     justifyContent: 'center',
   },
   accountInitials: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     color: C.btnText,
   },
   accountHead: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: C.label,
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   accountBody: {
     width: 14,
     height: 7,
     borderRadius: 7,
-    backgroundColor: C.label,
+    backgroundColor: 'rgba(255,255,255,0.7)',
     marginTop: 2,
   },
 
@@ -439,25 +414,43 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingTop: 28,
+    paddingBottom: 16,
   },
 
-  // New Recipe button
+  // Footer bar
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: C.bg,
+    borderTopWidth: 1,
+    borderTopColor: C.divider,
+  },
+  footerSide: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+
+  // New Recipe button (circle FAB)
   newBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: C.btnBg,
-    borderRadius: 14,
-    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
-    marginBottom: 28,
   },
-  newBtnText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-    letterSpacing: 0.8,
+  newBtnPlus: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 28,
     color: C.btnText,
+    lineHeight: 32,
+    marginTop: -2,
   },
+
   sectionLabel: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 9,
@@ -469,7 +462,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
 
-  // Draft row
+  // Recipe row
   draftRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -561,7 +554,7 @@ const styles = StyleSheet.create({
   // Empty state
   emptyState: {
     alignItems: 'center',
-    paddingTop: 64,
+    paddingTop: 80,
   },
   emptyIcon: {
     width: 64,
