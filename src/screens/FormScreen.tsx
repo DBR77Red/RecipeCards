@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { RecipeForm } from '../components/RecipeForm';
 import { RootStackParamList } from '../types/navigation';
 import { emptyRecipe } from '../utils/recipe';
-import { saveDraft } from '../utils/storage';
+import { publishRecipe, saveDraft } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Form'>;
 
@@ -11,7 +11,6 @@ export function FormScreen({ route, navigation }: Props) {
   const incoming = route.params?.recipe;
   const [recipe, setRecipe] = useState(incoming ?? emptyRecipe());
 
-  // Guard: published cards must not be editable — redirect to Preview
   useEffect(() => {
     if (incoming?.status === 'published') {
       navigation.replace('Preview', { recipe: incoming });
@@ -22,7 +21,13 @@ export function FormScreen({ route, navigation }: Props) {
 
   const handleSaveDraft = async () => {
     const saved = await saveDraft(recipe);
-    setRecipe(saved); // capture assigned id so subsequent saves update instead of insert
+    setRecipe(saved);
+  };
+
+  const handlePublish = async () => {
+    const saved = await saveDraft(recipe);
+    const published = await publishRecipe(saved.id);
+    navigation.replace('Preview', { recipe: published });
   };
 
   return (
@@ -30,6 +35,7 @@ export function FormScreen({ route, navigation }: Props) {
       recipe={recipe}
       onChange={setRecipe}
       onSaveDraft={handleSaveDraft}
+      onPublish={handlePublish}
       onPreview={() => navigation.navigate('Preview', { recipe })}
       onBack={() => navigation.goBack()}
     />

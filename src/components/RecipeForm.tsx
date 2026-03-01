@@ -1,9 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -40,6 +41,7 @@ interface RecipeFormProps {
   recipe: RecipeData;
   onChange: (recipe: RecipeData) => void;
   onSaveDraft: () => Promise<void>;
+  onPublish: () => Promise<void>;
   onPreview: () => void;
   onBack: () => void;
 }
@@ -145,7 +147,7 @@ function AddRowButton({ label, onPress }: { label: string; onPress: () => void }
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export function RecipeForm({ recipe, onChange, onSaveDraft, onPreview, onBack }: RecipeFormProps) {
+export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview, onBack }: RecipeFormProps) {
   const update = <K extends keyof RecipeData>(key: K, value: RecipeData[K]) =>
     onChange({ ...recipe, [key]: value });
 
@@ -210,6 +212,27 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPreview, onBack }:
     inputRange: [0, 1],
     outputRange: [-6, 0],
   });
+
+  // ── Publish confirmation modal ──────────────────────────────────────────
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const confirmAnim = useRef(new Animated.Value(0)).current;
+
+  const openConfirm = () => {
+    setShowConfirm(true);
+    Animated.timing(confirmAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  };
+
+  const closeConfirm = () => {
+    Animated.timing(confirmAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(
+      () => setShowConfirm(false)
+    );
+  };
+
+  const handlePublish = async () => {
+    closeConfirm();
+    await onPublish();
+  };
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -300,17 +323,27 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPreview, onBack }:
 
         {/* Actions */}
         <TouchableOpacity
-          style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
-          onPress={onPreview}
+          style={[styles.publishBtn, !recipe.title.trim() && styles.publishBtnDisabled]}
+          onPress={openConfirm}
           disabled={!recipe.title.trim()}
           activeOpacity={0.85}
         >
-          <Text style={styles.previewBtnText}>Preview Card</Text>
+          <Text style={styles.publishBtnText}>Publish</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.saveDraftBtn} onPress={handleSaveDraft}>
-          <Text style={styles.saveDraftBtnText}>Save draft</Text>
-        </TouchableOpacity>
+        <View style={styles.secondaryRow}>
+          <TouchableOpacity
+            style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
+            onPress={onPreview}
+            disabled={!recipe.title.trim()}
+          >
+            <Text style={styles.previewBtnText}>Preview Card</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.saveDraftBtn} onPress={handleSaveDraft}>
+            <Text style={styles.saveDraftBtnText}>Save draft</Text>
+          </TouchableOpacity>
+        </View>
 
       </ScrollView>
 
@@ -324,6 +357,37 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPreview, onBack }:
       >
         <Text style={styles.toastText}>✓  Draft saved</Text>
       </Animated.View>
+
+      {/* Publish confirmation modal */}
+      <Modal
+        visible={showConfirm}
+        transparent
+        animationType="none"
+        onRequestClose={closeConfirm}
+      >
+        <Animated.View style={[styles.overlay, { opacity: confirmAnim }]}>
+          <Animated.View style={[styles.confirmSheet, {
+            transform: [{ translateY: confirmAnim.interpolate({
+              inputRange:  [0, 1],
+              outputRange: [48, 0],
+            }) }],
+          }]}>
+            <Text style={styles.confirmTitle}>
+              {recipe.title.trim() || 'Untitled Recipe'}
+            </Text>
+            <Text style={styles.confirmHeadline}>Ready to publish?</Text>
+            <Text style={styles.confirmBody}>
+              Once published, this card is permanent. No edits, no take-backs. This is your recipe, exactly as it is right now.
+            </Text>
+            <TouchableOpacity style={styles.confirmBtn} onPress={handlePublish}>
+              <Text style={styles.confirmBtnText}>Publish forever</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={closeConfirm}>
+              <Text style={styles.cancelBtnText}>Not yet</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -519,8 +583,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  // Primary action
-  previewBtn: {
+  publishBtn: {
     backgroundColor: C.btnBg,
     borderRadius: 12,
     height: 52,
@@ -528,15 +591,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 36,
   },
-  previewBtnDisabled: { opacity: 0.35 },
-  previewBtnText: {
+  publishBtnDisabled: { opacity: 0.35 },
+  publishBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 14,
     letterSpacing: 0.8,
     color: C.btnText,
   },
 
-  // Secondary action
+  secondaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 24,
+  },
+  previewBtn: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  previewBtnDisabled: { opacity: 0.35 },
+  previewBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: C.muted,
+    letterSpacing: 0.3,
+  },
   saveDraftBtn: {
     paddingVertical: 16,
     alignItems: 'center',
@@ -548,7 +628,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Toast
   toast: {
     position: 'absolute',
     top: 58,
@@ -563,5 +642,61 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#F7F5F2',
     letterSpacing: 0.2,
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  confirmSheet: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: C.bg,
+    borderRadius: 24,
+    padding: 32,
+    gap: 16,
+  },
+  confirmTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 26,
+    color: C.title,
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  confirmHeadline: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 20,
+    color: C.title,
+  },
+  confirmBody: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    color: C.muted,
+    lineHeight: 24,
+  },
+  confirmBtn: {
+    backgroundColor: C.btnBg,
+    borderRadius: 100,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  confirmBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: C.btnText,
+  },
+  cancelBtn: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: C.label,
   },
 });
