@@ -192,6 +192,8 @@ export function HomeScreen({ navigation }: Props) {
   const [published, setPublished] = useState<RecipeData[]>([]);
   const [userName, setUserNameState] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [cardCode, setCardCode] = useState('');
 
   useEffect(() => {
     getUserName().then(setUserNameState);
@@ -288,7 +290,11 @@ export function HomeScreen({ navigation }: Props) {
 
       {/* Fixed footer bar */}
       <View style={styles.footer}>
-        <View style={styles.footerSide} />
+        <View style={styles.footerSide}>
+          <TouchableOpacity onPress={() => setShowCodeModal(true)} activeOpacity={0.7}>
+            <Text style={styles.enterCodeText}>Enter code</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           style={styles.newBtn}
           onPress={() => navigation.navigate('Form', {})}
@@ -307,6 +313,51 @@ export function HomeScreen({ navigation }: Props) {
         onSave={handleSaveName}
         onClose={() => setShowNameModal(false)}
       />
+
+      {/* Enter card code modal */}
+      <Modal
+        visible={showCodeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCodeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>View Shared Card</Text>
+            <Text style={styles.modalSub}>
+              Paste the card ID from a shared recipe link.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={cardCode}
+              onChangeText={setCardCode}
+              placeholder="Paste card ID here"
+              placeholderTextColor={C.label}
+              autoFocus
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[styles.modalBtn, !cardCode.trim() && styles.modalBtnDisabled]}
+              onPress={() => {
+                const id = cardCode.trim();
+                setShowCodeModal(false);
+                setCardCode('');
+                navigation.navigate('CardView', { cardId: id });
+              }}
+              disabled={!cardCode.trim()}
+            >
+              <Text style={styles.modalBtnText}>View Recipe</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => { setShowCodeModal(false); setCardCode(''); }}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -449,6 +500,13 @@ const styles = StyleSheet.create({
     color: C.btnText,
     lineHeight: 32,
     marginTop: -2,
+  },
+
+  enterCodeText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: C.muted,
+    letterSpacing: 0.2,
   },
 
   sectionLabel: {

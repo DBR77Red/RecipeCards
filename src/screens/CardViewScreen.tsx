@@ -1,9 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { RecipeCard } from '../components/RecipeCard';
 import { RecipeData } from '../components/RecipeCard';
+import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { getDrafts } from '../utils/storage';
 
@@ -12,12 +13,41 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 export function CardViewScreen({ route, navigation }: Props) {
   const { cardId } = route.params;
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDrafts().then(drafts => {
-      const found = drafts.find(d => d.id === cardId) ?? null;
-      setRecipe(found);
-    });
+    async function load() {
+      // Fetch from Supabase first (works across all devices)
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', cardId)
+        .single();
+
+      if (!error && data) {
+        setRecipe({
+          id: data.id,
+          status: 'published',
+          title: data.title,
+          creatorName: data.creator_name,
+          photo: data.photo_url,
+          servings: data.servings ?? '',
+          prepTime: data.prep_time ?? '',
+          cookTime: data.cook_time ?? '',
+          ingredients: data.ingredients ?? [],
+          directions: data.directions ?? [],
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          shareUrl: data.share_url,
+        });
+      } else {
+        // Fallback: check local storage (for recipes not yet published to cloud)
+        const drafts = await getDrafts();
+        setRecipe(drafts.find(d => d.id === cardId) ?? null);
+      }
+      setLoading(false);
+    }
+    load();
   }, [cardId]);
 
   return (
@@ -31,7 +61,9 @@ export function CardViewScreen({ route, navigation }: Props) {
         <Text style={styles.backBtnText}>← Home</Text>
       </TouchableOpacity>
 
-      {recipe ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="rgba(255,255,255,0.4)" />
+      ) : recipe ? (
         <>
           <Text style={styles.sharedBy}>
             Recipe by{' '}

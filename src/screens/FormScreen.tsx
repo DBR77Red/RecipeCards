@@ -40,7 +40,9 @@ export function FormScreen({ route, navigation }: Props) {
 
   const handlePublish = async () => {
     const saved = await saveDraft(recipe);
+    console.log('Saved with status:', saved.status);
     const published = await publishRecipe(saved.id);
+    console.log('Published with status:', published.status);
     navigation.replace('Preview', { recipe: published });
   };
 
