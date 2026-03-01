@@ -2,6 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RecipeData } from '../components/RecipeCard';
 
 const DRAFTS_KEY = '@recipecards/drafts';
+const USER_NAME_KEY = '@recipecards/userName';
+
+export async function getUserName(): Promise<string> {
+  try {
+    return (await AsyncStorage.getItem(USER_NAME_KEY)) || '';
+  } catch {
+    return '';
+  }
+}
+
+export async function setUserName(name: string): Promise<void> {
+  await AsyncStorage.setItem(USER_NAME_KEY, name);
+}
 
 /** Returns all stored drafts sorted newest-updated first. Returns [] on any error. */
 export async function getDrafts(): Promise<RecipeData[]> {

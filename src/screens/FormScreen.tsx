@@ -1,23 +1,37 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { RecipeData } from '../components/RecipeCard';
 import { RecipeForm } from '../components/RecipeForm';
 import { RootStackParamList } from '../types/navigation';
 import { emptyRecipe } from '../utils/recipe';
-import { publishRecipe, saveDraft } from '../utils/storage';
+import { getUserName, publishRecipe, saveDraft } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Form'>;
 
 export function FormScreen({ route, navigation }: Props) {
   const incoming = route.params?.recipe;
-  const [recipe, setRecipe] = useState(incoming ?? emptyRecipe());
+  const [recipe, setRecipe] = useState<RecipeData>(emptyRecipe());
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     if (incoming?.status === 'published') {
       navigation.replace('Preview', { recipe: incoming });
+      return;
     }
+
+    async function init() {
+      const userName = await getUserName();
+      const initial = incoming ?? emptyRecipe();
+      if (!initial.creatorName && userName) {
+        initial.creatorName = userName;
+      }
+      setRecipe(initial);
+      setInitialized(true);
+    }
+    init();
   }, []);
 
-  if (incoming?.status === 'published') return null;
+  if (incoming?.status === 'published' || !initialized) return null;
 
   const handleSaveDraft = async () => {
     const saved = await saveDraft(recipe);

@@ -99,7 +99,7 @@ function CardFront({ recipe }: { recipe: RecipeData }) {
             {recipe.title}
           </Text>
           <Text style={styles.creator}>
-            {recipe.creatorName.toUpperCase()}
+            Made by {recipe.creatorName}
           </Text>
         </View>
 

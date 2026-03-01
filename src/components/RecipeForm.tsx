@@ -253,7 +253,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           <Text style={styles.formLabel}>NEW RECIPE</Text>
         </View>
 
-        {/* Title + creator */}
+        {/* Title */}
         <View style={styles.heroGroup}>
           <TextInput
             style={styles.titleInput}
@@ -262,14 +262,6 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             placeholder="Recipe title"
             placeholderTextColor={C.placeholder}
             multiline
-          />
-          <TextInput
-            style={styles.creatorInput}
-            value={recipe.creatorName}
-            onChangeText={v => update('creatorName', v)}
-            placeholder="Your name"
-            placeholderTextColor={C.placeholder}
-            returnKeyType="next"
           />
         </View>
 

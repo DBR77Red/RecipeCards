@@ -1,19 +1,22 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
   Image,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RecipeData } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
-import { deleteDraft, getDrafts } from '../utils/storage';
+import { deleteDraft, getDrafts, getUserName, setUserName } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -45,12 +48,64 @@ function formatDate(iso: string): string {
 
 // ─── Account placeholder ──────────────────────────────────────────────────────
 
-function AccountButton() {
+function AccountButton({ userName, onPress }: { userName: string; onPress: () => void }) {
   return (
-    <View style={styles.accountBtn}>
-      <View style={styles.accountHead} />
-      <View style={styles.accountBody} />
-    </View>
+    <TouchableOpacity style={styles.accountBtn} onPress={onPress} activeOpacity={0.7}>
+      {userName ? (
+        <Text style={styles.accountInitials}>
+          {userName.charAt(0).toUpperCase()}
+        </Text>
+      ) : (
+        <>
+          <View style={styles.accountHead} />
+          <View style={styles.accountBody} />
+        </>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Name input modal ─────────────────────────────────────────────────────────
+
+function NameModal({ visible, currentName, onSave, onClose }: {
+  visible: boolean;
+  currentName: string;
+  onSave: (name: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(currentName);
+
+  useEffect(() => {
+    setName(currentName);
+  }, [currentName, visible]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Your Name</Text>
+          <Text style={styles.modalSub}>This name will appear on your recipe cards.</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter your name"
+            placeholderTextColor={C.label}
+            autoFocus
+          />
+          <TouchableOpacity
+            style={[styles.modalBtn, !name.trim() && styles.modalBtnDisabled]}
+            onPress={() => { onSave(name.trim()); onClose(); }}
+            disabled={!name.trim()}
+          >
+            <Text style={styles.modalBtnText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.modalCancelBtn} onPress={onClose}>
+            <Text style={styles.modalCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -135,6 +190,12 @@ function EmptyState() {
 
 export function HomeScreen({ navigation }: Props) {
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
+  const [userName, setUserNameState] = useState('');
+  const [showNameModal, setShowNameModal] = useState(false);
+
+  useEffect(() => {
+    getUserName().then(setUserNameState);
+  }, []);
 
   // Reload list every time this screen comes into focus
   useFocusEffect(
@@ -144,6 +205,11 @@ export function HomeScreen({ navigation }: Props) {
       return () => { active = false; };
     }, [])
   );
+
+  const handleSaveName = async (name: string) => {
+    await setUserName(name);
+    setUserNameState(name);
+  };
 
   const confirmDelete = (recipe: RecipeData) => {
     const label = recipe.title.trim() || 'Untitled Recipe';
@@ -185,7 +251,7 @@ export function HomeScreen({ navigation }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.appTitle}>Recipe Cards</Text>
-        <AccountButton />
+        <AccountButton userName={userName} onPress={() => setShowNameModal(true)} />
       </View>
       <View style={styles.headerDivider} />
 
@@ -209,6 +275,13 @@ export function HomeScreen({ navigation }: Props) {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <NameModal
+        visible={showNameModal}
+        currentName={userName}
+        onSave={handleSaveName}
+        onClose={() => setShowNameModal(false)}
       />
     </SafeAreaView>
   );
@@ -247,10 +320,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: C.divider,
+    backgroundColor: C.terracotta,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 2,
+  },
+  accountInitials: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: C.btnText,
   },
   accountHead: {
     width: 10,
@@ -264,6 +341,70 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: C.label,
     marginTop: 2,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: C.bg,
+    borderRadius: 20,
+    padding: 24,
+    gap: 12,
+  },
+  modalTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 22,
+    color: C.title,
+  },
+  modalSub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: C.muted,
+    marginBottom: 8,
+  },
+  modalInput: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    color: C.title,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: C.divider,
+  },
+  modalBtn: {
+    backgroundColor: C.btnBg,
+    borderRadius: 10,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  modalBtnDisabled: {
+    opacity: 0.4,
+  },
+  modalBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: C.btnText,
+  },
+  modalCancelBtn: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: C.label,
   },
 
   // List
