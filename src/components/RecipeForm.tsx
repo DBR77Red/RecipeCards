@@ -1,7 +1,8 @@
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import LottieView from 'lottie-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Image,
@@ -18,6 +19,10 @@ import {
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { RecipeData } from './RecipeCard';
+
+// Replace with a free audio-wave JSON URL from https://lottiefiles.com/free-animations/audio-wave
+// Click an animation → Share → "Lottie Animation URL" → copy the .json link
+const VOICE_LOTTIE_URL = 'YOUR_LOTTIE_JSON_URL_HERE';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -192,7 +197,12 @@ function VoiceBar({
   if (processing) {
     return (
       <View style={styles.voiceBar}>
-        <ActivityIndicator color={C.terracotta} size="small" />
+        <LottieView
+          source={{ uri: VOICE_LOTTIE_URL }}
+          autoPlay
+          loop
+          style={{ width: 40, height: 40 }}
+        />
         <Text style={styles.voiceProcessingText}>Transcribing & analysing…</Text>
       </View>
     );
@@ -203,8 +213,9 @@ function VoiceBar({
       <View style={styles.voiceBar}>
         <TouchableOpacity
           style={styles.micBtn}
-          onPress={hasPermission ? onStart : () =>
-            Alert.alert('Microphone Permission', 'Please allow microphone access to record recipes.')
+          onPress={hasPermission
+            ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onStart(); }
+            : () => Alert.alert('Microphone Permission', 'Please allow microphone access to record recipes.')
           }
           activeOpacity={0.75}
         >
@@ -301,6 +312,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
         directions:  parsed.directions  && parsed.directions.length  > 0
           ? parsed.directions  : recipe.directions,
       });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       resetRecorder();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';

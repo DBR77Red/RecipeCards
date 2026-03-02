@@ -1,9 +1,12 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import QRCode from 'react-native-qrcode-svg';
 import {
   Alert,
+  Dimensions,
   ScrollView,
   Share,
   StyleSheet,
@@ -20,6 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 export function PreviewScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
+  const confettiRef = useRef<any>(null);
 
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
 
@@ -37,6 +41,9 @@ export function PreviewScreen({ route, navigation }: Props) {
       const base = recipe.id ? recipe : await saveDraft(recipe);
       const local = await markPublishedLocally(base.id);
       setRecipe(local);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      confettiRef.current?.start();
 
       // Step 2: sync photo + recipe to Supabase
       try {
@@ -103,6 +110,14 @@ export function PreviewScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <ConfettiCannon
+        ref={confettiRef}
+        count={200}
+        origin={{ x: Dimensions.get('window').width / 2, y: Dimensions.get('window').height / 2 }}
+        autoStart={false}
+        fadeOut
+      />
     </View>
   );
 }
