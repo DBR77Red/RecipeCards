@@ -16,8 +16,7 @@ import {
   View,
 } from 'react-native';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
-import { parseRecipeFromTranscript } from '../utils/parseRecipe';
-import { transcribeAudio } from '../utils/transcribe';
+import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { RecipeData } from './RecipeCard';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -290,13 +289,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const handleVoiceComplete = async (uri: string) => {
     setProcessing(true);
     try {
-      const transcript = await transcribeAudio(uri);
-      if (!transcript.trim()) {
-        Alert.alert('No speech detected', 'Please try recording again and speak clearly.');
-        resetRecorder();
-        return;
-      }
-      const parsed = await parseRecipeFromTranscript(transcript);
+      const parsed = await voiceToRecipe(uri);
       onChange({
         ...recipe,
         title:       parsed.title       ?? recipe.title,
@@ -304,16 +297,18 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
         prepTime:    parsed.prepTime    ?? recipe.prepTime,
         cookTime:    parsed.cookTime    ?? recipe.cookTime,
         ingredients: parsed.ingredients && parsed.ingredients.length > 0
-          ? parsed.ingredients
-          : recipe.ingredients,
-        directions: parsed.directions && parsed.directions.length > 0
-          ? parsed.directions
-          : recipe.directions,
+          ? parsed.ingredients : recipe.ingredients,
+        directions:  parsed.directions  && parsed.directions.length  > 0
+          ? parsed.directions  : recipe.directions,
       });
       resetRecorder();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      Alert.alert('Voice fill failed', msg);
+      if (msg === 'no_speech') {
+        Alert.alert('No speech detected', 'Please try recording again and speak clearly.');
+      } else {
+        Alert.alert('Voice fill failed', msg);
+      }
       resetRecorder();
     } finally {
       setProcessing(false);

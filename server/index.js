@@ -1,95 +1,28 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Database = require('@replit/database');
 
-const db = new Database();
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchWithRetry(url, options, { retries = 3, baseDelayMs = 1000 } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status !== 529 && res.status !== 503 || attempt === retries) return res;
+    const delay = baseDelayMs * 2 ** attempt;
+    console.log(`[retry] attempt ${attempt + 1} — overloaded, waiting ${delay}ms`);
+    await sleep(delay);
+  }
+}
+
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 
-const domain = process.env.REPLIT_DEV_DOMAIN;
-const BASE_URL = domain ? `https://${domain}:3001` : 'http://localhost:3001';
-
-app.post('/api/recipes', async (req, res) => {
-  try {
-    const recipe = req.body;
-    if (!recipe || !recipe.id) {
-      return res.status(400).json({ error: 'Recipe with id is required' });
-    }
-    await db.set(`recipe:${recipe.id}`, JSON.stringify(recipe));
-    const shareUrl = `${BASE_URL}/api/recipes/${recipe.id}`;
-    res.status(201).json({ shareUrl });
-  } catch (err) {
-    console.error('POST /api/recipes error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/api/recipes/:id', async (req, res) => {
-  try {
-    const result = await db.get(`recipe:${req.params.id}`);
-    const raw = result && typeof result === 'object' && 'value' in result ? result.value : result;
-    if (!raw) return res.status(404).json({ error: 'Recipe not found' });
-    const recipe = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    res.json(recipe);
-  } catch (err) {
-    console.error('GET /api/recipes error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
-  try {
-    const apiKey = process.env.DEEPGRAM_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'DEEPGRAM_API_KEY is not configured' });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: 'No audio file provided' });
-    }
-
-    const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${apiKey}`,
-        'Content-Type': req.file.mimetype || 'audio/m4a',
-      },
-      body: req.file.buffer,
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Deepgram error:', response.status, text);
-      return res.status(502).json({ error: `Deepgram returned ${response.status}` });
-    }
-
-    const data = await response.json();
-    const transcript =
-      data?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? '';
-
-    res.json({ transcript });
-  } catch (err) {
-    console.error('POST /api/transcribe error:', err);
-    res.status(500).json({ error: 'Transcription failed' });
-  }
-});
-
-app.post('/api/parse-recipe', async (req, res) => {
-  try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
-    }
-
-    const { transcript } = req.body;
-    if (!transcript || typeof transcript !== 'string') {
-      return res.status(400).json({ error: 'transcript is required' });
-    }
-
-    const systemPrompt = `You are a recipe parser. Given a spoken recipe transcript, extract the following fields and return ONLY a valid JSON object with no extra text, markdown, or explanation.
+const SYSTEM_PROMPT = `You are a recipe parser. Given a spoken recipe transcript, extract the following fields and return ONLY a valid JSON object with no extra text, markdown, or explanation.
 
 Fields to extract:
 - "title": string — the recipe name. If not explicitly stated, infer a short descriptive title from the content (e.g. "Chocolate Chip Cookies"). Never leave this empty.
@@ -101,56 +34,84 @@ Fields to extract:
 
 Return ONLY the JSON object, no other text.`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
+  try {
+    const deepgramKey = process.env.DEEPGRAM_API_KEY;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (!deepgramKey) return res.status(500).json({ error: 'DEEPGRAM_API_KEY is not configured' });
+    if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
+    if (!req.file)     return res.status(400).json({ error: 'No audio file provided' });
+
+    console.log(`[voice] audio received: ${req.file.size} bytes, mimetype: ${req.file.mimetype}`);
+
+    // Step 1: transcribe audio with Deepgram
+    const dgRes = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
+        'Authorization': `Token ${deepgramKey}`,
+        'Content-Type': req.file.mimetype || 'audio/m4a',
+      },
+      body: req.file.buffer,
+    });
+    if (!dgRes.ok) {
+      const text = await dgRes.text();
+      return res.status(502).json({ error: `Deepgram returned ${dgRes.status}: ${text}` });
+    }
+    const dgData = await dgRes.json();
+    const transcript = dgData?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? '';
+    console.log(`[voice] transcript (${transcript.length} chars): "${transcript.slice(0, 80)}${transcript.length > 80 ? '…' : ''}"`);
+    if (!transcript.trim()) {
+      return res.status(422).json({ error: 'no_speech' });
+    }
+
+    // Step 2: parse transcript into recipe fields with Claude
+    const claudeRes = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: systemPrompt,
-        messages: [
-          { role: 'user', content: `Transcript:\n${transcript}` },
-        ],
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: `Transcript:\n${transcript}` }],
       }),
     });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Anthropic error:', response.status, text);
-      return res.status(502).json({ error: `Anthropic returned ${response.status}` });
+    if (!claudeRes.ok) {
+      const text = await claudeRes.text();
+      return res.status(502).json({ error: `Anthropic returned ${claudeRes.status}: ${text}` });
     }
+    const claudeData = await claudeRes.json();
+    const rawText = claudeData?.content?.[0]?.text ?? '{}';
 
-    const data = await response.json();
-    const rawText = data?.content?.[0]?.text ?? '{}';
+    // Claude sometimes wraps JSON in markdown code fences — strip them before parsing.
+    const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
     let recipe;
     try {
-      recipe = JSON.parse(rawText);
+      recipe = JSON.parse(jsonText);
     } catch {
-      console.error('Failed to parse Anthropic response as JSON:', rawText);
+      console.error('[voice] Claude raw response (unparseable):', rawText.slice(0, 200));
       return res.status(502).json({ error: 'Could not parse recipe from AI response' });
     }
 
-    if (!recipe.title) {
-      recipe.title = 'My Recipe';
-    }
+    if (!recipe.title)                      recipe.title       = 'My Recipe';
     if (!Array.isArray(recipe.ingredients)) recipe.ingredients = [];
-    if (!Array.isArray(recipe.directions)) recipe.directions = [];
-    if (typeof recipe.servings !== 'string') recipe.servings = '';
-    if (typeof recipe.prepTime !== 'string') recipe.prepTime = '';
-    if (typeof recipe.cookTime !== 'string') recipe.cookTime = '';
+    if (!Array.isArray(recipe.directions))  recipe.directions  = [];
+    if (typeof recipe.servings !== 'string') recipe.servings   = '';
+    if (typeof recipe.prepTime !== 'string') recipe.prepTime   = '';
+    if (typeof recipe.cookTime !== 'string') recipe.cookTime   = '';
 
-    res.json({ recipe });
+    console.log('[voice] done — recipe title:', recipe.title);
+    res.json({ recipe, transcript });
   } catch (err) {
-    console.error('POST /api/parse-recipe error:', err);
-    res.status(500).json({ error: 'Recipe parsing failed' });
+    console.error('POST /api/voice-to-recipe error:', err);
+    res.status(500).json({ error: 'Voice-to-recipe failed' });
   }
 });
 
 app.listen(3001, () => {
-  console.log(`RecipeCards API running at ${BASE_URL}`);
+  console.log('RecipeCards API listening on http://localhost:3001');
 });

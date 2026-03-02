@@ -1,6 +1,15 @@
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
 
+// Spread HIGH_QUALITY (M4A/AAC on both platforms) then tighten for speech:
+// mono, 16 kHz, 32 kbps — ~10× smaller than HIGH_QUALITY, Deepgram-compatible.
+const SPEECH_PRESET = {
+  ...RecordingPresets.HIGH_QUALITY,
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+};
+
 export type RecorderState = 'idle' | 'recording' | 'stopped';
 
 export interface VoiceRecorderResult {
@@ -21,17 +30,14 @@ export function useVoiceRecorder(): VoiceRecorderResult {
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
 
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(SPEECH_PRESET);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     requestRecordingPermissionsAsync().then(({ granted }) => {
       setHasPermission(granted);
     });
-
-    return () => {
-      clearTick();
-    };
+    return () => { clearTick(); };
   }, []);
 
   function clearTick() {
@@ -54,23 +60,15 @@ export function useVoiceRecorder(): VoiceRecorderResult {
 
   const startRecording = async () => {
     if (state === 'recording') return;
-
-    await setAudioModeAsync({
-      playsInSilentMode: true,
-      allowsRecording: true,
-    });
-
+    await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
     await recorder.prepareToRecordAsync();
     recorder.record();
     setElapsed(0);
     setState('recording');
-
     intervalRef.current = setInterval(() => {
       setElapsed(prev => {
         const next = prev + 1;
-        if (next >= MAX_SECONDS) {
-          stopRecording();
-        }
+        if (next >= MAX_SECONDS) stopRecording();
         return next;
       });
     }, 1000);
