@@ -33,6 +33,12 @@
         {
           "cameraPermission": "Allow RecipeCards to use your camera to scan recipe QR codes."
         }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow RecipeCards to use your microphone to record recipe instructions."
+        }
       ]
     ]
   }

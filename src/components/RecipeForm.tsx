@@ -1,6 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
   Image,
   KeyboardAvoidingView,
@@ -13,6 +15,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
+import { parseRecipeFromTranscript } from '../utils/parseRecipe';
+import { transcribeAudio } from '../utils/transcribe';
 import { RecipeData } from './RecipeCard';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -33,6 +38,8 @@ const C = {
   addColor:    '#78716C',
   photoBg:     '#E8E4DE',
   photoMark:   'rgba(0,0,0,0.12)',
+  micActive:   '#B45A3C',
+  micIdle:     '#E8E4DE',
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -145,13 +152,102 @@ function AddRowButton({ label, onPress }: { label: string; onPress: () => void }
   );
 }
 
+// ─── Voice bar ────────────────────────────────────────────────────────────────
+
+function VoiceBar({
+  state,
+  elapsed,
+  hasPermission,
+  processing,
+  onStart,
+  onStop,
+  onReset,
+}: {
+  state: 'idle' | 'recording' | 'stopped';
+  elapsed: number;
+  hasPermission: boolean;
+  processing: boolean;
+  onStart: () => void;
+  onStop: () => void;
+  onReset: () => void;
+}) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (state === 'recording') {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.18, duration: 600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [state]);
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+  if (processing) {
+    return (
+      <View style={styles.voiceBar}>
+        <ActivityIndicator color={C.terracotta} size="small" />
+        <Text style={styles.voiceProcessingText}>Transcribing & analysing…</Text>
+      </View>
+    );
+  }
+
+  if (state === 'idle') {
+    return (
+      <View style={styles.voiceBar}>
+        <TouchableOpacity
+          style={styles.micBtn}
+          onPress={hasPermission ? onStart : () =>
+            Alert.alert('Microphone Permission', 'Please allow microphone access to record recipes.')
+          }
+          activeOpacity={0.75}
+        >
+          <Text style={styles.micIcon}>🎙</Text>
+        </TouchableOpacity>
+        <Text style={styles.voiceHint}>
+          {hasPermission ? 'Tap to record your recipe' : 'Microphone permission needed'}
+        </Text>
+      </View>
+    );
+  }
+
+  if (state === 'recording') {
+    return (
+      <View style={styles.voiceBar}>
+        <Animated.View style={[styles.micBtnActive, { transform: [{ scale: pulseAnim }] }]}>
+          <Text style={styles.micIcon}>🎙</Text>
+        </Animated.View>
+        <Text style={styles.voiceElapsed}>{formatTime(elapsed)} / 1:00</Text>
+        <TouchableOpacity style={styles.stopBtn} onPress={onStop} activeOpacity={0.75}>
+          <Text style={styles.stopBtnText}>Stop</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.voiceBar}>
+      <Text style={styles.voiceDoneText}>Recording done ({formatTime(elapsed)})</Text>
+      <TouchableOpacity style={styles.retryBtn} onPress={onReset} activeOpacity={0.75}>
+        <Text style={styles.retryBtnText}>Re-record</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 // ─── Main form ────────────────────────────────────────────────────────────────
 
 export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview, onBack }: RecipeFormProps) {
   const update = <K extends keyof RecipeData>(key: K, value: RecipeData[K]) =>
     onChange({ ...recipe, [key]: value });
 
-  // Ingredients
   const updateIngredient = (i: number, v: string) => {
     const next = [...recipe.ingredients]; next[i] = v; update('ingredients', next);
   };
@@ -159,7 +255,6 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const removeIngredient = (i: number) =>
     update('ingredients', recipe.ingredients.filter((_, idx) => idx !== i));
 
-  // Directions
   const updateDirection = (i: number, v: string) => {
     const next = [...recipe.directions]; next[i] = v; update('directions', next);
   };
@@ -167,7 +262,6 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const removeDirection = (i: number) =>
     update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
-  // Photo
   const pickPhoto = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -180,6 +274,50 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       quality: 0.85,
     });
     if (!result.canceled) update('photo', result.assets[0].uri);
+  };
+
+  // ── Voice recorder ─────────────────────────────────────────────────────────
+
+  const { state: recState, elapsed, audioUri, hasPermission, startRecording, stopRecording, reset: resetRecorder } = useVoiceRecorder();
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (recState === 'stopped' && audioUri) {
+      handleVoiceComplete(audioUri);
+    }
+  }, [recState, audioUri]);
+
+  const handleVoiceComplete = async (uri: string) => {
+    setProcessing(true);
+    try {
+      const transcript = await transcribeAudio(uri);
+      if (!transcript.trim()) {
+        Alert.alert('No speech detected', 'Please try recording again and speak clearly.');
+        resetRecorder();
+        return;
+      }
+      const parsed = await parseRecipeFromTranscript(transcript);
+      onChange({
+        ...recipe,
+        title:       parsed.title       ?? recipe.title,
+        servings:    parsed.servings    ?? recipe.servings,
+        prepTime:    parsed.prepTime    ?? recipe.prepTime,
+        cookTime:    parsed.cookTime    ?? recipe.cookTime,
+        ingredients: parsed.ingredients && parsed.ingredients.length > 0
+          ? parsed.ingredients
+          : recipe.ingredients,
+        directions: parsed.directions && parsed.directions.length > 0
+          ? parsed.directions
+          : recipe.directions,
+      });
+      resetRecorder();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('Voice fill failed', msg);
+      resetRecorder();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // ── Toast ──────────────────────────────────────────────────────────────────
@@ -213,7 +351,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     outputRange: [-6, 0],
   });
 
-  // ── Publish confirmation modal ──────────────────────────────────────────
+  // ── Publish confirmation modal ─────────────────────────────────────────────
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -255,6 +393,19 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           </TouchableOpacity>
           <Text style={styles.formLabel}>NEW RECIPE</Text>
         </View>
+
+        {/* Voice bar */}
+        {Platform.OS !== 'web' && (
+          <VoiceBar
+            state={recState}
+            elapsed={elapsed}
+            hasPermission={hasPermission}
+            processing={processing}
+            onStart={startRecording}
+            onStop={stopRecording}
+            onReset={resetRecorder}
+          />
+        )}
 
         {/* Title */}
         <View style={styles.heroGroup}>
@@ -344,7 +495,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
 
       </ScrollView>
 
-      {/* Toast — floats above scroll, never blocks taps */}
+      {/* Toast */}
       <Animated.View
         style={[
           styles.toast,
@@ -423,6 +574,86 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 3,
     color: C.terracotta,
+  },
+
+  // Voice bar
+  voiceBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: C.divider,
+  },
+  micBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.micIdle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micBtnActive: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.micActive,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micIcon: {
+    fontSize: 18,
+  },
+  voiceHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: C.muted,
+    flex: 1,
+  },
+  voiceElapsed: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: C.terracotta,
+    flex: 1,
+  },
+  stopBtn: {
+    backgroundColor: C.title,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  stopBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: C.btnText,
+  },
+  voiceProcessingText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: C.muted,
+    flex: 1,
+  },
+  voiceDoneText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: C.sage,
+    flex: 1,
+  },
+  retryBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.divider,
+  },
+  retryBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: C.muted,
   },
 
   heroGroup: {
