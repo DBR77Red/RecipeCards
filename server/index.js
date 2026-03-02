@@ -45,7 +45,7 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
     console.log(`[voice] audio received: ${req.file.size} bytes, mimetype: ${req.file.mimetype}`);
 
     // Step 1: transcribe audio with Deepgram
-    const dgRes = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true', {
+    const dgRes = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&detect_language=true', {
       method: 'POST',
       headers: {
         'Authorization': `Token ${deepgramKey}`,
