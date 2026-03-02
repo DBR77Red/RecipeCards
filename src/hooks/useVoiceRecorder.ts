@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
 
 export type RecorderState = 'idle' | 'recording' | 'stopped';
@@ -21,20 +21,16 @@ export function useVoiceRecorder(): VoiceRecorderResult {
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
 
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    Audio.requestPermissionsAsync().then(({ granted }) => {
+    requestRecordingPermissionsAsync().then(({ granted }) => {
       setHasPermission(granted);
     });
 
     return () => {
       clearTick();
-      if (recordingRef.current) {
-        recordingRef.current.stopAndUnloadAsync().catch(() => {});
-        recordingRef.current = null;
-      }
     };
   }, []);
 
@@ -47,34 +43,29 @@ export function useVoiceRecorder(): VoiceRecorderResult {
 
   const stopRecording = async () => {
     clearTick();
-    if (!recordingRef.current) return;
     try {
-      await recordingRef.current.stopAndUnloadAsync();
-      const uri = recordingRef.current.getURI() ?? null;
-      setAudioUri(uri);
+      await recorder.stop();
+      setAudioUri(recorder.uri ?? null);
     } catch {
       setAudioUri(null);
     }
-    recordingRef.current = null;
     setState('stopped');
   };
 
   const startRecording = async () => {
     if (state === 'recording') return;
 
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: true,
     });
 
-    const { recording } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY
-    );
-    recordingRef.current = recording;
+    await recorder.prepareToRecordAsync();
+    recorder.record();
     setElapsed(0);
     setState('recording');
 
-    intervalRef.current = setInterval(async () => {
+    intervalRef.current = setInterval(() => {
       setElapsed(prev => {
         const next = prev + 1;
         if (next >= MAX_SECONDS) {
@@ -87,10 +78,6 @@ export function useVoiceRecorder(): VoiceRecorderResult {
 
   const reset = () => {
     clearTick();
-    if (recordingRef.current) {
-      recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      recordingRef.current = null;
-    }
     setAudioUri(null);
     setElapsed(0);
     setState('idle');
