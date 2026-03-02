@@ -214,7 +214,7 @@ function VoiceBar({
         <TouchableOpacity
           style={styles.micBtn}
           onPress={hasPermission
-            ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onStart(); }
+            ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onStart(); }
             : () => Alert.alert('Microphone Permission', 'Please allow microphone access to record recipes.')
           }
           activeOpacity={0.75}
@@ -377,9 +377,11 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
 
   const handlePublish = async () => {
     if (publishing) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPublishing(true);
     closeConfirm();
     await onPublish();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

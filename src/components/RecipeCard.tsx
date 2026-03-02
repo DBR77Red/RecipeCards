@@ -30,18 +30,18 @@ export interface RecipeData {
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  card:       '#F7F5F2',
-  photoBg:    '#DDD9D3',
-  photoMark:  'rgba(0,0,0,0.10)',
+  card:       '#FFFFFF',
+  photoBg:    '#F5F5F4',
+  photoMark:  'rgba(0,0,0,0.08)',
   title:      '#1C1917',
-  body:       '#44403C',
-  muted:      '#78716C',
-  label:      '#A8A29E',
+  body:       '#57534E',
+  muted:      '#A8A29E',
+  label:      '#D6D3D1',
   divider:    '#E7E5E4',
-  terracotta: '#B45A3C',
-  sage:       '#4F7A64',
-  circleBase: '#1C1917',
-  circleText: '#F7F5F2',
+  terracotta: '#EA580C',
+  sage:       '#059669',
+  circleBase: '#18181B',
+  circleText: '#FAFAFA',
 };
 
 const CARD_W  = 340;

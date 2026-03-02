@@ -24,17 +24,20 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:         '#F7F5F2',
+  bg:         '#FAFAF9',
   title:      '#1C1917',
-  body:       '#44403C',
-  muted:      '#78716C',
-  label:      '#A8A29E',
+  body:       '#57534E',
+  muted:      '#A8A29E',
+  label:      '#D6D3D1',
   divider:    '#E7E5E4',
-  terracotta: '#B45A3C',
-  btnBg:      '#1C1917',
-  btnText:    '#F7F5F2',
-  photoBg:    '#E8E4DE',
-  photoMark:  'rgba(0,0,0,0.10)',
+  terracotta: '#EA580C',
+  sage:       '#059669',
+  btnBg:      '#18181B',
+  btnText:    '#FAFAFA',
+  photoBg:    '#F5F5F4',
+  photoMark:  'rgba(0,0,0,0.06)',
+  cardBg:     '#FFFFFF',
+  shadow:     'rgba(0,0,0,0.08)',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -67,16 +70,18 @@ function CameraIcon() {
 
 function AccountButton({ userName, onPress }: { userName: string; onPress: () => void }) {
   return (
-    <TouchableOpacity style={styles.accountBtn} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
       {userName ? (
-        <Text style={styles.accountInitials}>
-          {userName.charAt(0).toUpperCase()}
-        </Text>
+        <View style={styles.accountBtn}>
+          <Text style={styles.accountInitials}>
+            {userName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
       ) : (
-        <>
+        <View style={styles.accountBtnEmpty}>
           <View style={styles.accountHead} />
           <View style={styles.accountBody} />
-        </>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -380,33 +385,38 @@ export function HomeScreen({ navigation }: Props) {
           </Text>
         )}
         ListEmptyComponent={isEmpty ? <EmptyState /> : null}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         extraData={key}
         stickySectionHeadersEnabled={false}
       />
 
-      {/* Fixed footer bar */}
+      {/* Fixed unified footer bar */}
       <View style={styles.footer}>
-        <View style={[styles.footerSide, styles.footerLeft]}>
+        <View style={styles.footerBar}>
           <TouchableOpacity
-            style={styles.cameraBtn}
+            style={styles.footerBtn}
             onPress={() => setShowQRScanner(true)}
             activeOpacity={0.7}
           >
             <CameraIcon />
           </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-          style={styles.newBtn}
-          onPress={() => navigation.navigate('Form', {})}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.newBtnPlus}>+</Text>
-        </TouchableOpacity>
-        <View style={styles.footerSide}>
-          <AccountButton userName={userName} onPress={() => setShowNameModal(true)} />
+          <View style={styles.footerDivider} />
+          <TouchableOpacity
+            style={styles.footerBtnCenter}
+            onPress={() => navigation.navigate('Form', {})}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.footerBtnPlus}>+</Text>
+          </TouchableOpacity>
+          <View style={styles.footerDivider} />
+          <TouchableOpacity
+            style={styles.footerBtn}
+            onPress={() => setShowNameModal(true)}
+            activeOpacity={0.7}
+          >
+            <AccountButton userName={userName} onPress={() => {}} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -482,47 +492,60 @@ const styles = StyleSheet.create({
 
   // Account button
   accountBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: C.terracotta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountBtnEmpty: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: C.muted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   accountInitials: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 16,
+    fontSize: 13,
     color: C.btnText,
   },
   accountHead: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   accountBody: {
-    width: 14,
-    height: 7,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    width: 12,
+    height: 5,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    marginTop: 1,
   },
 
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 340,
-    backgroundColor: C.bg,
-    borderRadius: 20,
-    padding: 24,
-    gap: 12,
+    maxWidth: 360,
+    backgroundColor: C.cardBg,
+    borderRadius: 24,
+    padding: 28,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
   },
   modalTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -574,42 +597,38 @@ const styles = StyleSheet.create({
 
   // List
   listContent: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 100,
   },
 
   // Footer bar
   footer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    backgroundColor: C.bg,
+  },
+  footerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    backgroundColor: C.bg,
-    borderTopWidth: 1,
-    borderTopColor: C.divider,
+    backgroundColor: C.cardBg,
+    borderRadius: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  footerSide: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  footerLeft: {
-    alignItems: 'flex-start',
-  },
-
-  // Camera scan button
-  cameraBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: C.photoBg,
+  footerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // New Recipe button (circle FAB)
-  newBtn: {
+  footerBtnCenter: {
     width: 52,
     height: 52,
     borderRadius: 26,
@@ -617,36 +636,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  newBtnPlus: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+  footerBtnPlus: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 26,
     color: C.btnText,
-    lineHeight: 32,
-    marginTop: -2,
+    lineHeight: 30,
+  },
+  footerDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: C.divider,
+    marginHorizontal: 4,
   },
 
   sectionLabel: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 9,
-    letterSpacing: 3,
-    color: C.label,
-    marginBottom: 4,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: C.muted,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   sectionLabelSpaced: {
-    marginTop: 32,
+    marginTop: 28,
   },
 
   // Recipe row
   draftRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     gap: 14,
+    backgroundColor: C.cardBg,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   thumbnail: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: C.photoBg,
     flexShrink: 0,
@@ -661,9 +695,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   guideRing: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: C.photoMark,
     alignItems: 'center',
@@ -677,46 +711,46 @@ const styles = StyleSheet.create({
   },
   draftMeta: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   draftTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'DMSans_500Medium',
     fontSize: 16,
     color: C.title,
-    lineHeight: 21,
+    lineHeight: 20,
   },
   draftTitleEmpty: {
     color: C.label,
   },
   draftSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     color: C.muted,
   },
   draftBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(180,90,60,0.10)',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: 'rgba(234,88,12,0.10)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   draftBadgeText: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 8,
-    letterSpacing: 2.5,
+    fontSize: 9,
+    letterSpacing: 1,
     color: C.terracotta,
   },
   publishedBadgeHome: {
-    backgroundColor: 'rgba(79,122,100,0.12)',
+    backgroundColor: 'rgba(5,150,105,0.10)',
   },
   publishedBadgeHomeText: {
-    color: '#4F7A64',
+    color: C.sage,
   },
   chevron: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 20,
+    fontSize: 18,
     color: C.label,
-    lineHeight: 24,
+    lineHeight: 20,
   },
 
   // Separator
@@ -728,33 +762,35 @@ const styles = StyleSheet.create({
   // Empty state
   emptyState: {
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: 60,
+    paddingHorizontal: 40,
   },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: C.photoBg,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
   emptyIconText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontFamily: 'DMSans_300Light',
+    fontSize: 32,
     color: C.label,
-    lineHeight: 32,
+    lineHeight: 36,
   },
   emptyTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 20,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 18,
     color: C.title,
-    marginTop: 16,
+    marginBottom: 8,
   },
   emptySub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     color: C.muted,
-    marginTop: 6,
+    textAlign: 'center',
   },
 });
 

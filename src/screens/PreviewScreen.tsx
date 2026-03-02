@@ -35,6 +35,7 @@ export function PreviewScreen({ route, navigation }: Props) {
 
   const handlePublish = async () => {
     if (publishing) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPublishing(true);
     try {
       // Step 1: mark published locally — QR appears immediately
@@ -42,7 +43,6 @@ export function PreviewScreen({ route, navigation }: Props) {
       const local = await markPublishedLocally(base.id);
       setRecipe(local);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       confettiRef.current?.start();
 
       // Step 2: sync photo + recipe to Supabase

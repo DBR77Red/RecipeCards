@@ -62,7 +62,7 @@ export function CardViewScreen({ route, navigation }: Props) {
       </TouchableOpacity>
 
       {loading ? (
-        <ActivityIndicator size="large" color="rgba(255,255,255,0.4)" />
+        <ActivityIndicator size="large" color="rgba(255,255,255,0.3)" />
       ) : recipe ? (
         <>
           <Text style={styles.sharedBy}>
@@ -81,7 +81,7 @@ export function CardViewScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#18181B',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -89,27 +89,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 52,
     left: 24,
+    zIndex: 10,
   },
   backBtnText: {
     fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.45)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
     letterSpacing: 0.3,
   },
   sharedBy: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 0.5,
     marginBottom: 16,
   },
   creatorName: {
     fontFamily: 'DMSans_600SemiBold',
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.7)',
   },
   notFound: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.35)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.3)',
   },
 });
