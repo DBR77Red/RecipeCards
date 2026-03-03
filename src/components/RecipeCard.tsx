@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
+  LayoutChangeEvent,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -31,59 +34,35 @@ export interface RecipeData {
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  card:       '#FFFFFF',
-  photoBg:    '#F5F5F4',
-  photoMark:  'rgba(0,0,0,0.08)',
-  title:      '#1C1917',
-  body:       '#57534E',
-  muted:      '#A8A29E',
-  label:      '#D6D3D1',
-  divider:    '#E7E5E4',
-  terracotta: '#EA580C',
-  sage:       '#059669',
-  circleBase: '#18181B',
-  circleText: '#FAFAFA',
+  bg:       '#fdf8f0',
+  border:   '#e8d5b0',
+  amber:    '#d4820a',
+  darkText: '#2c1810',
+  bodyText: '#5a3e2b',
+  white:    '#ffffff',
+  crease:   'rgba(212,130,10,0.4)',
 };
 
-const CARD_W  = 340;
-const CARD_H  = 580;
-const PHOTO_H = 280;
-const RADIUS  = 18;
+const CARD_W  = 320;
+const CARD_H  = 460;
+const PHOTO_H = Math.round(CARD_H * 0.65); // 299
+const BOT_H   = CARD_H - PHOTO_H;          // 161
+const RADIUS  = 16;
+const P       = 1400;
 
-// ─── Photo area ───────────────────────────────────────────────────────────────
+// Back face layout constants
+const BACK_HEADER_H = 80;  // approx height of the fixed title/hint header
+const CREASE_H      = 40;  // approx height of the crease row (line + button)
+const BODY_H        = CARD_H - BACK_HEADER_H; // 380 — fold detection threshold
+const CLIP_H        = BODY_H - CREASE_H;      // 340 — main body clip height
 
-function PhotoArea({ uri }: { uri: string | null }) {
-  if (uri) {
-    return (
-      <Image source={{ uri }} style={styles.photoArea} resizeMode="cover" />
-    );
-  }
+// ─── Stat column ─────────────────────────────────────────────────────────────
+
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.photoArea}>
-      <View style={styles.guideRing}>
-        <View style={styles.guideDot} />
-      </View>
-    </View>
-  );
-}
-
-// ─── Section with accent bar ──────────────────────────────────────────────────
-
-function Section({
-  label,
-  accent,
-  children,
-}: {
-  label: string;
-  accent: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.section}>
-      <View style={[styles.sectionHeader, { borderLeftColor: accent }]}>
-        <Text style={[styles.sectionLabel, { color: accent }]}>{label}</Text>
-      </View>
-      {children}
+    <View style={styles.statCol}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value || '—'}</Text>
     </View>
   );
 }
@@ -93,80 +72,211 @@ function Section({
 function CardFront({ recipe }: { recipe: RecipeData }) {
   return (
     <View style={styles.face}>
-      <PhotoArea uri={recipe.photo} />
-      <View style={styles.photoDivider} />
+      <View style={styles.photoZone}>
+        {recipe.photo ? (
+          <Image source={{ uri: recipe.photo }} style={styles.photo} resizeMode="cover" />
+        ) : (
+          <View style={[styles.photo, styles.photoPlaceholder]} />
+        )}
 
-      <View style={styles.frontContent}>
-        <View>
-          <Text style={styles.title} numberOfLines={2}>
-            {recipe.title}
-          </Text>
-          <Text style={styles.creator}>
-            Made by {recipe.creatorName}
-          </Text>
+        {/* Faux gradient scrim */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={{ flex: 0.38 }} />
+          <View style={{ flex: 0.22, backgroundColor: 'rgba(0,0,0,0.18)' }} />
+          <View style={{ flex: 0.22, backgroundColor: 'rgba(0,0,0,0.32)' }} />
+          <View style={{ flex: 0.18, backgroundColor: 'rgba(0,0,0,0.50)' }} />
         </View>
 
-        <View>
-          <View style={styles.hairline} />
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>{recipe.servings} servings</Text>
-            <View style={styles.metaDot} />
-            <Text style={styles.metaText}>{recipe.prepTime} prep</Text>
-            <View style={styles.metaDot} />
-            <Text style={styles.metaText}>{recipe.cookTime} cook</Text>
-          </View>
+        <View style={styles.scrimText} pointerEvents="none">
+          <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
+          <Text style={styles.photoMeta}>By {recipe.creatorName} · 🔀 —</Text>
         </View>
       </View>
 
-      <Text style={styles.flipHint}>tap to flip  ↺</Text>
+      <View style={styles.bottomZone}>
+        <View style={styles.statsRow}>
+          <Stat label="Serves" value={recipe.servings} />
+          <View style={styles.statDivider} />
+          <Stat label="Prep"   value={recipe.prepTime} />
+          <View style={styles.statDivider} />
+          <Stat label="Cook"   value={recipe.cookTime} />
+        </View>
+        <Text style={styles.frontHint}>Tap to see recipe details</Text>
+      </View>
     </View>
   );
 }
 
-// ─── Back face ────────────────────────────────────────────────────────────────
+// ─── Back content ─────────────────────────────────────────────────────────────
 
-function CardBack({ recipe }: { recipe: RecipeData }) {
+function BackContent({ recipe }: { recipe: RecipeData }) {
+  return (
+    <View style={styles.backContentInner}>
+      <Text style={styles.sectionHeading}>Ingredients</Text>
+      {recipe.ingredients.map((ing, i) => (
+        <View key={i} style={styles.bulletRow}>
+          <View style={styles.bulletDot} />
+          <Text style={styles.bulletText}>{ing}</Text>
+        </View>
+      ))}
+
+      <Text style={[styles.sectionHeading, { marginTop: 14 }]}>Instructions</Text>
+      {recipe.directions.map((step, i) => (
+        <View key={i} style={styles.stepRow}>
+          <Text style={styles.stepNum}>{i + 1}.</Text>
+          <Text style={styles.stepText}>{step}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ─── Card back ────────────────────────────────────────────────────────────────
+// Fold state is owned by RecipeCard and passed down so that RecipeCard
+// can drive the layout spacer from the same animation values.
+
+interface CardBackProps {
+  recipe: RecipeData;
+  scrollRef: React.RefObject<ScrollView>;
+  contentH: number;
+  onContentMeasured: (h: number) => void;
+  unfolded: boolean;
+  foldAnim: Animated.Value;
+  shadowAnim: Animated.Value;
+  onToggleFold: () => void;
+}
+
+function CardBack({
+  recipe,
+  scrollRef,
+  contentH,
+  onContentMeasured,
+  unfolded,
+  foldAnim,
+  shadowAnim,
+  onToggleFold,
+}: CardBackProps) {
+  const measured  = contentH > 0;
+  const needsFold = contentH > BODY_H;
+  const foldoutH  = Math.max(0, contentH - CLIP_H);
+  const half      = foldoutH / 2;
+
+  const onMeasure = (e: LayoutChangeEvent) => {
+    if (contentH > 0) return;
+    onContentMeasured(e.nativeEvent.layout.height);
+  };
+
+  const shadowOpacity = shadowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] });
+
   return (
     <View style={styles.face}>
-      <View style={styles.backInner}>
-        <Text style={styles.backTitle} numberOfLines={2}>
-          {recipe.title}
-        </Text>
-
-        <Section label="INGREDIENTS" accent={C.terracotta}>
-          {recipe.ingredients.map((ing, i) => (
-            <View key={i} style={styles.ingredientRow}>
-              <View style={styles.ingredientDot} />
-              <Text style={styles.ingredientText}>{ing}</Text>
-            </View>
-          ))}
-        </Section>
-
-        <Section label="DIRECTIONS" accent={C.sage}>
-          {recipe.directions.map((step, i) => (
-            <View key={i} style={styles.stepRow}>
-              <View style={styles.stepCircle}>
-                <Text style={styles.stepCircleNum}>{i + 1}</Text>
-              </View>
-              <Text style={styles.stepText}>{step}</Text>
-            </View>
-          ))}
-        </Section>
+      {/* Fixed header */}
+      <View style={styles.backHeader}>
+        <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
+        <Text style={styles.backHint}>Tap to flip back</Text>
       </View>
 
-      <Text style={styles.flipHint}>tap to flip  ↺</Text>
+      {/* Pass 1: hidden measurement view (within card bounds so onLayout fires) */}
+      <View style={styles.measureShell} pointerEvents="none">
+        <View onLayout={onMeasure}>
+          <BackContent recipe={recipe} />
+        </View>
+      </View>
+
+      {/* Pass 2: display */}
+      {measured && (needsFold ? (
+
+        <View style={{ flex: 1 }}>
+          {/* Main body clipped at CLIP_H — leaves room for the crease row */}
+          <View style={{ height: CLIP_H, overflow: 'hidden' }}>
+            <BackContent recipe={recipe} />
+          </View>
+
+          {/* Crease: dashed line + pill button */}
+          <View style={styles.creaseRow}>
+            <View style={styles.creaseLine} />
+            <Pressable onPress={onToggleFold} style={styles.foldBtn} hitSlop={8}>
+              <Text style={styles.foldBtnText}>{unfolded ? 'Fold ↑' : 'Unfold ↓'}</Text>
+            </Pressable>
+            <View style={styles.creaseLine} />
+          </View>
+
+          {/* Drop shadow under crease when unfolded */}
+          <Animated.View
+            style={[styles.creaseShadow, { opacity: shadowOpacity }]}
+            pointerEvents="none"
+          />
+
+          {/*
+            Foldout panel.
+            Fixed height = foldoutH so translate-scale-translate has stable math.
+            overflow:hidden clips the absolutely-positioned child above y=0.
+            The child is offset top:-CLIP_H so only the overflow content is visible.
+          */}
+          <Animated.View
+            style={{
+              height: foldoutH,
+              overflow: 'hidden',
+              backgroundColor: C.bg,
+              opacity: foldAnim,
+              transform: [
+                { translateY: -half },
+                { scaleY: foldAnim },
+                { translateY: half },
+              ],
+            }}
+          >
+            <View style={{ position: 'absolute', top: -CLIP_H, left: 0, right: 0 }}>
+              <BackContent recipe={recipe} />
+            </View>
+          </Animated.View>
+        </View>
+
+      ) : (
+
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <BackContent recipe={recipe} />
+        </ScrollView>
+
+      ))}
     </View>
   );
 }
 
-// ─── Flip wrapper ─────────────────────────────────────────────────────────────
+// ─── Flip + fold wrapper ──────────────────────────────────────────────────────
 
 export function RecipeCard({ recipe }: { recipe: RecipeData }) {
-  const [flipped, setFlipped] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
+  const [flipped, setFlipped]   = useState(false);
+  const flipAnim                = useRef(new Animated.Value(0)).current;
+  const backScrollRef           = useRef<ScrollView>(null);
+
+  // Fold state lifted here so we can drive the layout spacer
+  const [contentH, setContentH] = useState(0);
+  const [unfolded, setUnfolded] = useState(false);
+  // foldAnim / shadowAnim: useNativeDriver:true — drives scaleY, opacity, translateY
+  const foldAnim   = useRef(new Animated.Value(0)).current;
+  const shadowAnim = useRef(new Animated.Value(0)).current;
+  // spacerAnim: useNativeDriver:false — drives the layout `height` of the spacer
+  // (height is not supported by the native animated module)
+  const spacerAnim = useRef(new Animated.Value(0)).current;
+
+  const foldoutH = Math.max(0, contentH - CLIP_H);
 
   const handleFlip = () => {
-    Animated.spring(anim, {
+    if (!flipped) {
+      backScrollRef.current?.scrollTo({ y: 0, animated: false });
+    } else if (unfolded) {
+      // Collapse foldout instantly when flipping back to front
+      setUnfolded(false);
+      foldAnim.setValue(0);
+      shadowAnim.setValue(0);
+      spacerAnim.setValue(0);
+    }
+    Animated.spring(flipAnim, {
       toValue: flipped ? 0 : 1,
       friction: 7,
       tension: 9,
@@ -175,233 +285,326 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
     setFlipped(f => !f);
   };
 
-  const frontSpin    = anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
-  const backSpin     = anim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   });
-  const frontOpacity = anim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' });
-  const backOpacity  = anim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' });
+  const handleToggleFold = () => {
+    const next    = !unfolded;
+    const toVal   = next ? 1 : 0;
+    const dur     = next ? 350 : 250;
+    const easing  = next ? Easing.out(Easing.ease) : Easing.in(Easing.ease);
+    setUnfolded(next);
+    Animated.parallel([
+      // Native driver: transform + opacity on the foldout panel
+      Animated.timing(foldAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: true }),
+      Animated.timing(shadowAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: true }),
+      // JS driver: layout height of the spacer (not supported by native driver)
+      Animated.timing(spacerAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: false }),
+    ]).start();
+  };
 
-  const P = 1400;
+  const frontSpin    = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
+  const backSpin     = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   });
+  const frontOpacity = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' });
+  const backOpacity  = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' });
+
+  /*
+    Spacer driven by spacerAnim (useNativeDriver:false) — not foldAnim —
+    because `height` is a layout property unsupported by the native driver.
+    Runs in parallel with foldAnim so visually they stay in sync.
+  */
+  const spacerHeight = spacerAnim.interpolate({
+    inputRange:  [0, 1],
+    outputRange: [0, foldoutH],
+  });
 
   return (
-    <Pressable onPress={handleFlip}>
-      <View style={styles.wrapper}>
-        <Animated.View style={[styles.faceShell, {
-          backfaceVisibility: 'hidden',
-          opacity: frontOpacity,
-          transform: [{ perspective: P }, { rotateY: frontSpin }],
-        }]}>
-          <CardFront recipe={recipe} />
-        </Animated.View>
+    <View>
+      <Pressable onPress={handleFlip}>
+        <View style={styles.wrapper}>
+          {/* Front */}
+          <Animated.View style={[styles.faceShell, {
+            backfaceVisibility: 'hidden',
+            opacity: frontOpacity,
+            transform: [{ perspective: P }, { rotateY: frontSpin }],
+          }]}>
+            <CardFront recipe={recipe} />
+          </Animated.View>
 
-        <Animated.View style={[styles.faceShell, styles.faceShellBack, {
-          backfaceVisibility: 'hidden',
-          opacity: backOpacity,
-          transform: [{ perspective: P }, { rotateY: backSpin }],
-        }]}>
-          <CardBack recipe={recipe} />
-        </Animated.View>
-      </View>
-    </Pressable>
+          {/* Back — overflow:visible so foldout can extend below card boundary */}
+          <Animated.View style={[styles.faceShell, styles.faceShellBack, {
+            backfaceVisibility: 'hidden',
+            opacity: backOpacity,
+            transform: [{ perspective: P }, { rotateY: backSpin }],
+          }]}>
+            <CardBack
+              recipe={recipe}
+              scrollRef={backScrollRef}
+              contentH={contentH}
+              onContentMeasured={setContentH}
+              unfolded={unfolded}
+              foldAnim={foldAnim}
+              shadowAnim={shadowAnim}
+              onToggleFold={handleToggleFold}
+            />
+          </Animated.View>
+        </View>
+      </Pressable>
+
+      {/*
+        Transparent spacer that matches the foldout height.
+        Grows/shrinks in sync with the foldout animation, pushing
+        the QR code and other siblings in the parent ScrollView downward.
+        pointerEvents:none so it never intercepts touches.
+      */}
+      <Animated.View style={{ height: spacerHeight }} pointerEvents="none" />
+    </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // ── Shell ──
   wrapper: {
     width: CARD_W,
     height: CARD_H,
     borderRadius: RADIUS,
     ...Platform.select({
-      web: { boxShadow: '0px 24px 48px rgba(0,0,0,0.22)' },
+      web: { boxShadow: '0px 20px 40px rgba(0,0,0,0.2)' },
       default: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 24 },
-        shadowOpacity: 0.22,
-        shadowRadius: 48,
-        elevation: 24,
+        shadowOffset: { width: 0, height: 20 },
+        shadowOpacity: 0.2,
+        shadowRadius: 40,
+        elevation: 20,
       },
     }),
   },
   faceShell: {
     width: CARD_W,
     height: CARD_H,
-    backgroundColor: C.card,
+    backgroundColor: C.bg,
     borderRadius: RADIUS,
+    borderWidth: 2,
+    borderColor: C.border,
     overflow: 'hidden',
-    ...Platform.select({
-      web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.08)' },
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
-      },
-    }),
   },
   faceShellBack: {
     position: 'absolute',
     top: 0,
     left: 0,
+    // Allow foldout to extend below card boundary
+    overflow: 'visible',
   },
   face: {
     flex: 1,
-    flexDirection: 'column',
   },
-  photoArea: {
+
+  // ── Front: photo zone ──
+  photoZone: {
     width: '100%',
     height: PHOTO_H,
-    backgroundColor: C.photoBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  guideRing: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: C.photoMark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  guideDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: C.photoMark,
-  },
-  photoDivider: {
-    height: 1,
-    backgroundColor: C.divider,
-  },
-  frontContent: {
-    flex: 1,
-    paddingHorizontal: 26,
-    paddingTop: 20,
-    paddingBottom: 6,
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
-    lineHeight: 33,
-    color: C.title,
-    letterSpacing: -0.3,
-    marginBottom: 6,
-  },
-  creator: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 9,
-    letterSpacing: 2.5,
-    color: C.muted,
-  },
-  hairline: {
-    height: 1,
-    backgroundColor: C.divider,
-    marginBottom: 12,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  metaText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: C.muted,
-  },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: C.label,
-  },
-  backInner: {
-    flex: 1,
     overflow: 'hidden',
-    paddingHorizontal: 26,
-    paddingTop: 28,
-    paddingBottom: 8,
   },
-  backTitle: {
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+  photoPlaceholder: {
+    backgroundColor: '#e0cda8',
+  },
+  scrimText: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+  photoTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 19,
     lineHeight: 25,
-    color: C.title,
-    letterSpacing: -0.2,
-    marginBottom: 22,
+    color: C.white,
+    marginBottom: 4,
   },
-  section: {
-    marginBottom: 20,
+  photoMeta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
   },
-  sectionHeader: {
-    borderLeftWidth: 2.5,
-    paddingLeft: 8,
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 9,
-    letterSpacing: 3,
-  },
-  ingredientRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 9,
+
+  // ── Front: bottom zone ──
+  bottomZone: {
+    height: BOT_H,
+    backgroundColor: C.bg,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 14,
+    paddingBottom: 12,
     gap: 10,
   },
-  ingredientDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: C.label,
-    marginTop: 9,
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 10,
+    color: C.amber,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: C.darkText,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: C.border,
+  },
+  frontHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    fontStyle: 'italic',
+    color: C.amber,
+    textAlign: 'center',
+  },
+
+  // ── Back: header ──
+  backHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 10,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  backTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 17,
+    lineHeight: 23,
+    color: C.darkText,
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  backHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 10,
+    fontStyle: 'italic',
+    color: C.amber,
+  },
+
+  // ── Back: content ──
+  backContentInner: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 16,
+  },
+  sectionHeading: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: C.amber,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    gap: 8,
+  },
+  bulletDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: C.amber,
+    marginTop: 7,
     flexShrink: 0,
   },
-  ingredientText: {
+  bulletText: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    lineHeight: 22,
-    color: C.body,
+    lineHeight: 20,
+    color: C.bodyText,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 11,
-    gap: 10,
+    marginBottom: 8,
+    gap: 6,
   },
-  stepCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: C.circleBase,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-    flexShrink: 0,
-  },
-  stepCircleNum: {
+  stepNum: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 9.5,
-    color: C.circleText,
-    lineHeight: 12,
+    fontSize: 13,
+    color: C.amber,
+    width: 22,
+    flexShrink: 0,
   },
   stepText: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    lineHeight: 22,
-    color: C.body,
+    lineHeight: 20,
+    color: C.bodyText,
   },
-  flipHint: {
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 9.5,
-    letterSpacing: 1.6,
-    color: C.label,
-    paddingTop: 10,
-    paddingBottom: 16,
+
+  // ── Measurement pass ──
+  measureShell: {
+    position: 'absolute',
+    top: BACK_HEADER_H,
+    left: 0,
+    right: 0,
+    opacity: 0,
+  },
+
+  // ── Fold mechanics ──
+  creaseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  creaseLine: {
+    flex: 1,
+    height: 0,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: C.crease,
+  },
+  foldBtn: {
+    backgroundColor: C.amber,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  foldBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: C.white,
+  },
+  creaseShadow: {
+    height: 6,
+    ...Platform.select({
+      web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.18)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 8,
+        elevation: 6,
+      },
+    }),
   },
 });
