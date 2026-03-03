@@ -35,7 +35,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
     if (!recipe || saving) return;
     setSaving(true);
     try {
-      await saveDraft({ ...recipe, id: '', status: 'draft' });
+      await saveDraft({ ...recipe, id: '', status: 'published' });
       setSaved(true);
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
