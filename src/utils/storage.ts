@@ -25,9 +25,9 @@ export async function getDrafts(): Promise<RecipeData[]> {
     const drafts: RecipeData[] = JSON.parse(raw);
     console.log('Storage raw:', raw);
     console.log('Storage parsed:', drafts.map(d => ({ id: d.id, status: d.status, title: d.title })));
-    return [...drafts].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+    return [...drafts]
+      .filter(d => !d.deletedAt)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   } catch {
     return [];
   }
@@ -149,4 +149,29 @@ export async function deleteDraft(id: string): Promise<void> {
   if (!raw) return;
   const drafts: RecipeData[] = JSON.parse(raw);
   await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts.filter(d => d.id !== id)));
+}
+
+/** Soft-deletes a published recipe by stamping deletedAt. The record stays in
+ *  AsyncStorage until purgeDeletedRecipes() runs on next app startup. */
+export async function softDeletePublished(id: string): Promise<void> {
+  const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+  if (!raw) return;
+  const drafts: RecipeData[] = JSON.parse(raw);
+  const idx = drafts.findIndex(d => d.id === id);
+  if (idx < 0) return;
+  drafts[idx] = { ...drafts[idx], deletedAt: new Date().toISOString() };
+  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+}
+
+/** Permanently removes any soft-deleted records. Call once at app startup. */
+export async function purgeDeletedRecipes(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    if (!raw) return;
+    const drafts: RecipeData[] = JSON.parse(raw);
+    const cleaned = drafts.filter(d => !d.deletedAt);
+    if (cleaned.length !== drafts.length) {
+      await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(cleaned));
+    }
+  } catch { /* best-effort */ }
 }

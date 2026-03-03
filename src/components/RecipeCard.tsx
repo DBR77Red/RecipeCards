@@ -25,6 +25,7 @@ export interface RecipeData {
   createdAt: string;
   updatedAt: string;
   shareUrl?: string;
+  deletedAt?: string;
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -15,9 +16,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { RecipeData } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
-import { deleteDraft, getDrafts, getUserName, setUserName } from '../utils/storage';
+import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -289,6 +291,7 @@ export function HomeScreen({ navigation }: Props) {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
 
   useEffect(() => {
     getUserName().then(setUserNameState);
@@ -330,26 +333,27 @@ export function HomeScreen({ navigation }: Props) {
     }
   };
 
-  const confirmDelete = (recipe: RecipeData) => {
-    const label = recipe.title.trim() || 'Untitled Recipe';
-    Alert.alert(
-      'Delete Draft',
-      `Delete "${label}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDraft(recipe.id);
-            const all = await getDrafts();
-            setDrafts(all.filter(r => r.status === 'draft'));
-            setPublished(all.filter(r => r.status === 'published'));
-          },
-        },
-      ]
-    );
+  const handleLongPress = (recipe: RecipeData) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setDeleteTarget(recipe);
+    setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 0);
   };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setDeleteTarget(null);
+    if (target.status === 'draft') {
+      await deleteDraft(target.id);
+    } else {
+      await softDeletePublished(target.id);
+    }
+    const all = await getDrafts();
+    setDrafts(all.filter(r => r.status === 'draft'));
+    setPublished(all.filter(r => r.status === 'published'));
+  };
+
+  const handleDeleteCancel = () => setDeleteTarget(null);
 
   const renderItem = ({ item }: { item: RecipeData }) => (
     <DraftListItem
@@ -359,7 +363,7 @@ export function HomeScreen({ navigation }: Props) {
           ? navigation.navigate('Preview', { recipe: item })
           : navigation.navigate('Form', { recipe: item })
       }
-      onLongPress={item.status === 'draft' ? () => confirmDelete(item) : () => {}}
+      onLongPress={() => handleLongPress(item)}
     />
   );
 
@@ -478,6 +482,14 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </View>
       </Modal>
+
+      <DeleteConfirmModal
+        visible={deleteTarget !== null}
+        variant={deleteTarget?.status ?? 'draft'}
+        recipeTitle={deleteTarget?.title ?? ''}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </SafeAreaView>
   );
 }
