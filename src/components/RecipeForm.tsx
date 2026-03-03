@@ -272,18 +272,42 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const removeDirection = (i: number) =>
     update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
-  const pickPhoto = async () => {
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.85,
-    });
-    if (!result.canceled) update('photo', result.assets[0].uri);
+  const pickPhoto = () => {
+    Alert.alert('Add Photo', undefined, [
+      {
+        text: 'Take Photo',
+        onPress: async () => {
+          if (Platform.OS !== 'web') {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') return;
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.85,
+          });
+          if (!result.canceled) update('photo', result.assets[0].uri);
+        },
+      },
+      {
+        text: 'Choose from Library',
+        onPress: async () => {
+          if (Platform.OS !== 'web') {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') return;
+          }
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.85,
+          });
+          if (!result.canceled) update('photo', result.assets[0].uri);
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   // ── Voice recorder ─────────────────────────────────────────────────────────
