@@ -1,24 +1,24 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const C = {
   bg:      '#F7F5F2',
   title:   '#1C1917',
   muted:   '#78716C',
   label:   '#A8A29E',
-  red:     '#DC2626',
-  redText: '#FFFFFF',
+  btnBg:   '#1C1917',
+  btnText: '#F7F5F2',
+  border:  '#E7E5E4',
 };
 
 interface Props {
   visible: boolean;
-  variant: 'draft' | 'published';
-  recipeTitle: string;
-  onConfirm: () => void;
+  onTakePhoto: () => void;
+  onChooseLibrary: () => void;
   onCancel: () => void;
 }
 
-export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, onCancel }: Props) {
+export function PhotoPickerModal({ visible, onTakePhoto, onChooseLibrary, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,23 +34,22 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
     outputRange: [48, 0],
   });
 
-  const isDraft = variant === 'draft';
-  const displayTitle = recipeTitle.trim() || 'Untitled Recipe';
-  const heading     = isDraft ? 'Delete Draft?' : 'Remove Card?';
-  const body        = isDraft
-    ? `"${displayTitle}" will be permanently deleted. This cannot be undone.`
-    : "Everyone you shared it with will keep their copy, but they won't be able to re-share the card.";
-  const confirmText = isDraft ? 'Delete forever' : 'Remove card';
-
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
       <Animated.View style={[styles.overlay, { opacity: anim }]}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <Text style={styles.title}>{heading}</Text>
-          <Text style={styles.body}>{body}</Text>
-          <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
-            <Text style={styles.confirmBtnText}>{confirmText}</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Add Photo</Text>
+          <Text style={styles.body}>How would you like to add a photo?</Text>
+
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.btn} onPress={onTakePhoto}>
+              <Text style={styles.btnText}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onChooseLibrary}>
+              <Text style={styles.btnSecondaryText}>Choose from Library</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
@@ -89,18 +88,30 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 4,
   },
-  confirmBtn: {
-    backgroundColor: C.red,
+  actions: {
+    gap: 10,
+  },
+  btn: {
+    backgroundColor: C.btnBg,
     borderRadius: 100,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
   },
-  confirmBtnText: {
+  btnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
-    color: C.redText,
+    color: C.btnText,
+  },
+  btnSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: C.border,
+  },
+  btnSecondaryText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: C.title,
   },
   cancelBtn: {
     paddingVertical: 16,

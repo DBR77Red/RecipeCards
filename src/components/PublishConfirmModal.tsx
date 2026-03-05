@@ -1,24 +1,23 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const C = {
-  bg:      '#F7F5F2',
-  title:   '#1C1917',
-  muted:   '#78716C',
-  label:   '#A8A29E',
-  red:     '#DC2626',
-  redText: '#FFFFFF',
+  bg:     '#F7F5F2',
+  title:  '#1C1917',
+  muted:  '#78716C',
+  label:  '#A8A29E',
+  btnBg:  '#1C1917',
+  btnText:'#F7F5F2',
 };
 
 interface Props {
   visible: boolean;
-  variant: 'draft' | 'published';
   recipeTitle: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, onCancel }: Props) {
+export function PublishConfirmModal({ visible, recipeTitle, onConfirm, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,25 +33,23 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
     outputRange: [48, 0],
   });
 
-  const isDraft = variant === 'draft';
-  const displayTitle = recipeTitle.trim() || 'Untitled Recipe';
-  const heading     = isDraft ? 'Delete Draft?' : 'Remove Card?';
-  const body        = isDraft
-    ? `"${displayTitle}" will be permanently deleted. This cannot be undone.`
-    : "Everyone you shared it with will keep their copy, but they won't be able to re-share the card.";
-  const confirmText = isDraft ? 'Delete forever' : 'Remove card';
-
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
       <Animated.View style={[styles.overlay, { opacity: anim }]}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <Text style={styles.title}>{heading}</Text>
-          <Text style={styles.body}>{body}</Text>
+          <Text style={styles.recipeTitle} numberOfLines={2}>
+            {recipeTitle.trim() || 'Untitled Recipe'}
+          </Text>
+          <Text style={styles.headline}>Ready to publish?</Text>
+          <Text style={styles.body}>
+            Once published, this card is permanent. No edits, no take-backs.
+            This is your recipe, exactly as it is right now.
+          </Text>
           <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
-            <Text style={styles.confirmBtnText}>{confirmText}</Text>
+            <Text style={styles.confirmBtnText}>Publish forever</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>Not yet</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -76,21 +73,26 @@ const styles = StyleSheet.create({
     padding: 32,
     gap: 16,
   },
-  title: {
+  recipeTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 26,
     color: C.title,
     letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  headline: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 20,
+    color: C.title,
   },
   body: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     color: C.muted,
     lineHeight: 24,
-    marginBottom: 4,
   },
   confirmBtn: {
-    backgroundColor: C.red,
+    backgroundColor: C.btnBg,
     borderRadius: 100,
     height: 54,
     alignItems: 'center',
@@ -100,7 +102,7 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
-    color: C.redText,
+    color: C.btnText,
   },
   cancelBtn: {
     paddingVertical: 16,

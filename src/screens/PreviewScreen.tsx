@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { RecipeCard } from '../components/RecipeCard';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 export function PreviewScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
 
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
 
@@ -29,8 +31,12 @@ export function PreviewScreen({ route, navigation }: Props) {
     });
   };
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
     if (publishing) return;
+    setShowPublishModal(true);
+  };
+
+  const doPublish = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPublishing(true);
     try {
@@ -59,6 +65,12 @@ export function PreviewScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.screen}>
+      <PublishConfirmModal
+        visible={showPublishModal}
+        recipeTitle={recipe.title}
+        onConfirm={() => { setShowPublishModal(false); doPublish(); }}
+        onCancel={() => setShowPublishModal(false)}
+      />
       <StatusBar style="light" />
 
       <TouchableOpacity
@@ -78,19 +90,12 @@ export function PreviewScreen({ route, navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <RecipeCard recipe={recipe} onShare={handleShare} />
-
-        {recipe.status !== 'published' && (
-          <TouchableOpacity
-            style={[styles.publishBtn, publishing && styles.publishBtnDisabled]}
-            onPress={handlePublish}
-            disabled={publishing}
-          >
-            <Text style={styles.publishBtnText}>
-              {publishing ? 'Publishing…' : 'Publish to Share'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <RecipeCard
+          recipe={recipe}
+          onShare={handleShare}
+          onPublish={handlePublish}
+          publishing={publishing}
+        />
       </ScrollView>
 
     </View>
@@ -118,25 +123,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
     color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.3,
-  },
-  // ── Publish button (draft preview) ────────────────────────────────────────
-  publishBtn: {
-    marginTop: 28,
-    paddingHorizontal: 36,
-    paddingVertical: 14,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.20)',
-  },
-  publishBtnDisabled: {
-    opacity: 0.4,
-  },
-  publishBtnText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
 });

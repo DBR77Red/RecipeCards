@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
+import { PhotoPickerModal } from './PhotoPickerModal';
 import { RecipeData } from './RecipeCard';
 
 // Replace with a free audio-wave JSON URL from https://lottiefiles.com/free-animations/audio-wave
@@ -272,42 +273,36 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const removeDirection = (i: number) =>
     update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
-  const pickPhoto = () => {
-    Alert.alert('Add Photo', undefined, [
-      {
-        text: 'Take Photo',
-        onPress: async () => {
-          if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') return;
-          }
-          const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.85,
-          });
-          if (!result.canceled) update('photo', result.assets[0].uri);
-        },
-      },
-      {
-        text: 'Choose from Library',
-        onPress: async () => {
-          if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') return;
-          }
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.85,
-          });
-          if (!result.canceled) update('photo', result.assets[0].uri);
-        },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  const pickPhoto = () => setShowPhotoPicker(true);
+
+  const handleTakePhoto = async () => {
+    setShowPhotoPicker(false);
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.85,
+    });
+    if (!result.canceled) update('photo', result.assets[0].uri);
+  };
+
+  const handleChooseLibrary = async () => {
+    setShowPhotoPicker(false);
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.85,
+    });
+    if (!result.canceled) update('photo', result.assets[0].uri);
   };
 
   // ── Voice recorder ─────────────────────────────────────────────────────────
@@ -384,6 +379,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
 
   // ── Publish confirmation modal ─────────────────────────────────────────────
 
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
@@ -537,6 +533,13 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       >
         <Text style={styles.toastText}>✓  Draft saved</Text>
       </Animated.View>
+
+      <PhotoPickerModal
+        visible={showPhotoPicker}
+        onTakePhoto={handleTakePhoto}
+        onChooseLibrary={handleChooseLibrary}
+        onCancel={() => setShowPhotoPicker(false)}
+      />
 
       {/* Publish confirmation modal */}
       <Modal
