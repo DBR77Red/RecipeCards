@@ -52,40 +52,61 @@ function formatDate(iso: string): string {
   });
 }
 
-// ─── Camera icon ──────────────────────────────────────────────────────────────
+// ─── Tab bar icons ────────────────────────────────────────────────────────────
 
-function CameraIcon() {
+function HomeIcon({ color }: { color: string }) {
   return (
-    <Svg width={20} height={18} viewBox="0 0 20 18" fill="none">
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M19 16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2.5L6 3h8l1.5 2H18a1 1 0 0 1 1 1z"
-        stroke={C.muted}
-        strokeWidth={1.5}
-        strokeLinejoin="round"
+        d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"
+        stroke={color} strokeWidth={1.6} strokeLinejoin="round"
       />
-      <Circle cx="10" cy="10.5" r="3" stroke={C.muted} strokeWidth={1.5} />
+      <Path d="M9 21v-7h6v7" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
     </Svg>
   );
 }
 
-// ─── Account button ───────────────────────────────────────────────────────────
-
-function AccountButton({ userName, onPress }: { userName: string; onPress: () => void }) {
+function FavoritesIcon({ color }: { color: string }) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      {userName ? (
-        <View style={styles.accountBtn}>
-          <Text style={styles.accountInitials}>
-            {userName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.accountBtnEmpty}>
-          <View style={styles.accountHead} />
-          <View style={styles.accountBody} />
-        </View>
-      )}
-    </TouchableOpacity>
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+        stroke={color} strokeWidth={1.6} strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function ExchangeIcon({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      {/* top-left cell */}
+      <Path d="M3 3h7v7H3z" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+      <Path d="M5 5h3v3H5z" fill={color} />
+      {/* top-right cell */}
+      <Path d="M14 3h7v7h-7z" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+      <Path d="M16 5h3v3h-3z" fill={color} />
+      {/* bottom-left cell */}
+      <Path d="M3 14h7v7H3z" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+      <Path d="M5 16h3v3H5z" fill={color} />
+      {/* bottom-right dots */}
+      <Path d="M14 14h3v3h-3z" fill={color} />
+      <Path d="M18 14h3v3h-3z" fill={color} />
+      <Path d="M14 18h3v3h-3z" fill={color} />
+      <Path d="M18 18h3v3h-3z" fill={color} />
+    </Svg>
+  );
+}
+
+function ProfileIcon({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth={1.6} />
+      <Path
+        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+        stroke={color} strokeWidth={1.6} strokeLinecap="round"
+      />
+    </Svg>
   );
 }
 
@@ -395,33 +416,37 @@ export function HomeScreen({ navigation }: Props) {
         stickySectionHeadersEnabled={false}
       />
 
-      {/* Fixed unified footer bar */}
-      <View style={styles.footer}>
-        <View style={styles.footerBar}>
+      {/* Tab bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => {}}>
+          <HomeIcon color={C.terracotta} />
+          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => Alert.alert('Coming Soon', 'Favorites will be available in a future update.')}>
+          <FavoritesIcon color={C.muted} />
+          <Text style={styles.tabLabel}>Favorites</Text>
+        </TouchableOpacity>
+
+        <View style={styles.tabItemCenter}>
           <TouchableOpacity
-            style={styles.footerBtn}
-            onPress={() => setShowQRScanner(true)}
-            activeOpacity={0.7}
-          >
-            <CameraIcon />
-          </TouchableOpacity>
-          <View style={styles.footerDivider} />
-          <TouchableOpacity
-            style={styles.footerBtnCenter}
+            style={styles.tabCenterBtn}
             onPress={() => navigation.navigate('Form', {})}
             activeOpacity={0.85}
           >
-            <Text style={styles.footerBtnPlus}>+</Text>
-          </TouchableOpacity>
-          <View style={styles.footerDivider} />
-          <TouchableOpacity
-            style={styles.footerBtn}
-            onPress={() => setShowNameModal(true)}
-            activeOpacity={0.7}
-          >
-            <AccountButton userName={userName} onPress={() => {}} />
+            <Text style={styles.tabCenterPlus}>+</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowQRScanner(true)}>
+          <ExchangeIcon color={C.muted} />
+          <Text style={styles.tabLabel}>Exchange</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowNameModal(true)}>
+          <ProfileIcon color={C.muted} />
+          <Text style={styles.tabLabel}>Profile</Text>
+        </TouchableOpacity>
       </View>
 
       <NameModal
@@ -502,42 +527,6 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
   },
 
-  // Account button
-  accountBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: C.terracotta,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accountBtnEmpty: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: C.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accountInitials: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: C.btnText,
-  },
-  accountHead: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  accountBody: {
-    width: 12,
-    height: 5,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    marginTop: 1,
-  },
-
   // Modal
   modalOverlay: {
     flex: 1,
@@ -614,51 +603,58 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
-  // Footer bar
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-    backgroundColor: C.bg,
-  },
-  footerBar: {
+  // Tab bar
+  tabBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     backgroundColor: C.cardBg,
-    borderRadius: 28,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 4,
+    borderTopWidth: 1,
+    borderTopColor: C.divider,
+    paddingBottom: 8,
+    paddingTop: 4,
+    paddingHorizontal: 4,
   },
-  footerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  tabItem: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 6,
+    gap: 3,
   },
-  footerBtnCenter: {
+  tabItemCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 2,
+  },
+  tabCenterBtn: {
     width: 52,
     height: 52,
     borderRadius: 26,
     backgroundColor: C.btnBg,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  footerBtnPlus: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 26,
+  tabCenterPlus: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 28,
     color: C.btnText,
-    lineHeight: 30,
+    lineHeight: 32,
   },
-  footerDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: C.divider,
-    marginHorizontal: 4,
+  tabLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: C.muted,
+  },
+  tabLabelActive: {
+    color: C.terracotta,
+    fontFamily: 'DMSans_500Medium',
   },
 
   sectionLabel: {
