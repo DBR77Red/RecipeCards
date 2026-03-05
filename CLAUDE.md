@@ -144,3 +144,32 @@ Always show a `PublishConfirmModal` before triggering publish. Never publish on 
 - Never put a `ScrollView` inside a component that is itself wrapped in a `Pressable` — scroll gestures will be intercepted by the Pressable
 - Both card faces are always mounted (position absolute). Use `pointerEvents="none"` on the hidden face — invisible views still receive touches by default
 - Measure back-face height with `onLayout` into a `ref`, not state, to avoid React batching causing stale values at flip time
+
+---
+
+## Voice Pipeline
+
+- **Transcription**: Deepgram Nova-2 with `detect_language: true` — auto-detects language from audio
+- **Languages**: pt-BR and pt-PT are first-class supported; English is the default fallback
+- **Parsing**: transcripts are sent to Claude Haiku, which returns structured recipe JSON
+- **API key hygiene**: `.env` is created manually by the developer — never write API keys directly into files or suggest committing them
+
+---
+
+## Soft Delete
+
+Only published cards use soft delete. Drafts are hard-deleted.
+
+| Status | Delete behavior |
+|---|---|
+| Draft | Hard delete with confirmation modal. Permanent, no recovery. |
+| Published | Soft delete: stamp `deletedAt`, hide immediately, purge on next app startup. Warn user that recipients keep their copy but cannot re-share. |
+
+---
+
+## Parked Features — Do Not Re-introduce
+
+These were intentionally removed. Do not bring them back without an explicit instruction from the user.
+
+- **Confetti**: `react-native-confetti-cannon` removed due to stuck particles. A Lottie-based approach was considered but not started. Do not add any confetti effect.
+- **Card fold/unfold mechanic**: the accordion flap + crease line that extended the back face was removed and replaced with a plain content-driven height via `onLayout`. Do not re-introduce the fold metaphor, the dashed crease line, or the translate-scale flip workaround associated with it.
