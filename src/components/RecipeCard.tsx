@@ -182,8 +182,8 @@ export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: 
   }, [recipe.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMeasured = (h: number) => {
-    backHRef.current = h;
-    if (flipped) setCardHeight(h);
+    backHRef.current = Math.max(h, frontH);
+    if (flipped) setCardHeight(backHRef.current);
   };
 
   const handleFlip = () => {
@@ -208,22 +208,28 @@ export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: 
     <View style={[styles.wrapper, { height: cardHeight }]}>
       <Pressable onPress={handleFlip} style={StyleSheet.absoluteFill}>
         {/* Front face */}
-        <Animated.View style={[styles.faceShell, {
-          height: frontH,
-          backfaceVisibility: 'hidden',
-          opacity:   frontOpacity,
-          transform: [{ perspective: P }, { rotateY: frontSpin }],
-        }]}>
+        <Animated.View
+          pointerEvents={flipped ? 'none' : 'auto'}
+          style={[styles.faceShell, {
+            height: frontH,
+            backfaceVisibility: 'hidden',
+            opacity:   frontOpacity,
+            transform: [{ perspective: P }, { rotateY: frontSpin }],
+          }]}
+        >
           <CardFront recipe={recipe} onShare={onShare} />
         </Animated.View>
 
         {/* Back face — height matches content */}
-        <Animated.View style={[styles.faceShellBack, {
-          height: backHRef.current,
-          backfaceVisibility: 'hidden',
-          opacity:   backOpacity,
-          transform: [{ perspective: P }, { rotateY: backSpin }],
-        }]}>
+        <Animated.View
+          pointerEvents={flipped ? 'auto' : 'none'}
+          style={[styles.faceShellBack, {
+            height: backHRef.current,
+            backfaceVisibility: 'hidden',
+            opacity:   backOpacity,
+            transform: [{ perspective: P }, { rotateY: backSpin }],
+          }]}
+        >
           <CardBack recipe={recipe} onMeasured={handleMeasured} />
         </Animated.View>
       </Pressable>
