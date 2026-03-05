@@ -24,6 +24,8 @@ app.use(express.json());
 
 const SYSTEM_PROMPT = `You are a recipe parser. Given a spoken recipe transcript, extract the following fields and return ONLY a valid JSON object with no extra text, markdown, or explanation.
 
+IMPORTANT: All field values must be written in the same language as the transcript. Do not translate anything.
+
 Fields to extract:
 - "title": string — the recipe name. If not explicitly stated, infer a short descriptive title from the content (e.g. "Chocolate Chip Cookies"). Never leave this empty.
 - "servings": string — serving size (e.g. "4", "4 people"). Leave as "" if not mentioned.
