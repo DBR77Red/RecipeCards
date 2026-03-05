@@ -1,12 +1,9 @@
 import React, { useRef, useState } from 'react';
 import {
   Animated,
-  Easing,
   Image,
-  LayoutChangeEvent,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -40,7 +37,6 @@ const C = {
   darkText: '#2c1810',
   bodyText: '#5a3e2b',
   white:    '#ffffff',
-  crease:   'rgba(212,130,10,0.4)',
 };
 
 const CARD_W  = 320;
@@ -49,12 +45,6 @@ const PHOTO_H = Math.round(CARD_H * 0.65); // 299
 const BOT_H   = CARD_H - PHOTO_H;          // 161
 const RADIUS  = 16;
 const P       = 1400;
-
-// Back face layout constants
-const BACK_HEADER_H = 80;  // approx height of the fixed title/hint header
-const CREASE_H      = 40;  // approx height of the crease row (line + button)
-const BODY_H        = CARD_H - BACK_HEADER_H; // 380 — fold detection threshold
-const CLIP_H        = BODY_H - CREASE_H;      // 340 — main body clip height
 
 // ─── Stat column ─────────────────────────────────────────────────────────────
 
@@ -107,197 +97,75 @@ function CardFront({ recipe }: { recipe: RecipeData }) {
   );
 }
 
-// ─── Back content ─────────────────────────────────────────────────────────────
+// ─── Back face ────────────────────────────────────────────────────────────────
 
-function BackContent({ recipe }: { recipe: RecipeData }) {
+function CardBack({ recipe, onMeasured }: { recipe: RecipeData; onMeasured: (h: number) => void }) {
   return (
-    <View style={styles.backContentInner}>
-      <Text style={styles.sectionHeading}>Ingredients</Text>
-      {recipe.ingredients.map((ing, i) => (
-        <View key={i} style={styles.bulletRow}>
-          <View style={styles.bulletDot} />
-          <Text style={styles.bulletText}>{ing}</Text>
-        </View>
-      ))}
-
-      <Text style={[styles.sectionHeading, { marginTop: 14 }]}>Instructions</Text>
-      {recipe.directions.map((step, i) => (
-        <View key={i} style={styles.stepRow}>
-          <Text style={styles.stepNum}>{i + 1}.</Text>
-          <Text style={styles.stepText}>{step}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-// ─── Card back ────────────────────────────────────────────────────────────────
-// Fold state is owned by RecipeCard and passed down so that RecipeCard
-// can drive the layout spacer from the same animation values.
-
-interface CardBackProps {
-  recipe: RecipeData;
-  scrollRef: React.RefObject<ScrollView>;
-  contentH: number;
-  onContentMeasured: (h: number) => void;
-  unfolded: boolean;
-  foldAnim: Animated.Value;
-  shadowAnim: Animated.Value;
-  onToggleFold: () => void;
-}
-
-function CardBack({
-  recipe,
-  scrollRef,
-  contentH,
-  onContentMeasured,
-  unfolded,
-  foldAnim,
-  shadowAnim,
-  onToggleFold,
-}: CardBackProps) {
-  const measured  = contentH > 0;
-  const needsFold = contentH > BODY_H;
-  const foldoutH  = Math.max(0, contentH - CLIP_H);
-  const half      = foldoutH / 2;
-
-  const onMeasure = (e: LayoutChangeEvent) => {
-    if (contentH > 0) return;
-    onContentMeasured(e.nativeEvent.layout.height);
-  };
-
-  const shadowOpacity = shadowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] });
-
-  return (
-    <View style={styles.face}>
-      {/* Fixed header */}
+    <View onLayout={e => onMeasured(e.nativeEvent.layout.height)}>
+      {/* Header */}
       <View style={styles.backHeader}>
         <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
         <Text style={styles.backHint}>Tap to flip back</Text>
       </View>
 
-      {/* Pass 1: hidden measurement view (within card bounds so onLayout fires) */}
-      <View style={styles.measureShell} pointerEvents="none">
-        <View onLayout={onMeasure}>
-          <BackContent recipe={recipe} />
-        </View>
+      {/* Content */}
+      <View style={styles.backContentInner}>
+        <Text style={styles.sectionHeading}>Ingredients</Text>
+        {recipe.ingredients.map((ing, i) => (
+          <View key={i} style={styles.bulletRow}>
+            <View style={styles.bulletDot} />
+            <Text style={styles.bulletText}>{ing}</Text>
+          </View>
+        ))}
+
+        <Text style={[styles.sectionHeading, { marginTop: 14 }]}>Instructions</Text>
+        {recipe.directions.map((step, i) => (
+          <View key={i} style={styles.stepRow}>
+            <Text style={styles.stepNum}>{i + 1}.</Text>
+            <Text style={styles.stepText}>{step}</Text>
+          </View>
+        ))}
       </View>
-
-      {/* Pass 2: display */}
-      {measured && (needsFold ? (
-
-        <View style={{ flex: 1 }}>
-          {/* Main body clipped at CLIP_H — leaves room for the crease row */}
-          <View style={{ height: CLIP_H, overflow: 'hidden' }}>
-            <BackContent recipe={recipe} />
-          </View>
-
-          {/* Crease: dashed line + pill button */}
-          <View style={styles.creaseRow}>
-            <View style={styles.creaseLine} />
-            <Pressable onPress={onToggleFold} style={styles.foldBtn} hitSlop={8}>
-              <Text style={styles.foldBtnText}>{unfolded ? 'Fold ↑' : 'Unfold ↓'}</Text>
-            </Pressable>
-            <View style={styles.creaseLine} />
-          </View>
-
-          {/* Drop shadow under crease when unfolded */}
-          <Animated.View
-            style={[styles.creaseShadow, { opacity: shadowOpacity }]}
-            pointerEvents="none"
-          />
-
-          {/*
-            Foldout panel.
-            Fixed height = foldoutH so translate-scale-translate has stable math.
-            overflow:hidden clips the absolutely-positioned child above y=0.
-            The child is offset top:-CLIP_H so only the overflow content is visible.
-          */}
-          <Animated.View
-            style={{
-              height: foldoutH,
-              overflow: 'hidden',
-              backgroundColor: C.bg,
-              opacity: foldAnim,
-              transform: [
-                { translateY: -half },
-                { scaleY: foldAnim },
-                { translateY: half },
-              ],
-            }}
-          >
-            <View style={{ position: 'absolute', top: -CLIP_H, left: 0, right: 0 }}>
-              <BackContent recipe={recipe} />
-            </View>
-          </Animated.View>
-        </View>
-
-      ) : (
-
-        <ScrollView
-          ref={scrollRef}
-          style={{ flex: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <BackContent recipe={recipe} />
-        </ScrollView>
-
-      ))}
     </View>
   );
 }
 
-// ─── Flip + fold wrapper ──────────────────────────────────────────────────────
+// ─── Card wrapper ─────────────────────────────────────────────────────────────
 
 export function RecipeCard({ recipe }: { recipe: RecipeData }) {
   const [flipped, setFlipped]   = useState(false);
+  const [backH,   setBackH]     = useState(0);
   const flipAnim                = useRef(new Animated.Value(0)).current;
-  const backScrollRef           = useRef<ScrollView>(null);
+  // JS driver — animates layout height (not supported by native driver)
+  const cardHeightAnim          = useRef(new Animated.Value(CARD_H)).current;
 
-  // Fold state lifted here so we can drive the layout spacer
-  const [contentH, setContentH] = useState(0);
-  const [unfolded, setUnfolded] = useState(false);
-  // foldAnim / shadowAnim: useNativeDriver:true — drives scaleY, opacity, translateY
-  const foldAnim   = useRef(new Animated.Value(0)).current;
-  const shadowAnim = useRef(new Animated.Value(0)).current;
-  // spacerAnim: useNativeDriver:false — drives the layout `height` of the spacer
-  // (height is not supported by the native animated module)
-  const spacerAnim = useRef(new Animated.Value(0)).current;
-
-  const foldoutH = Math.max(0, contentH - CLIP_H);
-
-  const handleFlip = () => {
-    if (!flipped) {
-      backScrollRef.current?.scrollTo({ y: 0, animated: false });
-    } else if (unfolded) {
-      // Collapse foldout instantly when flipping back to front
-      setUnfolded(false);
-      foldAnim.setValue(0);
-      shadowAnim.setValue(0);
-      spacerAnim.setValue(0);
-    }
-    Animated.spring(flipAnim, {
-      toValue: flipped ? 0 : 1,
-      friction: 7,
-      tension: 9,
-      useNativeDriver: true,
-    }).start();
-    setFlipped(f => !f);
+  const handleMeasured = (h: number) => {
+    if (backH > 0) return;
+    setBackH(h);
+    // If card is already flipped when we first measure, jump to correct height
+    if (flipped) cardHeightAnim.setValue(h);
   };
 
-  const handleToggleFold = () => {
-    const next    = !unfolded;
-    const toVal   = next ? 1 : 0;
-    const dur     = next ? 350 : 250;
-    const easing  = next ? Easing.out(Easing.ease) : Easing.in(Easing.ease);
-    setUnfolded(next);
+  const handleFlip = () => {
+    const toBack   = !flipped;
+    const targetH  = toBack ? (backH || CARD_H) : CARD_H;
+
     Animated.parallel([
-      // Native driver: transform + opacity on the foldout panel
-      Animated.timing(foldAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: true }),
-      Animated.timing(shadowAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: true }),
-      // JS driver: layout height of the spacer (not supported by native driver)
-      Animated.timing(spacerAnim, { toValue: toVal, duration: dur, easing, useNativeDriver: false }),
+      Animated.spring(flipAnim, {
+        toValue:  toBack ? 1 : 0,
+        friction: 7,
+        tension:  9,
+        useNativeDriver: true,
+      }),
+      Animated.spring(cardHeightAnim, {
+        toValue:  targetH,
+        friction: 8,
+        tension:  8,
+        useNativeDriver: false,
+      }),
     ]).start();
+
+    setFlipped(toBack);
   };
 
   const frontSpin    = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
@@ -305,57 +173,28 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
   const frontOpacity = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' });
   const backOpacity  = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' });
 
-  /*
-    Spacer driven by spacerAnim (useNativeDriver:false) — not foldAnim —
-    because `height` is a layout property unsupported by the native driver.
-    Runs in parallel with foldAnim so visually they stay in sync.
-  */
-  const spacerHeight = spacerAnim.interpolate({
-    inputRange:  [0, 1],
-    outputRange: [0, foldoutH],
-  });
-
   return (
-    <View>
-      <Pressable onPress={handleFlip}>
-        <View style={styles.wrapper}>
-          {/* Front */}
-          <Animated.View style={[styles.faceShell, {
-            backfaceVisibility: 'hidden',
-            opacity: frontOpacity,
-            transform: [{ perspective: P }, { rotateY: frontSpin }],
-          }]}>
-            <CardFront recipe={recipe} />
-          </Animated.View>
+    <Animated.View style={[styles.wrapper, { height: cardHeightAnim }]}>
+      <Pressable onPress={handleFlip} style={StyleSheet.absoluteFill}>
+        {/* Front face */}
+        <Animated.View style={[styles.faceShell, {
+          backfaceVisibility: 'hidden',
+          opacity:   frontOpacity,
+          transform: [{ perspective: P }, { rotateY: frontSpin }],
+        }]}>
+          <CardFront recipe={recipe} />
+        </Animated.View>
 
-          {/* Back — overflow:visible so foldout can extend below card boundary */}
-          <Animated.View style={[styles.faceShell, styles.faceShellBack, {
-            backfaceVisibility: 'hidden',
-            opacity: backOpacity,
-            transform: [{ perspective: P }, { rotateY: backSpin }],
-          }]}>
-            <CardBack
-              recipe={recipe}
-              scrollRef={backScrollRef}
-              contentH={contentH}
-              onContentMeasured={setContentH}
-              unfolded={unfolded}
-              foldAnim={foldAnim}
-              shadowAnim={shadowAnim}
-              onToggleFold={handleToggleFold}
-            />
-          </Animated.View>
-        </View>
+        {/* Back face — no fixed height, sizes to content */}
+        <Animated.View style={[styles.faceShellBack, {
+          backfaceVisibility: 'hidden',
+          opacity:   backOpacity,
+          transform: [{ perspective: P }, { rotateY: backSpin }],
+        }]}>
+          <CardBack recipe={recipe} onMeasured={handleMeasured} />
+        </Animated.View>
       </Pressable>
-
-      {/*
-        Transparent spacer that matches the foldout height.
-        Grows/shrinks in sync with the foldout animation, pushing
-        the QR code and other siblings in the parent ScrollView downward.
-        pointerEvents:none so it never intercepts touches.
-      */}
-      <Animated.View style={{ height: spacerHeight }} pointerEvents="none" />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -365,7 +204,7 @@ const styles = StyleSheet.create({
   // ── Shell ──
   wrapper: {
     width: CARD_W,
-    height: CARD_H,
+    // height is animated — no static value here
     borderRadius: RADIUS,
     ...Platform.select({
       web: { boxShadow: '0px 20px 40px rgba(0,0,0,0.2)' },
@@ -379,6 +218,9 @@ const styles = StyleSheet.create({
     }),
   },
   faceShell: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: CARD_W,
     height: CARD_H,
     backgroundColor: C.bg,
@@ -391,8 +233,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    // Allow foldout to extend below card boundary
-    overflow: 'visible',
+    width: CARD_W,
+    backgroundColor: C.bg,
+    borderRadius: RADIUS,
+    borderWidth: 2,
+    borderColor: C.border,
+    overflow: 'hidden',
   },
   face: {
     flex: 1,
@@ -508,7 +354,7 @@ const styles = StyleSheet.create({
   backContentInner: {
     paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   sectionHeading: {
     fontFamily: 'DMSans_600SemiBold',
@@ -557,54 +403,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: C.bodyText,
-  },
-
-  // ── Measurement pass ──
-  measureShell: {
-    position: 'absolute',
-    top: BACK_HEADER_H,
-    left: 0,
-    right: 0,
-    opacity: 0,
-  },
-
-  // ── Fold mechanics ──
-  creaseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    gap: 8,
-  },
-  creaseLine: {
-    flex: 1,
-    height: 0,
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: C.crease,
-  },
-  foldBtn: {
-    backgroundColor: C.amber,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  foldBtnText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 11,
-    color: C.white,
-  },
-  creaseShadow: {
-    height: 6,
-    ...Platform.select({
-      web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.18)' },
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-        elevation: 6,
-      },
-    }),
   },
 });
