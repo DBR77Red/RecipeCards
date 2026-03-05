@@ -252,11 +252,11 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
         {recipe.photo ? (
           <Image source={{ uri: recipe.photo }} style={styles.thumbnailImg} resizeMode="cover" />
         ) : (
-          <View style={styles.thumbnailPlaceholder}>
-            <View style={styles.guideRing}>
-              <View style={styles.guideDot} />
-            </View>
-          </View>
+          <Image
+            source={require('../../assets/placeholder.jpg')}
+            style={styles.thumbnailImg}
+            resizeMode="cover"
+          />
         )}
       </View>
 

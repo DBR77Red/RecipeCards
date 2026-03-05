@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 // LayoutAnimation requires this flag on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -68,32 +69,51 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 // ─── Front face ───────────────────────────────────────────────────────────────
 
-function CardFront({ recipe, onShare }: { recipe: RecipeData; onShare?: () => void }) {
+function CardFront({
+  recipe, onFlip, onShare, onPublish, publishing,
+}: {
+  recipe: RecipeData;
+  onFlip: () => void;
+  onShare?: () => void;
+  onPublish?: () => void;
+  publishing?: boolean;
+}) {
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
   const published = recipe.status === 'published';
 
   return (
     <View style={styles.face}>
-      <View style={styles.photoZone}>
+      {/* Flip target: only the photo zone — keeps buttons below free from conflicts */}
+      <Pressable onPress={onFlip} style={styles.photoZone}>
         {recipe.photo ? (
           <Image source={{ uri: recipe.photo }} style={styles.photo} resizeMode="cover" />
         ) : (
-          <View style={[styles.photo, styles.photoPlaceholder]} />
+          <Image
+            source={require('../../assets/placeholder.jpg')}
+            style={[styles.photo, styles.photoPlaceholder]}
+            resizeMode="cover"
+          />
         )}
 
-        {/* Faux gradient scrim */}
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <View style={{ flex: 0.38 }} />
-          <View style={{ flex: 0.22, backgroundColor: 'rgba(0,0,0,0.18)' }} />
-          <View style={{ flex: 0.22, backgroundColor: 'rgba(0,0,0,0.32)' }} />
-          <View style={{ flex: 0.18, backgroundColor: 'rgba(0,0,0,0.50)' }} />
-        </View>
+        {/* Gradient scrim */}
+        <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Defs>
+            <LinearGradient id="scrimGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <Stop offset="0%" stopColor="black" stopOpacity={0} />
+              <Stop offset="38%" stopColor="black" stopOpacity={0} />
+              <Stop offset="60%" stopColor="black" stopOpacity={0.18} />
+              <Stop offset="82%" stopColor="black" stopOpacity={0.32} />
+              <Stop offset="100%" stopColor="black" stopOpacity={0.5} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#scrimGradient)" />
+        </Svg>
 
         <View style={styles.scrimText} pointerEvents="none">
           <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
           <Text style={styles.photoMeta}>By {recipe.creatorName} · 🔀 —</Text>
         </View>
-      </View>
+      </Pressable>
 
       <View style={[styles.bottomZone, published && styles.bottomZonePub]}>
         <View style={styles.statsRow}>
@@ -104,21 +124,35 @@ function CardFront({ recipe, onShare }: { recipe: RecipeData; onShare?: () => vo
           <Stat label="Cook"   value={recipe.cookTime} />
         </View>
 
+        <View style={styles.qrDivider} />
+
         {published ? (
-          <>
-            <View style={styles.qrDivider} />
-            <View style={styles.qrCenter}>
-              <View style={styles.qrBox}>
-                <QRCode value={shareUrl} size={148} />
-              </View>
-              <Text style={styles.qrLabel}>Scan to receive this recipe</Text>
-              <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
-                <Text style={styles.shareBtnText}>Share Recipe</Text>
-              </TouchableOpacity>
+          <View style={styles.qrCenter}>
+            <View style={styles.qrBox}>
+              <QRCode value={shareUrl} size={148} />
             </View>
-          </>
+            <Text style={styles.qrLabel}>Scan to receive this recipe</Text>
+            <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
+              <Text style={styles.shareBtnText}>Share Recipe</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <Text style={styles.frontHint}>Tap to see recipe details</Text>
+          <View style={styles.qrCenter}>
+            <View style={styles.publishPlaceholder}>
+              <Text style={styles.publishPlaceholderIcon}>✦</Text>
+            </View>
+            <Text style={styles.publishTitle}>Ready to share?</Text>
+            <Text style={styles.qrLabel}>Publish to get your QR code</Text>
+            <TouchableOpacity
+              style={[styles.shareBtn, styles.publishBtn, publishing && styles.publishBtnDisabled]}
+              onPress={onPublish}
+              disabled={publishing}
+            >
+              <Text style={styles.publishBtnText}>
+                {publishing ? 'Publishing…' : 'Publish to Share'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </View>
@@ -127,9 +161,13 @@ function CardFront({ recipe, onShare }: { recipe: RecipeData; onShare?: () => vo
 
 // ─── Back face ────────────────────────────────────────────────────────────────
 
-function CardBack({ recipe, onMeasured }: { recipe: RecipeData; onMeasured: (h: number) => void }) {
+function CardBack({ recipe, onFlip, onMeasured }: {
+  recipe: RecipeData;
+  onFlip: () => void;
+  onMeasured: (h: number) => void;
+}) {
   return (
-    <View onLayout={e => onMeasured(e.nativeEvent.layout.height)}>
+    <Pressable onPress={onFlip} onLayout={e => onMeasured(e.nativeEvent.layout.height)}>
       {/* Header */}
       <View style={styles.backHeader}>
         <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
@@ -154,14 +192,19 @@ function CardBack({ recipe, onMeasured }: { recipe: RecipeData; onMeasured: (h: 
           </View>
         ))}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 
-export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: () => void }) {
-  const frontH = recipe.status === 'published' ? CARD_H_PUB : CARD_H;
+export function RecipeCard({ recipe, onShare, onPublish, publishing }: {
+  recipe: RecipeData;
+  onShare?: () => void;
+  onPublish?: () => void;
+  publishing?: boolean;
+}) {
+  const frontH = CARD_H_PUB; // always the same height regardless of status
 
   const [flipped,    setFlipped]    = useState(false);
   const [cardHeight, setCardHeight] = useState(frontH);
@@ -169,17 +212,6 @@ export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: 
   // Ref so handleFlip always reads the latest measured value,
   // even if the React state update hasn't flushed yet.
   const backHRef                    = useRef(CARD_H);
-
-  // When recipe is published while the front is showing, expand the card
-  useEffect(() => {
-    if (!flipped) {
-      LayoutAnimation.configureNext({
-        duration: 300,
-        update: { type: LayoutAnimation.Types.easeInEaseOut },
-      });
-      setCardHeight(frontH);
-    }
-  }, [recipe.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMeasured = (h: number) => {
     backHRef.current = Math.max(h, frontH);
@@ -206,33 +238,31 @@ export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: 
 
   return (
     <View style={[styles.wrapper, { height: cardHeight }]}>
-      <Pressable onPress={handleFlip} style={StyleSheet.absoluteFill}>
-        {/* Front face */}
-        <Animated.View
-          pointerEvents={flipped ? 'none' : 'auto'}
-          style={[styles.faceShell, {
-            height: frontH,
-            backfaceVisibility: 'hidden',
-            opacity:   frontOpacity,
-            transform: [{ perspective: P }, { rotateY: frontSpin }],
-          }]}
-        >
-          <CardFront recipe={recipe} onShare={onShare} />
-        </Animated.View>
+      {/* Front face */}
+      <Animated.View
+        pointerEvents={flipped ? 'none' : 'auto'}
+        style={[styles.faceShell, {
+          height: frontH,
+          backfaceVisibility: 'hidden',
+          opacity:   frontOpacity,
+          transform: [{ perspective: P }, { rotateY: frontSpin }],
+        }]}
+      >
+        <CardFront recipe={recipe} onFlip={handleFlip} onShare={onShare} onPublish={onPublish} publishing={publishing} />
+      </Animated.View>
 
-        {/* Back face — height matches content */}
-        <Animated.View
-          pointerEvents={flipped ? 'auto' : 'none'}
-          style={[styles.faceShellBack, {
-            height: backHRef.current,
-            backfaceVisibility: 'hidden',
-            opacity:   backOpacity,
-            transform: [{ perspective: P }, { rotateY: backSpin }],
-          }]}
-        >
-          <CardBack recipe={recipe} onMeasured={handleMeasured} />
-        </Animated.View>
-      </Pressable>
+      {/* Back face — height matches content */}
+      <Animated.View
+        pointerEvents={flipped ? 'auto' : 'none'}
+        style={[styles.faceShellBack, {
+          height: backHRef.current,
+          backfaceVisibility: 'hidden',
+          opacity:   backOpacity,
+          transform: [{ perspective: P }, { rotateY: backSpin }],
+        }]}
+      >
+        <CardBack recipe={recipe} onFlip={handleFlip} onMeasured={handleMeasured} />
+      </Animated.View>
     </View>
   );
 }
@@ -293,7 +323,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   photoPlaceholder: {
-    backgroundColor: '#e0cda8',
   },
   scrimText: {
     position: 'absolute',
@@ -403,6 +432,40 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
     color: C.amber,
+    letterSpacing: 0.3,
+  },
+  publishPlaceholder: {
+    width: 176,
+    height: 176,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(212,130,10,0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  publishPlaceholderIcon: {
+    fontSize: 36,
+    color: C.border,
+  },
+  publishTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 15,
+    color: C.darkText,
+    textAlign: 'center',
+  },
+  publishBtn: {
+    backgroundColor: C.amber,
+    borderColor: C.amber,
+  },
+  publishBtnDisabled: {
+    opacity: 0.5,
+  },
+  publishBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: C.white,
     letterSpacing: 0.3,
   },
 
