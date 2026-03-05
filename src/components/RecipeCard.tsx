@@ -1,13 +1,22 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
+  LayoutAnimation,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+
+// LayoutAnimation requires this flag on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,12 +48,12 @@ const C = {
   white:    '#ffffff',
 };
 
-const CARD_W  = 320;
-const CARD_H  = 460;
-const PHOTO_H = Math.round(CARD_H * 0.65); // 299
-const BOT_H   = CARD_H - PHOTO_H;          // 161
-const RADIUS  = 16;
-const P       = 1400;
+const CARD_W      = 320;
+const CARD_H      = 460;
+const CARD_H_PUB  = 720; // published front: photo + stats + QR 148 + label + share btn
+const PHOTO_H     = Math.round(CARD_H * 0.65); // 299
+const RADIUS      = 16;
+const P           = 1400;
 
 // ─── Stat column ─────────────────────────────────────────────────────────────
 
@@ -59,7 +68,10 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 // ─── Front face ───────────────────────────────────────────────────────────────
 
-function CardFront({ recipe }: { recipe: RecipeData }) {
+function CardFront({ recipe, onShare }: { recipe: RecipeData; onShare?: () => void }) {
+  const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
+  const published = recipe.status === 'published';
+
   return (
     <View style={styles.face}>
       <View style={styles.photoZone}>
@@ -83,7 +95,7 @@ function CardFront({ recipe }: { recipe: RecipeData }) {
         </View>
       </View>
 
-      <View style={styles.bottomZone}>
+      <View style={[styles.bottomZone, published && styles.bottomZonePub]}>
         <View style={styles.statsRow}>
           <Stat label="Serves" value={recipe.servings} />
           <View style={styles.statDivider} />
@@ -91,7 +103,23 @@ function CardFront({ recipe }: { recipe: RecipeData }) {
           <View style={styles.statDivider} />
           <Stat label="Cook"   value={recipe.cookTime} />
         </View>
-        <Text style={styles.frontHint}>Tap to see recipe details</Text>
+
+        {published ? (
+          <>
+            <View style={styles.qrDivider} />
+            <View style={styles.qrCenter}>
+              <View style={styles.qrBox}>
+                <QRCode value={shareUrl} size={148} />
+              </View>
+              <Text style={styles.qrLabel}>Scan to receive this recipe</Text>
+              <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
+                <Text style={styles.shareBtnText}>Share Recipe</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <Text style={styles.frontHint}>Tap to see recipe details</Text>
+        )}
       </View>
     </View>
   );
@@ -108,7 +136,7 @@ function CardBack({ recipe, onMeasured }: { recipe: RecipeData; onMeasured: (h: 
         <Text style={styles.backHint}>Tap to flip back</Text>
       </View>
 
-      {/* Content */}
+      {/* Content — fully expanded, no clipping */}
       <View style={styles.backContentInner}>
         <Text style={styles.sectionHeading}>Ingredients</Text>
         {recipe.ingredients.map((ing, i) => (
@@ -132,40 +160,43 @@ function CardBack({ recipe, onMeasured }: { recipe: RecipeData; onMeasured: (h: 
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 
-export function RecipeCard({ recipe }: { recipe: RecipeData }) {
-  const [flipped, setFlipped]   = useState(false);
-  const [backH,   setBackH]     = useState(0);
-  const flipAnim                = useRef(new Animated.Value(0)).current;
-  // JS driver — animates layout height (not supported by native driver)
-  const cardHeightAnim          = useRef(new Animated.Value(CARD_H)).current;
+export function RecipeCard({ recipe, onShare }: { recipe: RecipeData; onShare?: () => void }) {
+  const frontH = recipe.status === 'published' ? CARD_H_PUB : CARD_H;
+
+  const [flipped,    setFlipped]    = useState(false);
+  const [cardHeight, setCardHeight] = useState(frontH);
+  const flipAnim                    = useRef(new Animated.Value(0)).current;
+  // Ref so handleFlip always reads the latest measured value,
+  // even if the React state update hasn't flushed yet.
+  const backHRef                    = useRef(CARD_H);
+
+  // When recipe is published while the front is showing, expand the card
+  useEffect(() => {
+    if (!flipped) {
+      LayoutAnimation.configureNext({
+        duration: 300,
+        update: { type: LayoutAnimation.Types.easeInEaseOut },
+      });
+      setCardHeight(frontH);
+    }
+  }, [recipe.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMeasured = (h: number) => {
-    if (backH > 0) return;
-    setBackH(h);
-    // If card is already flipped when we first measure, jump to correct height
-    if (flipped) cardHeightAnim.setValue(h);
+    backHRef.current = h;
+    if (flipped) setCardHeight(h);
   };
 
   const handleFlip = () => {
-    const toBack   = !flipped;
-    const targetH  = toBack ? (backH || CARD_H) : CARD_H;
-
-    Animated.parallel([
-      Animated.spring(flipAnim, {
-        toValue:  toBack ? 1 : 0,
-        friction: 7,
-        tension:  9,
-        useNativeDriver: true,
-      }),
-      Animated.spring(cardHeightAnim, {
-        toValue:  targetH,
-        friction: 8,
-        tension:  8,
-        useNativeDriver: false,
-      }),
-    ]).start();
-
+    const toBack = !flipped;
+    setCardHeight(toBack ? backHRef.current : frontH);
     setFlipped(toBack);
+
+    Animated.spring(flipAnim, {
+      toValue:         toBack ? 1 : 0,
+      friction:        7,
+      tension:         9,
+      useNativeDriver: true,
+    }).start();
   };
 
   const frontSpin    = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
@@ -174,19 +205,21 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
   const backOpacity  = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
-    <Animated.View style={[styles.wrapper, { height: cardHeightAnim }]}>
+    <View style={[styles.wrapper, { height: cardHeight }]}>
       <Pressable onPress={handleFlip} style={StyleSheet.absoluteFill}>
         {/* Front face */}
         <Animated.View style={[styles.faceShell, {
+          height: frontH,
           backfaceVisibility: 'hidden',
           opacity:   frontOpacity,
           transform: [{ perspective: P }, { rotateY: frontSpin }],
         }]}>
-          <CardFront recipe={recipe} />
+          <CardFront recipe={recipe} onShare={onShare} />
         </Animated.View>
 
-        {/* Back face — no fixed height, sizes to content */}
+        {/* Back face — height matches content */}
         <Animated.View style={[styles.faceShellBack, {
+          height: backHRef.current,
           backfaceVisibility: 'hidden',
           opacity:   backOpacity,
           transform: [{ perspective: P }, { rotateY: backSpin }],
@@ -194,7 +227,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeData }) {
           <CardBack recipe={recipe} onMeasured={handleMeasured} />
         </Animated.View>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -238,7 +271,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS,
     borderWidth: 2,
     borderColor: C.border,
-    overflow: 'hidden',
   },
   face: {
     flex: 1,
@@ -280,7 +312,7 @@ const styles = StyleSheet.create({
 
   // ── Front: bottom zone ──
   bottomZone: {
-    height: BOT_H,
+    flex: 1,
     backgroundColor: C.bg,
     borderTopWidth: 1,
     borderTopColor: C.border,
@@ -324,6 +356,48 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: C.amber,
     textAlign: 'center',
+  },
+  bottomZonePub: {
+    justifyContent: 'flex-start',
+    gap: 16,
+  },
+  qrDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: C.border,
+  },
+  qrCenter: {
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  qrBox: {
+    padding: 14,
+    backgroundColor: C.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  qrLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    letterSpacing: 0.3,
+    color: C.bodyText,
+    textAlign: 'center',
+  },
+  shareBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.bg,
+  },
+  shareBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: C.amber,
+    letterSpacing: 0.3,
   },
 
   // ── Back: header ──

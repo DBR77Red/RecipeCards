@@ -2,7 +2,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import QRCode from 'react-native-qrcode-svg';
 import {
   Alert,
   ScrollView,
@@ -79,22 +78,9 @@ export function PreviewScreen({ route, navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <RecipeCard recipe={recipe} />
+        <RecipeCard recipe={recipe} onShare={handleShare} />
 
-        {recipe.status === 'published' ? (
-          <>
-            <View style={styles.qrSection}>
-              <View style={styles.qrBox}>
-                <QRCode value={shareUrl} size={148} />
-              </View>
-              <Text style={styles.scanLabel}>Scan to receive this recipe</Text>
-            </View>
-
-            <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-              <Text style={styles.shareBtnText}>Share Recipe</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
+        {recipe.status !== 'published' && (
           <TouchableOpacity
             style={[styles.publishBtn, publishing && styles.publishBtnDisabled]}
             onPress={handlePublish}
@@ -132,39 +118,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
     color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.3,
-  },
-  // ── QR section ────────────────────────────────────────────────────────────
-  qrSection: {
-    marginTop: 32,
-    alignItems: 'center',
-  },
-  qrBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-  },
-  scanLabel: {
-    marginTop: 12,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
-    letterSpacing: 0.8,
-    color: 'rgba(255,255,255,0.30)',
-  },
-  // ── Share button ──────────────────────────────────────────────────────────
-  shareBtn: {
-    marginTop: 18,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.13)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  shareBtnText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
     letterSpacing: 0.3,
   },
   // ── Publish button (draft preview) ────────────────────────────────────────
