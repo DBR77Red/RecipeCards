@@ -36,6 +36,26 @@ Fields to extract:
 
 Return ONLY the JSON object, no other text.`;
 
+const MERGE_SYSTEM_PROMPT = `You are a recipe assistant. You will receive the current state of a recipe and a new spoken transcript with additional or corrected information.
+
+Your job is to return an updated recipe by intelligently merging both:
+- If the transcript mentions a field already filled, update it only if the new version is more complete or specific (e.g. "200 grams of rice" improves "rice" — replace it).
+- If the transcript adds new ingredients or steps not already present, append them.
+- If the transcript does not mention a field at all, keep the current value unchanged.
+- If a field is currently empty and the transcript provides it, fill it in.
+- Never duplicate an ingredient or step that is already present with the same meaning.
+- Keep all values in the same language as the transcript. Do not translate anything.
+
+Fields to return:
+- "title": string — never empty.
+- "servings": string — e.g. "4". Empty string if unknown.
+- "prepTime": string — e.g. "15 min". Empty string if unknown.
+- "cookTime": string — e.g. "30 min". Empty string if unknown.
+- "ingredients": array of strings — complete merged list.
+- "directions": array of strings — complete merged list.
+
+Return ONLY the JSON object, no extra text, markdown, or explanation.`;
+
 app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
   try {
     const deepgramKey = process.env.DEEPGRAM_API_KEY;
@@ -66,7 +86,17 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
       return res.status(422).json({ error: 'no_speech' });
     }
 
-    // Step 2: parse transcript into recipe fields with Claude
+    // Step 2: parse/merge transcript into recipe fields with Claude
+    let currentRecipe = null;
+    if (req.body.currentRecipe) {
+      try { currentRecipe = JSON.parse(req.body.currentRecipe); } catch { /* ignore */ }
+    }
+
+    const systemPrompt  = currentRecipe ? MERGE_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    const userMessage   = currentRecipe
+      ? `Current recipe:\n${JSON.stringify(currentRecipe, null, 2)}\n\nNew transcript:\n${transcript}`
+      : `Transcript:\n${transcript}`;
+
     const claudeRes = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -77,8 +107,8 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: `Transcript:\n${transcript}` }],
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
       }),
     });
     if (!claudeRes.ok) {

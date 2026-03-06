@@ -324,20 +324,18 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const handleVoiceComplete = async (uri: string) => {
     setProcessing(true);
     try {
-      const parsed = await voiceToRecipe(uri);
-
-      // Only fill a field if it is currently empty — never overwrite existing content.
-      const hasIngredients = recipe.ingredients.some(i => i.trim());
-      const hasDirections  = recipe.directions.some(d => d.trim());
+      // Pass the current recipe so the server can do an intelligent merge.
+      // The server returns the fully merged result — we apply it directly.
+      const parsed = await voiceToRecipe(uri, recipe);
 
       onChange({
         ...recipe,
-        title:       !recipe.title.trim()    && parsed.title    ? parsed.title    : recipe.title,
-        servings:    !recipe.servings.trim() && parsed.servings ? parsed.servings : recipe.servings,
-        prepTime:    !recipe.prepTime.trim() && parsed.prepTime ? parsed.prepTime : recipe.prepTime,
-        cookTime:    !recipe.cookTime.trim() && parsed.cookTime ? parsed.cookTime : recipe.cookTime,
-        ingredients: !hasIngredients && parsed.ingredients?.length ? parsed.ingredients : recipe.ingredients,
-        directions:  !hasDirections  && parsed.directions?.length  ? parsed.directions  : recipe.directions,
+        title:       parsed.title       || recipe.title,
+        servings:    parsed.servings    ?? recipe.servings,
+        prepTime:    parsed.prepTime    ?? recipe.prepTime,
+        cookTime:    parsed.cookTime    ?? recipe.cookTime,
+        ingredients: parsed.ingredients?.length ? parsed.ingredients : recipe.ingredients,
+        directions:  parsed.directions?.length  ? parsed.directions  : recipe.directions,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       resetRecorder();
