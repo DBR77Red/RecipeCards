@@ -116,7 +116,7 @@ function CardFront({
         </View>
       </Pressable>
 
-      <View style={[styles.bottomZone, published && styles.bottomZonePub]}>
+      <Pressable style={[styles.bottomZone, published && styles.bottomZonePub]} onPress={onFlip}>
         <View style={styles.statsRow}>
           <Stat label="Serves" value={recipe.servings} />
           <View style={styles.statDivider} />
@@ -155,7 +155,7 @@ function CardFront({
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </Pressable>
     </View>
   );
 }
