@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
@@ -462,7 +463,15 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             <Image source={{ uri: recipe.photo }} style={styles.photoPreview} resizeMode="cover" />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoIcon}>+</Text>
+              <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                  stroke="rgba(0,0,0,0.18)"
+                  strokeWidth={1.5}
+                  strokeLinejoin="round"
+                />
+                <Circle cx="12" cy="13" r="4" stroke="rgba(0,0,0,0.18)" strokeWidth={1.5} />
+              </Svg>
               <Text style={styles.photoLabel}>{t.formAddPhoto}</Text>
             </View>
           )}
@@ -739,12 +748,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-  },
-  photoIcon: {
-    fontSize: 28,
-    color: C.photoMark,
-    lineHeight: 32,
-    fontFamily: 'DMSans_400Regular',
   },
   photoLabel: {
     fontFamily: 'DMSans_500Medium',
