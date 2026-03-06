@@ -186,3 +186,4 @@ Planned features to implement in the future:
 - **Auth**: User authentication for syncing across devices
 - **Customization**: Allow users to customize card appearance (colors, fonts, themes)
 - **Animations**: Enhanced card animations (flip, transitions, micro-interactions)
+- **Smart share link**: Replace the `recipecards://card/{id}` deep link with a Universal Link (iOS) / App Link (Android) — e.g. `https://recipecards.app/card/{id}`. If the recipient has the app installed the OS intercepts the HTTPS URL and opens the app directly (same behaviour as the QR code). If they don't have the app, the link opens a web page that detects the platform and redirects to the App Store or Google Play. Requires: a hosted domain, an `apple-app-site-association` file served at `/.well-known/`, and an `assetlinks.json` file for Android. The Expo linking config (`recipecards://`) already handles in-app routing — only the outer URL scheme needs to change.
