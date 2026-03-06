@@ -13,12 +13,14 @@ import {
 } from 'react-native';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { RecipeCard } from '../components/RecipeCard';
+import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 
 export function PreviewScreen({ route, navigation }: Props) {
+  const { t } = useLanguage();
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -52,12 +54,12 @@ export function PreviewScreen({ route, navigation }: Props) {
         setRecipe(synced);
       } catch (cloudErr: any) {
         Alert.alert(
-          'Cloud sync failed',
+          t.cloudSyncFailedTitle,
           `Your card is saved locally and the QR works on this device, but other phones won't be able to load it.\n\nError: ${cloudErr?.message ?? 'Unknown error'}\n\nCheck that the "recipes" table and "recipe-photos" bucket exist in Supabase and that the bucket is set to Public.`
         );
       }
     } catch (err: any) {
-      Alert.alert('Publish failed', err?.message ?? 'Something went wrong.');
+      Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);
     } finally {
       setPublishing(false);
     }
@@ -82,7 +84,7 @@ export function PreviewScreen({ route, navigation }: Props) {
         }
       >
         <Text style={styles.backBtnText}>
-          {recipe.status === 'published' ? '← Back' : '← Edit Recipe'}
+          {recipe.status === 'published' ? t.previewBack : t.previewEditRecipe}
         </Text>
       </TouchableOpacity>
 

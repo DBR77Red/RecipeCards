@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { RecipeData } from '../components/RecipeCard';
 import { RecipeForm } from '../components/RecipeForm';
+import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { emptyRecipe } from '../utils/recipe';
 import { getUserName, markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
@@ -10,6 +11,7 @@ import { getUserName, markPublishedLocally, saveDraft, syncToCloud } from '../ut
 type Props = NativeStackScreenProps<RootStackParamList, 'Form'>;
 
 export function FormScreen({ route, navigation }: Props) {
+  const { t } = useLanguage();
   const incoming = route.params?.recipe;
   const [recipe, setRecipe] = useState<RecipeData>(emptyRecipe());
   const [initialized, setInitialized] = useState(false);
@@ -48,12 +50,12 @@ export function FormScreen({ route, navigation }: Props) {
         await syncToCloud(local);
       } catch (cloudErr: any) {
         Alert.alert(
-          'Cloud sync failed',
+          t.cloudSyncFailedTitle,
           `Your card is saved locally and the QR works on this device, but other phones won't be able to load it.\n\nError: ${cloudErr?.message ?? 'Unknown error'}`
         );
       }
     } catch (err: any) {
-      Alert.alert('Publish failed', err?.message ?? 'Something went wrong.');
+      Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);
     }
   };
 

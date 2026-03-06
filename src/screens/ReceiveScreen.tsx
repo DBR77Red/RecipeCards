@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { RecipeCard, RecipeData } from '../components/RecipeCard';
+import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { fetchSharedRecipe } from '../utils/api';
 import { saveDraft } from '../utils/storage';
@@ -18,16 +19,17 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Receive'>;
 
 
 export function ReceiveScreen({ route, navigation }: Props) {
+  const { t } = useLanguage();
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchSharedRecipe(route.params.cardId)
       .then(setRecipe)
-      .catch(() => setError('This recipe could not be found or is no longer available.'))
+      .catch(() => setHasError(true))
       .finally(() => setLoading(false));
   }, [route.params.cardId]);
 
@@ -53,26 +55,26 @@ export function ReceiveScreen({ route, navigation }: Props) {
         style={styles.backBtn}
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
       >
-        <Text style={styles.backBtnText}>← Back</Text>
+        <Text style={styles.backBtnText}>{t.receiveBack}</Text>
       </TouchableOpacity>
 
       {loading && (
         <View style={styles.center}>
           <ActivityIndicator color="rgba(255,255,255,0.5)" size="large" />
-          <Text style={styles.loadingText}>Loading recipe…</Text>
+          <Text style={styles.loadingText}>{t.receiveLoading}</Text>
         </View>
       )}
 
-      {!loading && error && (
+      {!loading && hasError && (
         <View style={styles.center}>
           <Text style={styles.errorIcon}>✕</Text>
-          <Text style={styles.errorTitle}>Recipe not found</Text>
-          <Text style={styles.errorSub}>{error}</Text>
+          <Text style={styles.errorTitle}>{t.receiveNotFoundTitle}</Text>
+          <Text style={styles.errorSub}>{t.receiveNotFoundBody}</Text>
           <TouchableOpacity
             style={styles.backHomeBtn}
             onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
           >
-            <Text style={styles.backHomeBtnText}>Back to Home</Text>
+            <Text style={styles.backHomeBtnText}>{t.receiveBackHome}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -83,7 +85,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.sharedLabel}>
-            Shared by {recipe.creatorName || 'Unknown'}
+            {t.receiveSharedBy} {recipe.creatorName || 'Unknown'}
           </Text>
 
           <RecipeCard recipe={recipe} />
@@ -94,7 +96,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
             disabled={saving || saved}
           >
             <Text style={styles.addBtnText}>
-              {saved ? 'Added to collection!' : saving ? 'Saving…' : 'Add to My Collection'}
+              {saved ? t.receiveAdded : saving ? t.receiveSaving : t.receiveAddBtn}
             </Text>
           </TouchableOpacity>
         </ScrollView>

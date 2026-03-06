@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 const C = {
   bg:     '#F7F5F2',
@@ -19,6 +20,7 @@ interface Props {
 
 export function PublishConfirmModal({ visible, recipeTitle, onConfirm, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
+  const { t } = useLanguage();
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -38,18 +40,15 @@ export function PublishConfirmModal({ visible, recipeTitle, onConfirm, onCancel 
       <Animated.View style={[styles.overlay, { opacity: anim }]}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
           <Text style={styles.recipeTitle} numberOfLines={2}>
-            {recipeTitle.trim() || 'Untitled Recipe'}
+            {recipeTitle.trim() || t.untitledRecipe}
           </Text>
-          <Text style={styles.headline}>Ready to publish?</Text>
-          <Text style={styles.body}>
-            Once published, this card is permanent. No edits, no take-backs.
-            This is your recipe, exactly as it is right now.
-          </Text>
+          <Text style={styles.headline}>{t.publishConfirmHeadline}</Text>
+          <Text style={styles.body}>{t.publishConfirmBody}</Text>
           <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
-            <Text style={styles.confirmBtnText}>Publish forever</Text>
+            <Text style={styles.confirmBtnText}>{t.publishConfirmBtn}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Not yet</Text>
+            <Text style={styles.cancelText}>{t.publishConfirmCancel}</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>

@@ -16,6 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
+import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { PhotoPickerModal } from './PhotoPickerModal';
@@ -95,10 +97,10 @@ function MetaField({
 }
 
 function IngredientRow({
-  value, onChange, onRemove, index, canRemove,
+  value, onChange, onRemove, index, canRemove, labelPrefix,
 }: {
   value: string; onChange: (v: string) => void; onRemove: () => void;
-  index: number; canRemove: boolean;
+  index: number; canRemove: boolean; labelPrefix: string;
 }) {
   return (
     <View style={styles.listRow}>
@@ -107,7 +109,7 @@ function IngredientRow({
         style={styles.listInput}
         value={value}
         onChangeText={onChange}
-        placeholder={`Ingredient ${index + 1}`}
+        placeholder={`${labelPrefix} ${index + 1}`}
         placeholderTextColor={C.placeholder}
         returnKeyType="next"
       />
@@ -121,10 +123,10 @@ function IngredientRow({
 }
 
 function DirectionRow({
-  value, onChange, onRemove, index, canRemove,
+  value, onChange, onRemove, index, canRemove, labelPrefix,
 }: {
   value: string; onChange: (v: string) => void; onRemove: () => void;
-  index: number; canRemove: boolean;
+  index: number; canRemove: boolean; labelPrefix: string;
 }) {
   return (
     <View style={styles.listRow}>
@@ -135,7 +137,7 @@ function DirectionRow({
         style={[styles.listInput, styles.listInputMultiline]}
         value={value}
         onChangeText={onChange}
-        placeholder={`Step ${index + 1}`}
+        placeholder={`${labelPrefix} ${index + 1}`}
         placeholderTextColor={C.placeholder}
         multiline
         returnKeyType="next"
@@ -167,6 +169,7 @@ function VoiceBar({
   onStart,
   onStop,
   onReset,
+  t,
 }: {
   state: 'idle' | 'recording' | 'stopped';
   elapsed: number;
@@ -175,6 +178,7 @@ function VoiceBar({
   onStart: () => void;
   onStop: () => void;
   onReset: () => void;
+  t: Translations;
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -204,7 +208,7 @@ function VoiceBar({
           loop
           style={{ width: 40, height: 40 }}
         />
-        <Text style={styles.voiceProcessingText}>Transcribing & analysing…</Text>
+        <Text style={styles.voiceProcessingText}>{t.voiceTranscribing}</Text>
       </View>
     );
   }
@@ -216,14 +220,14 @@ function VoiceBar({
           style={styles.micBtn}
           onPress={hasPermission
             ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onStart(); }
-            : () => Alert.alert('Microphone Permission', 'Please allow microphone access to record recipes.')
+            : () => Alert.alert(t.voiceMicPermTitle, t.voiceMicPermBody)
           }
           activeOpacity={0.75}
         >
           <Text style={styles.micIcon}>🎙</Text>
         </TouchableOpacity>
         <Text style={styles.voiceHint}>
-          {hasPermission ? 'Tap to record your recipe' : 'Microphone permission needed'}
+          {hasPermission ? t.voiceTapToRecord : t.voiceMicNeeded}
         </Text>
       </View>
     );
@@ -237,7 +241,7 @@ function VoiceBar({
         </Animated.View>
         <Text style={styles.voiceElapsed}>{formatTime(elapsed)} / 1:00</Text>
         <TouchableOpacity style={styles.stopBtn} onPress={onStop} activeOpacity={0.75}>
-          <Text style={styles.stopBtnText}>Stop</Text>
+          <Text style={styles.stopBtnText}>{t.voiceStop}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -245,9 +249,9 @@ function VoiceBar({
 
   return (
     <View style={styles.voiceBar}>
-      <Text style={styles.voiceDoneText}>Recording done ({formatTime(elapsed)})</Text>
+      <Text style={styles.voiceDoneText}>{t.voiceRecordingDonePrefix} ({formatTime(elapsed)})</Text>
       <TouchableOpacity style={styles.retryBtn} onPress={onReset} activeOpacity={0.75}>
-        <Text style={styles.retryBtnText}>Re-record</Text>
+        <Text style={styles.retryBtnText}>{t.voiceReRecord}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -256,6 +260,7 @@ function VoiceBar({
 // ─── Main form ────────────────────────────────────────────────────────────────
 
 export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview, onBack }: RecipeFormProps) {
+  const { t } = useLanguage();
   const update = <K extends keyof RecipeData>(key: K, value: RecipeData[K]) =>
     onChange({ ...recipe, [key]: value });
 
@@ -336,9 +341,9 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       if (msg === 'no_speech') {
-        Alert.alert('No speech detected', 'Please try recording again and speak clearly.');
+        Alert.alert(t.voiceNoSpeechTitle, t.voiceNoSpeechBody);
       } else {
-        Alert.alert('Voice fill failed', msg);
+        Alert.alert(t.voiceFillFailedTitle, msg);
       }
       resetRecorder();
     } finally {
@@ -419,9 +424,9 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       >
         <View style={styles.topRow}>
           <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={styles.backLink}>← Home</Text>
+            <Text style={styles.backLink}>{t.formBack}</Text>
           </TouchableOpacity>
-          <Text style={styles.formLabel}>NEW RECIPE</Text>
+          <Text style={styles.formLabel}>{t.formNewRecipe}</Text>
         </View>
 
         {/* Voice bar */}
@@ -434,6 +439,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             onStart={startRecording}
             onStop={stopRecording}
             onReset={resetRecorder}
+            t={t}
           />
         )}
 
@@ -443,7 +449,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             style={styles.titleInput}
             value={recipe.title}
             onChangeText={v => update('title', v)}
-            placeholder="Recipe title"
+            placeholder={t.formTitlePlaceholder}
             placeholderTextColor={C.placeholder}
             multiline
           />
@@ -456,46 +462,48 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           ) : (
             <View style={styles.photoPlaceholder}>
               <Text style={styles.photoIcon}>+</Text>
-              <Text style={styles.photoLabel}>Add Photo</Text>
+              <Text style={styles.photoLabel}>{t.formAddPhoto}</Text>
             </View>
           )}
         </TouchableOpacity>
 
         {/* Meta */}
         <View style={styles.metaRow}>
-          <MetaField label="SERVES" value={recipe.servings} placeholder="4"
+          <MetaField label={t.formServes} value={recipe.servings} placeholder="4"
             onChangeText={v => update('servings', v)} />
           <View style={styles.metaSep} />
-          <MetaField label="PREP" value={recipe.prepTime} placeholder="15 min"
+          <MetaField label={t.formPrep} value={recipe.prepTime} placeholder="15 min"
             onChangeText={v => update('prepTime', v)} />
           <View style={styles.metaSep} />
-          <MetaField label="COOK" value={recipe.cookTime} placeholder="20 min"
+          <MetaField label={t.formCook} value={recipe.cookTime} placeholder="20 min"
             onChangeText={v => update('cookTime', v)} />
         </View>
 
         <View style={styles.sectionDivider} />
 
         {/* Ingredients */}
-        <FormSectionHeader label="INGREDIENTS" accent={C.terracotta} />
+        <FormSectionHeader label={t.formIngredients} accent={C.terracotta} />
         {recipe.ingredients.map((ing, i) => (
           <IngredientRow key={i} index={i} value={ing}
             onChange={v => updateIngredient(i, v)}
             onRemove={() => removeIngredient(i)}
-            canRemove={recipe.ingredients.length > 1} />
+            canRemove={recipe.ingredients.length > 1}
+            labelPrefix={t.formIngredientPrefix} />
         ))}
-        <AddRowButton label="+ Add ingredient" onPress={addIngredient} />
+        <AddRowButton label={t.formAddIngredient} onPress={addIngredient} />
 
         <View style={styles.sectionGap} />
 
         {/* Directions */}
-        <FormSectionHeader label="DIRECTIONS" accent={C.sage} />
+        <FormSectionHeader label={t.formDirections} accent={C.sage} />
         {recipe.directions.map((step, i) => (
           <DirectionRow key={i} index={i} value={step}
             onChange={v => updateDirection(i, v)}
             onRemove={() => removeDirection(i)}
-            canRemove={recipe.directions.length > 1} />
+            canRemove={recipe.directions.length > 1}
+            labelPrefix={t.formStepPrefix} />
         ))}
-        <AddRowButton label="+ Add step" onPress={addDirection} />
+        <AddRowButton label={t.formAddStep} onPress={addDirection} />
 
         {/* Actions */}
         <TouchableOpacity
@@ -505,7 +513,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           accessibilityState={{ disabled: !recipe.title.trim() }}
           activeOpacity={0.85}
         >
-          <Text style={styles.publishBtnText}>Publish</Text>
+          <Text style={styles.publishBtnText}>{t.formPublish}</Text>
         </TouchableOpacity>
 
         <View style={styles.secondaryRow}>
@@ -515,11 +523,11 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             disabled={!recipe.title.trim()}
             accessibilityState={{ disabled: !recipe.title.trim() }}
           >
-            <Text style={styles.previewBtnText}>Preview Card</Text>
+            <Text style={styles.previewBtnText}>{t.formPreviewCard}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.saveDraftBtn} onPress={handleSaveDraft}>
-            <Text style={styles.saveDraftBtnText}>Save draft</Text>
+            <Text style={styles.saveDraftBtnText}>{t.formSaveDraft}</Text>
           </TouchableOpacity>
         </View>
 
@@ -532,7 +540,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           { opacity: toastAnim, transform: [{ translateY: toastTranslateY }], pointerEvents: 'none' },
         ]}
       >
-        <Text style={styles.toastText}>✓  Draft saved</Text>
+        <Text style={styles.toastText}>{t.formDraftSaved}</Text>
       </Animated.View>
 
       <PhotoPickerModal
@@ -557,22 +565,20 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             }) }],
           }]}>
             <Text style={styles.confirmTitle}>
-              {recipe.title.trim() || 'Untitled Recipe'}
+              {recipe.title.trim() || t.untitledRecipe}
             </Text>
-            <Text style={styles.confirmHeadline}>Ready to publish?</Text>
-            <Text style={styles.confirmBody}>
-              Once published, this card is permanent. No edits, no take-backs. This is your recipe, exactly as it is right now.
-            </Text>
+            <Text style={styles.confirmHeadline}>{t.publishConfirmHeadline}</Text>
+            <Text style={styles.confirmBody}>{t.publishConfirmBody}</Text>
             <TouchableOpacity
               style={[styles.confirmBtn, publishing && { opacity: 0.5 }]}
               onPress={handlePublish}
               disabled={publishing}
               accessibilityState={{ disabled: publishing }}
             >
-              <Text style={styles.confirmBtnText}>Publish forever</Text>
+              <Text style={styles.confirmBtnText}>{t.publishConfirmBtn}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={closeConfirm} disabled={publishing}>
-              <Text style={styles.cancelBtnText}>Not yet</Text>
+              <Text style={styles.cancelBtnText}>{t.publishConfirmCancel}</Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -756,7 +762,7 @@ const styles = StyleSheet.create({
   metaFieldLabel: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 8,
-    letterSpacing: 2.5,
+    letterSpacing: 1,
     color: C.label,
     marginBottom: 8,
   },

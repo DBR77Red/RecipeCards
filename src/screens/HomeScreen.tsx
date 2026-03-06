@@ -18,6 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { RecipeData } from '../components/RecipeCard';
+import { useLanguage } from '../context/LanguageContext';
+import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
 import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished } from '../utils/storage';
 
@@ -110,43 +112,68 @@ function ProfileIcon({ color }: { color: string }) {
   );
 }
 
-// ─── Name input modal ─────────────────────────────────────────────────────────
+// ─── Profile modal (name + language) ─────────────────────────────────────────
 
-function NameModal({ visible, currentName, onSave, onClose }: {
+function ProfileModal({ visible, currentName, onSave, onClose }: {
   visible: boolean;
   currentName: string;
   onSave: (name: string) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(currentName);
+  const { t, language, setLanguage } = useLanguage();
 
   useEffect(() => {
     setName(currentName);
   }, [currentName, visible]);
 
+  const LANGS: { code: Language; label: string }[] = [
+    { code: 'en', label: 'EN' },
+    { code: 'pt', label: 'PT' },
+    { code: 'de', label: 'DE' },
+  ];
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Your Name</Text>
-          <Text style={styles.modalSub}>This name will appear on your recipe cards.</Text>
+          <Text style={styles.modalTitle}>{t.profileTitle}</Text>
+          <Text style={styles.modalSub}>{t.profileNameSub}</Text>
           <TextInput
             style={styles.modalInput}
             value={name}
             onChangeText={setName}
-            placeholder="Enter your name"
+            placeholder={t.profileNamePlaceholder}
             placeholderTextColor={C.label}
             autoFocus
           />
+
+          {/* Language picker */}
+          <Text style={styles.modalLanguageLabel}>{t.profileLanguageLabel}</Text>
+          <View style={styles.languagePicker}>
+            {LANGS.map(({ code, label }) => (
+              <TouchableOpacity
+                key={code}
+                style={[styles.langPill, language === code && styles.langPillActive]}
+                onPress={() => setLanguage(code)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.langPillText, language === code && styles.langPillTextActive]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <TouchableOpacity
             style={[styles.modalBtn, !name.trim() && styles.modalBtnDisabled]}
             onPress={() => { onSave(name.trim()); onClose(); }}
             disabled={!name.trim()}
           >
-            <Text style={styles.modalBtnText}>Save</Text>
+            <Text style={styles.modalBtnText}>{t.save}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.modalCancelBtn} onPress={onClose}>
-            <Text style={styles.modalCancelText}>Cancel</Text>
+            <Text style={styles.modalCancelText}>{t.cancel}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -164,6 +191,7 @@ function QRScannerModal({ visible, onScanned, onClose, onEnterManually }: {
 }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (visible) setScanned(false);
@@ -175,19 +203,17 @@ function QRScannerModal({ visible, onScanned, onClose, onEnterManually }: {
     return (
       <Modal visible animationType="slide" onRequestClose={onClose}>
         <View style={qrStyles.permScreen}>
-          <Text style={qrStyles.permTitle}>Camera Access Needed</Text>
-          <Text style={qrStyles.permSub}>
-            Grant camera access to scan recipe QR codes.
-          </Text>
+          <Text style={qrStyles.permTitle}>{t.qrCameraTitle}</Text>
+          <Text style={qrStyles.permSub}>{t.qrCameraSub}</Text>
           {permission && !permission.canAskAgain ? (
-            <Text style={qrStyles.permSub}>Please enable camera in your device Settings.</Text>
+            <Text style={qrStyles.permSub}>{t.qrCameraSettings}</Text>
           ) : (
             <TouchableOpacity style={qrStyles.permBtn} onPress={requestPermission}>
-              <Text style={qrStyles.permBtnText}>Allow Camera</Text>
+              <Text style={qrStyles.permBtnText}>{t.qrAllowCamera}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={qrStyles.permCancel} onPress={onClose}>
-            <Text style={qrStyles.permCancelText}>Cancel</Text>
+            <Text style={qrStyles.permCancelText}>{t.cancel}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -207,18 +233,18 @@ function QRScannerModal({ visible, onScanned, onClose, onEnterManually }: {
           }}
         />
         <TouchableOpacity style={qrStyles.cancelBtn} onPress={onClose}>
-          <Text style={qrStyles.cancelText}>← Cancel</Text>
+          <Text style={qrStyles.cancelText}>← {t.cancel}</Text>
         </TouchableOpacity>
         <View style={qrStyles.overlay} pointerEvents="none">
-          <Text style={qrStyles.overlayTitle}>Scan Recipe Card</Text>
+          <Text style={qrStyles.overlayTitle}>{t.qrScanTitle}</Text>
           <View style={qrStyles.viewfinder} />
-          <Text style={qrStyles.overlayHint}>Align the QR code within the frame</Text>
+          <Text style={qrStyles.overlayHint}>{t.qrAlignHint}</Text>
         </View>
         <TouchableOpacity
           style={qrStyles.manualBtn}
           onPress={() => { onClose(); onEnterManually(); }}
         >
-          <Text style={qrStyles.manualText}>Enter code manually</Text>
+          <Text style={qrStyles.manualText}>{t.qrEnterManually}</Text>
         </TouchableOpacity>
       </View>
     </Modal>
@@ -234,10 +260,13 @@ interface DraftListItemProps {
 }
 
 function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
-  const displayTitle    = recipe.title.trim() || 'Untitled Recipe';
+  const { t } = useLanguage();
+  const displayTitle    = recipe.title.trim() || t.untitledRecipe;
   const isTitleEmpty    = !recipe.title.trim();
   const ingredientCount = recipe.ingredients.filter(i => i.trim()).length;
-  const ingredientLabel = ingredientCount === 1 ? '1 ingredient' : `${ingredientCount} ingredients`;
+  const ingredientLabel = ingredientCount === 1
+    ? `1 ${t.ingredient}`
+    : `${ingredientCount} ${t.ingredients}`;
 
   return (
     <TouchableOpacity
@@ -291,13 +320,14 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { t } = useLanguage();
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
         <Text style={styles.emptyIconText}>+</Text>
       </View>
-      <Text style={styles.emptyTitle}>No recipes yet</Text>
-      <Text style={styles.emptySub}>Tap New Recipe to get started.</Text>
+      <Text style={styles.emptyTitle}>{t.emptyTitle}</Text>
+      <Text style={styles.emptySub}>{t.emptySub}</Text>
     </View>
   );
 }
@@ -305,10 +335,11 @@ function EmptyState() {
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
 export function HomeScreen({ navigation }: Props) {
+  const { t } = useLanguage();
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
   const [published, setPublished] = useState<RecipeData[]>([]);
   const [userName, setUserNameState] = useState('');
-  const [showNameModal, setShowNameModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
@@ -350,7 +381,7 @@ export function HomeScreen({ navigation }: Props) {
     if (match) {
       navigation.navigate('Receive', { cardId: match[1] });
     } else {
-      Alert.alert('Invalid QR Code', "This doesn't look like a RecipeCards QR code.");
+      Alert.alert(t.qrInvalidTitle, t.qrInvalidBody);
     }
   };
 
@@ -391,8 +422,8 @@ export function HomeScreen({ navigation }: Props) {
   type ListSection = { title: string; data: RecipeData[] };
 
   const sections: ListSection[] = [
-    ...(drafts.length > 0 ? [{ title: 'YOUR DRAFTS', data: drafts }] : []),
-    ...(published.length > 0 ? [{ title: 'PUBLISHED', data: published }] : []),
+    ...(drafts.length > 0 ? [{ title: t.sectionDrafts, data: drafts }] : []),
+    ...(published.length > 0 ? [{ title: t.sectionPublished, data: published }] : []),
   ];
 
   const isEmpty = drafts.length === 0 && published.length === 0;
@@ -405,7 +436,7 @@ export function HomeScreen({ navigation }: Props) {
         keyExtractor={item => item.id}
         renderItem={renderItem}
         renderSectionHeader={({ section: { title } }) => (
-          <Text style={[styles.sectionLabel, title === 'PUBLISHED' && drafts.length > 0 && styles.sectionLabelSpaced]}>
+          <Text style={[styles.sectionLabel, title === t.sectionPublished && drafts.length > 0 && styles.sectionLabelSpaced]}>
             {title}
           </Text>
         )}
@@ -420,12 +451,12 @@ export function HomeScreen({ navigation }: Props) {
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => {}}>
           <HomeIcon color={C.terracotta} />
-          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
+          <Text style={[styles.tabLabel, styles.tabLabelActive]}>{t.tabHome}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => Alert.alert('Coming Soon', 'Favorites will be available in a future update.')}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => Alert.alert(t.comingSoonTitle, t.comingSoonBody)}>
           <FavoritesIcon color={C.muted} />
-          <Text style={styles.tabLabel}>Favorites</Text>
+          <Text style={styles.tabLabel}>{t.tabFavorites}</Text>
         </TouchableOpacity>
 
         <View style={styles.tabItemCenter}>
@@ -440,20 +471,20 @@ export function HomeScreen({ navigation }: Props) {
 
         <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowQRScanner(true)}>
           <ExchangeIcon color={C.muted} />
-          <Text style={styles.tabLabel}>Exchange</Text>
+          <Text style={styles.tabLabel}>{t.tabExchange}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowNameModal(true)}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowProfileModal(true)}>
           <ProfileIcon color={C.muted} />
-          <Text style={styles.tabLabel}>Profile</Text>
+          <Text style={styles.tabLabel}>{t.tabProfile}</Text>
         </TouchableOpacity>
       </View>
 
-      <NameModal
-        visible={showNameModal}
+      <ProfileModal
+        visible={showProfileModal}
         currentName={userName}
         onSave={handleSaveName}
-        onClose={() => setShowNameModal(false)}
+        onClose={() => setShowProfileModal(false)}
       />
 
       <QRScannerModal
@@ -472,15 +503,13 @@ export function HomeScreen({ navigation }: Props) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>View Shared Card</Text>
-            <Text style={styles.modalSub}>
-              Paste the card ID from a shared recipe link.
-            </Text>
+            <Text style={styles.modalTitle}>{t.viewCardTitle}</Text>
+            <Text style={styles.modalSub}>{t.viewCardSub}</Text>
             <TextInput
               style={styles.modalInput}
               value={cardCode}
               onChangeText={setCardCode}
-              placeholder="Paste card ID here"
+              placeholder={t.viewCardPlaceholder}
               placeholderTextColor={C.label}
               autoFocus
               autoCapitalize="none"
@@ -496,13 +525,13 @@ export function HomeScreen({ navigation }: Props) {
               }}
               disabled={!cardCode.trim()}
             >
-              <Text style={styles.modalBtnText}>View Recipe</Text>
+              <Text style={styles.modalBtnText}>{t.viewCardBtn}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.modalCancelBtn}
               onPress={() => { setShowCodeModal(false); setCardCode(''); }}
             >
-              <Text style={styles.modalCancelText}>Cancel</Text>
+              <Text style={styles.modalCancelText}>{t.cancel}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -756,6 +785,42 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: C.label,
     lineHeight: 20,
+  },
+
+  // Language picker
+  modalLanguageLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: C.muted,
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  languagePicker: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  langPill: {
+    flex: 1,
+    height: 42,
+    borderRadius: 100,
+    borderWidth: 1.5,
+    borderColor: C.divider,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langPillActive: {
+    backgroundColor: C.btnBg,
+    borderColor: C.btnBg,
+  },
+  langPillText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: C.muted,
+    letterSpacing: 1,
+  },
+  langPillTextActive: {
+    color: C.btnText,
   },
 
   // Separator

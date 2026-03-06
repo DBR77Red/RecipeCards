@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 const C = {
   bg:      '#F7F5F2',
@@ -20,6 +21,7 @@ interface Props {
 
 export function PhotoPickerModal({ visible, onTakePhoto, onChooseLibrary, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
+  const { t } = useLanguage();
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -38,20 +40,20 @@ export function PhotoPickerModal({ visible, onTakePhoto, onChooseLibrary, onCanc
     <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
       <Animated.View style={[styles.overlay, { opacity: anim }]}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <Text style={styles.title}>Add Photo</Text>
-          <Text style={styles.body}>How would you like to add a photo?</Text>
+          <Text style={styles.title}>{t.photoPickerTitle}</Text>
+          <Text style={styles.body}>{t.photoPickerSub}</Text>
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.btn} onPress={onTakePhoto}>
-              <Text style={styles.btnText}>Take Photo</Text>
+              <Text style={styles.btnText}>{t.photoTakePhoto}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onChooseLibrary}>
-              <Text style={styles.btnSecondaryText}>Choose from Library</Text>
+              <Text style={styles.btnSecondaryText}>{t.photoChooseLibrary}</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t.cancel}</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>

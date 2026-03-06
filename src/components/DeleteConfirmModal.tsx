@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 const C = {
   bg:      '#F7F5F2',
@@ -20,6 +21,7 @@ interface Props {
 
 export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
+  const { t } = useLanguage();
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -35,12 +37,10 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
   });
 
   const isDraft = variant === 'draft';
-  const displayTitle = recipeTitle.trim() || 'Untitled Recipe';
-  const heading     = isDraft ? 'Delete Draft?' : 'Remove Card?';
-  const body        = isDraft
-    ? `"${displayTitle}" will be permanently deleted. This cannot be undone.`
-    : "Everyone you shared it with will keep their copy, but they won't be able to re-share the card.";
-  const confirmText = isDraft ? 'Delete forever' : 'Remove card';
+  const displayTitle = recipeTitle.trim() || t.untitledRecipe;
+  const heading     = isDraft ? t.deleteDraftTitle : t.deleteCardTitle;
+  const body        = isDraft ? t.deleteDraftBody(displayTitle) : t.deleteCardBody;
+  const confirmText = isDraft ? t.deleteDraftBtn : t.deleteCardBtn;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
@@ -52,7 +52,7 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
             <Text style={styles.confirmBtnText}>{confirmText}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t.cancel}</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>

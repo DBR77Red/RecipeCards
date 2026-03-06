@@ -173,6 +173,7 @@ These were intentionally removed. Do not bring them back without an explicit ins
 
 - **Confetti**: `react-native-confetti-cannon` removed due to stuck particles. A Lottie-based approach was considered but not started. Do not add any confetti effect.
 - **Card fold/unfold mechanic**: the accordion flap + crease line that extended the back face was removed and replaced with a plain content-driven height via `onLayout`. Do not re-introduce the fold metaphor, the dashed crease line, or the translate-scale flip workaround associated with it.
+- **Home screen deck view**: Attempted to show horizontal deck of cards at top of home screen (like back face preview). Implementation was reverted as it didn't work well. Do not attempt again without explicit user request with clear UX specs.
 
 ---
 

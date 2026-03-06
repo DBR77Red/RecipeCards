@@ -9,6 +9,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider } from './src/context/LanguageContext';
 import { CardViewScreen } from './src/screens/CardViewScreen';
 import { FormScreen }     from './src/screens/FormScreen';
 import { HomeScreen }     from './src/screens/HomeScreen';
@@ -43,6 +44,7 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
+    <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
         <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
@@ -54,5 +56,6 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
+    </LanguageProvider>
   );
 }

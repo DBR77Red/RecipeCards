@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { RecipeCard } from '../components/RecipeCard';
 import { RecipeData } from '../components/RecipeCard';
+import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { getDrafts } from '../utils/storage';
@@ -11,6 +12,7 @@ import { getDrafts } from '../utils/storage';
 type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
 export function CardViewScreen({ route, navigation }: Props) {
+  const { t } = useLanguage();
   const { cardId } = route.params;
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ export function CardViewScreen({ route, navigation }: Props) {
         style={styles.backBtn}
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
       >
-        <Text style={styles.backBtnText}>← Home</Text>
+        <Text style={styles.backBtnText}>{t.cardViewBack}</Text>
       </TouchableOpacity>
 
       {loading ? (
@@ -66,13 +68,13 @@ export function CardViewScreen({ route, navigation }: Props) {
       ) : recipe ? (
         <>
           <Text style={styles.sharedBy}>
-            Recipe by{' '}
+            {t.cardViewRecipeBy}{' '}
             <Text style={styles.creatorName}>{recipe.creatorName}</Text>
           </Text>
           <RecipeCard recipe={recipe} />
         </>
       ) : (
-        <Text style={styles.notFound}>Recipe not found.</Text>
+        <Text style={styles.notFound}>{t.cardViewNotFound}</Text>
       )}
     </View>
   );
