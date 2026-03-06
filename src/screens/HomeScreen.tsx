@@ -301,7 +301,11 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
         <Text style={styles.draftSub}>
           {ingredientLabel} · {formatDate(recipe.updatedAt)}
         </Text>
-        {recipe.status === 'published' ? (
+        {recipe.isReceived ? (
+          <View style={[styles.draftBadge, styles.receivedBadgeHome]}>
+            <Text style={[styles.draftBadgeText, styles.receivedBadgeHomeText]}>RECEIVED</Text>
+          </View>
+        ) : recipe.status === 'published' ? (
           <View style={[styles.draftBadge, styles.publishedBadgeHome]}>
             <Text style={[styles.draftBadgeText, styles.publishedBadgeHomeText]}>PUBLISHED</Text>
           </View>
@@ -412,7 +416,9 @@ export function HomeScreen({ navigation }: Props) {
     <DraftListItem
       recipe={item}
       onPress={() =>
-        item.status === 'published'
+        item.isReceived
+          ? navigation.navigate('CardView', { cardId: item.id })
+          : item.status === 'published'
           ? navigation.navigate('Preview', { recipe: item })
           : navigation.navigate('Form', { recipe: item })
       }
@@ -780,6 +786,12 @@ const styles = StyleSheet.create({
   },
   publishedBadgeHomeText: {
     color: C.sage,
+  },
+  receivedBadgeHome: {
+    backgroundColor: 'rgba(99,102,241,0.10)',
+  },
+  receivedBadgeHomeText: {
+    color: '#6366F1',
   },
   chevron: {
     fontFamily: 'DMSans_400Regular',

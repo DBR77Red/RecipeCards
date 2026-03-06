@@ -143,6 +143,27 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
   return synced;
 }
 
+/**
+ * Saves a card received from another user as a read-only published record.
+ * Never editable — always has isReceived: true.
+ */
+export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> {
+  const now = new Date().toISOString();
+  const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+  const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
+  const saved: RecipeData = {
+    ...recipe,
+    id: String(Date.now()),
+    status: 'published',
+    isReceived: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  drafts.push(saved);
+  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  return saved;
+}
+
 /** Removes a draft by id. Silently does nothing if the id is not found. */
 export async function deleteDraft(id: string): Promise<void> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);

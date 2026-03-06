@@ -13,7 +13,7 @@ import { RecipeCard, RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { fetchSharedRecipe } from '../utils/api';
-import { saveDraft } from '../utils/storage';
+import { saveReceivedCard } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Receive'>;
 
@@ -37,7 +37,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
     if (!recipe || saving) return;
     setSaving(true);
     try {
-      await saveDraft({ ...recipe, id: '', status: 'published' });
+      await saveReceivedCard(recipe);
       setSaved(true);
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
