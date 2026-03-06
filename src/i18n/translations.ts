@@ -1,4 +1,4 @@
-export type Language = 'en' | 'pt' | 'de';
+export type Language = 'en' | 'pt' | 'de' | 'es';
 
 export interface Translations {
   // Common
@@ -468,6 +468,119 @@ const de: Translations = {
   somethingWentWrong: 'Etwas ist schief gelaufen.',
 };
 
+// ─── Spanish ──────────────────────────────────────────────────────────────────
+
+const es: Translations = {
+  cancel: 'Cancelar',
+  save: 'Guardar',
+  untitledRecipe: 'Receta sin título',
+
+  tabHome: 'Inicio',
+  tabFavorites: 'Favoritos',
+  tabExchange: 'Compartir',
+  tabProfile: 'Perfil',
+
+  sectionDrafts: 'BORRADORES',
+  sectionPublished: 'PUBLICADAS',
+
+  emptyTitle: 'Sin recetas todavía',
+  emptySub: 'Toca Nueva Receta para empezar.',
+
+  ingredient: 'ingrediente',
+  ingredients: 'ingredientes',
+
+  profileTitle: 'Perfil',
+  profileNameSub: 'Este nombre aparecerá en tus tarjetas de receta.',
+  profileNamePlaceholder: 'Escribe tu nombre',
+  profileLanguageLabel: 'Idioma',
+
+  viewCardTitle: 'Ver Tarjeta Compartida',
+  viewCardSub: 'Pega el ID de tarjeta de un enlace de receta compartido.',
+  viewCardPlaceholder: 'Pega el ID de tarjeta aquí',
+  viewCardBtn: 'Ver Receta',
+
+  qrCameraTitle: 'Acceso a Cámara Necesario',
+  qrCameraSub: 'Permite el acceso a la cámara para escanear códigos QR de recetas.',
+  qrCameraSettings: 'Activa la cámara en los ajustes del dispositivo.',
+  qrAllowCamera: 'Permitir Cámara',
+  qrScanTitle: 'Escanear Tarjeta de Receta',
+  qrAlignHint: 'Alinea el código QR dentro del marco',
+  qrEnterManually: 'Introducir código manualmente',
+  qrInvalidTitle: 'Código QR Inválido',
+  qrInvalidBody: 'Esto no parece ser un código QR de RecipeCards.',
+
+  comingSoonTitle: 'Próximamente',
+  comingSoonBody: 'Los favoritos estarán disponibles en una próxima actualización.',
+
+  formBack: '← Inicio',
+  formNewRecipe: 'NUEVA RECETA',
+  formTitlePlaceholder: 'Título de la receta',
+  formAddPhoto: 'Añadir Foto',
+  formServes: 'RACIONES',
+  formPrep: 'PREP',
+  formCook: 'COCCIÓN',
+  formIngredients: 'INGREDIENTES',
+  formDirections: 'INSTRUCCIONES',
+  formAddIngredient: '+ Añadir ingrediente',
+  formAddStep: '+ Añadir paso',
+  formPublish: 'Publicar',
+  formPreviewCard: 'Vista previa',
+  formSaveDraft: 'Guardar borrador',
+  formDraftSaved: '✓  Borrador guardado',
+  formIngredientPrefix: 'Ingrediente',
+  formStepPrefix: 'Paso',
+
+  voiceTapToRecord: 'Toca para grabar tu receta',
+  voiceMicNeeded: 'Se necesita permiso de micrófono',
+  voiceTranscribing: 'Transcribiendo y analizando…',
+  voiceStop: 'Parar',
+  voiceReRecord: 'Volver a grabar',
+  voiceRecordingDonePrefix: 'Grabación lista',
+  voiceMicPermTitle: 'Permiso de Micrófono',
+  voiceMicPermBody: 'Permite el acceso al micrófono para grabar recetas.',
+  voiceNoSpeechTitle: 'No se detectó voz',
+  voiceNoSpeechBody: 'Por favor, intenta grabar de nuevo y habla con claridad.',
+  voiceFillFailedTitle: 'Error al rellenar por voz',
+
+  publishConfirmHeadline: '¿Listo para publicar?',
+  publishConfirmBody: 'Una vez publicada, esta tarjeta es permanente. Sin ediciones, sin marcha atrás. Esta es tu receta, exactamente como está ahora.',
+  publishConfirmBtn: 'Publicar para siempre',
+  publishConfirmCancel: 'Todavía no',
+
+  previewBack: '← Volver',
+  previewEditRecipe: '← Editar Receta',
+
+  deleteDraftTitle: '¿Eliminar Borrador?',
+  deleteCardTitle: '¿Eliminar Tarjeta?',
+  deleteDraftBody: (title) => `"${title}" se eliminará permanentemente. Esto no se puede deshacer.`,
+  deleteCardBody: 'Todos con quienes la compartiste conservarán su copia, pero no podrán volver a compartir la tarjeta.',
+  deleteDraftBtn: 'Eliminar para siempre',
+  deleteCardBtn: 'Eliminar tarjeta',
+
+  photoPickerTitle: 'Añadir Foto',
+  photoPickerSub: '¿Cómo quieres añadir una foto?',
+  photoTakePhoto: 'Tomar Foto',
+  photoChooseLibrary: 'Elegir de la Biblioteca',
+
+  cardViewBack: '← Inicio',
+  cardViewRecipeBy: 'Receta de',
+  cardViewNotFound: 'Receta no encontrada.',
+
+  receiveBack: '← Volver',
+  receiveLoading: 'Cargando receta…',
+  receiveNotFoundTitle: 'Receta no encontrada',
+  receiveNotFoundBody: 'Esta receta no se pudo encontrar o ya no está disponible.',
+  receiveBackHome: 'Volver al Inicio',
+  receiveSharedBy: 'Compartido por',
+  receiveAddBtn: 'Añadir a Mi Colección',
+  receiveSaving: 'Guardando…',
+  receiveAdded: '¡Añadido a la colección!',
+
+  cloudSyncFailedTitle: 'Error de sincronización',
+  publishFailedTitle: 'Error al publicar',
+  somethingWentWrong: 'Algo salió mal.',
+};
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const translations: Record<Language, Translations> = { en, pt, de };
+export const translations: Record<Language, Translations> = { en, pt, de, es };

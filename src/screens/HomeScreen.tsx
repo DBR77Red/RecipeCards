@@ -131,6 +131,7 @@ function ProfileModal({ visible, currentName, onSave, onClose }: {
     { code: 'en', label: 'EN' },
     { code: 'pt', label: 'PT' },
     { code: 'de', label: 'DE' },
+    { code: 'es', label: 'ES' },
   ];
 
   return (
