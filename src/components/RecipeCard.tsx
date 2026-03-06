@@ -37,6 +37,7 @@ export interface RecipeData {
   shareUrl?: string;
   deletedAt?: string;
   isReceived?: boolean;
+  receiveCount?: number;
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────

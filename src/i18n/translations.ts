@@ -93,6 +93,8 @@ export interface Translations {
   // Preview screen
   previewBack: string;
   previewEditRecipe: string;
+  previewReceiveCount: (n: number) => string;
+  previewReceiveNone: string;
 
   // Delete modal
   deleteDraftTitle: string;
@@ -212,6 +214,8 @@ const en: Translations = {
 
   previewBack: '← Back',
   previewEditRecipe: '← Edit Recipe',
+  previewReceiveCount: (n) => n === 1 ? '1 person received this card' : `${n} people received this card`,
+  previewReceiveNone: 'No one has received this card yet',
 
   deleteDraftTitle: 'Delete Draft?',
   deleteCardTitle: 'Remove Card?',
@@ -326,6 +330,8 @@ const pt: Translations = {
 
   previewBack: '← Voltar',
   previewEditRecipe: '← Editar Receita',
+  previewReceiveCount: (n) => n === 1 ? '1 pessoa recebeu este cartão' : `${n} pessoas receberam este cartão`,
+  previewReceiveNone: 'Ninguém recebeu este cartão ainda',
 
   deleteDraftTitle: 'Excluir Rascunho?',
   deleteCardTitle: 'Remover Cartão?',
@@ -440,6 +446,8 @@ const de: Translations = {
 
   previewBack: '← Zurück',
   previewEditRecipe: '← Rezept bearbeiten',
+  previewReceiveCount: (n) => n === 1 ? '1 Person hat diese Karte erhalten' : `${n} Personen haben diese Karte erhalten`,
+  previewReceiveNone: 'Noch niemand hat diese Karte erhalten',
 
   deleteDraftTitle: 'Entwurf löschen?',
   deleteCardTitle: 'Karte entfernen?',
@@ -554,6 +562,8 @@ const es: Translations = {
 
   previewBack: '← Volver',
   previewEditRecipe: '← Editar Receta',
+  previewReceiveCount: (n) => n === 1 ? '1 persona recibió esta tarjeta' : `${n} personas recibieron esta tarjeta`,
+  previewReceiveNone: 'Nadie ha recibido esta tarjeta todavía',
 
   deleteDraftTitle: '¿Eliminar Borrador?',
   deleteCardTitle: '¿Eliminar Tarjeta?',

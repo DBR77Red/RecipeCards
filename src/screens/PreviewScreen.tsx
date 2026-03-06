@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -14,6 +14,7 @@ import {
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { RecipeCard } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
+import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
 
@@ -24,6 +25,19 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [receiveCount, setReceiveCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (recipe.status !== 'published' || !recipe.id) return;
+    supabase
+      .from('recipes')
+      .select('receive_count')
+      .eq('id', recipe.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setReceiveCount((data.receive_count as number) ?? 0);
+      });
+  }, [recipe.id, recipe.status]);
 
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
 
@@ -98,6 +112,12 @@ export function PreviewScreen({ route, navigation }: Props) {
           onPublish={handlePublish}
           publishing={publishing}
         />
+
+        {recipe.status === 'published' && receiveCount !== null && (
+          <Text style={styles.receiveCount}>
+            {receiveCount === 0 ? t.previewReceiveNone : t.previewReceiveCount(receiveCount)}
+          </Text>
+        )}
       </ScrollView>
 
     </View>
@@ -126,5 +146,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.45)',
     letterSpacing: 0.3,
+  },
+  receiveCount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.35)',
+    marginTop: 20,
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
 });

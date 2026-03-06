@@ -149,6 +149,21 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
  */
 export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> {
   const now = new Date().toISOString();
+
+  // Increment receive count on the original Supabase record (best-effort)
+  try {
+    const { data } = await supabase
+      .from('recipes')
+      .select('receive_count')
+      .eq('id', recipe.id)
+      .single();
+    const newCount = ((data?.receive_count as number) ?? 0) + 1;
+    await supabase
+      .from('recipes')
+      .update({ receive_count: newCount })
+      .eq('id', recipe.id);
+  } catch { /* non-critical — silently ignore */ }
+
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);
   const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
   const saved: RecipeData = {
