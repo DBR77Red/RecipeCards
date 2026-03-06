@@ -42,6 +42,7 @@ export function PreviewScreen({ route, navigation }: Props) {
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
 
   const handleShare = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await Share.share({
       message: `${recipe.creatorName} shared a recipe with you: ${shareUrl}`,
     });

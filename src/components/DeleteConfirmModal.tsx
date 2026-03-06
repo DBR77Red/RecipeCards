@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
@@ -48,7 +49,7 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
           <Text style={styles.title}>{heading}</Text>
           <Text style={styles.body}>{body}</Text>
-          <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
+          <TouchableOpacity style={styles.confirmBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); onConfirm(); }}>
             <Text style={styles.confirmBtnText}>{confirmText}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>

@@ -375,6 +375,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const handleSaveDraft = async () => {
     try {
       await onSaveDraft();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast();
     } catch { /* silent */ }
   };
