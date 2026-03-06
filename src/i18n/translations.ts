@@ -15,6 +15,7 @@ export interface Translations {
   // List sections
   sectionDrafts: string;
   sectionPublished: string;
+  sectionReceived: string;
 
   // Empty state
   emptyTitle: string;
@@ -143,6 +144,7 @@ const en: Translations = {
 
   sectionDrafts: 'YOUR DRAFTS',
   sectionPublished: 'PUBLISHED',
+  sectionReceived: 'RECEIVED',
 
   emptyTitle: 'No recipes yet',
   emptySub: 'Tap New Recipe to get started.',
@@ -256,6 +258,7 @@ const pt: Translations = {
 
   sectionDrafts: 'RASCUNHOS',
   sectionPublished: 'PUBLICADAS',
+  sectionReceived: 'RECEBIDAS',
 
   emptyTitle: 'Nenhuma receita ainda',
   emptySub: 'Toque em Nova Receita para começar.',
@@ -369,6 +372,7 @@ const de: Translations = {
 
   sectionDrafts: 'ENTWÜRFE',
   sectionPublished: 'VERÖFFENTLICHT',
+  sectionReceived: 'ERHALTEN',
 
   emptyTitle: 'Noch keine Rezepte',
   emptySub: 'Tippe auf Neues Rezept, um zu beginnen.',
@@ -482,6 +486,7 @@ const es: Translations = {
 
   sectionDrafts: 'BORRADORES',
   sectionPublished: 'PUBLICADAS',
+  sectionReceived: 'RECIBIDAS',
 
   emptyTitle: 'Sin recetas todavía',
   emptySub: 'Toca Nueva Receta para empezar.',

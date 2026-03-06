@@ -343,6 +343,7 @@ export function HomeScreen({ navigation }: Props) {
   const { t } = useLanguage();
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
   const [published, setPublished] = useState<RecipeData[]>([]);
+  const [received, setReceived] = useState<RecipeData[]>([]);
   const [userName, setUserNameState] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
@@ -359,9 +360,11 @@ export function HomeScreen({ navigation }: Props) {
   const loadData = useCallback(async () => {
     const all = await getDrafts();
     const draftsList = all.filter(r => r.status === 'draft');
-    const publishedList = all.filter(r => r.status === 'published');
+    const publishedList = all.filter(r => r.status === 'published' && !r.isReceived);
+    const receivedList = all.filter(r => r.isReceived);
     setDrafts(draftsList);
     setPublished(publishedList);
+    setReceived(receivedList);
     setKey(k => k + 1);
   }, []);
 
@@ -407,7 +410,8 @@ export function HomeScreen({ navigation }: Props) {
     }
     const all = await getDrafts();
     setDrafts(all.filter(r => r.status === 'draft'));
-    setPublished(all.filter(r => r.status === 'published'));
+    setPublished(all.filter(r => r.status === 'published' && !r.isReceived));
+    setReceived(all.filter(r => r.isReceived));
   };
 
   const handleDeleteCancel = () => setDeleteTarget(null);
@@ -431,9 +435,10 @@ export function HomeScreen({ navigation }: Props) {
   const sections: ListSection[] = [
     ...(drafts.length > 0 ? [{ title: t.sectionDrafts, data: drafts }] : []),
     ...(published.length > 0 ? [{ title: t.sectionPublished, data: published }] : []),
+    ...(received.length > 0 ? [{ title: t.sectionReceived, data: received }] : []),
   ];
 
-  const isEmpty = drafts.length === 0 && published.length === 0;
+  const isEmpty = drafts.length === 0 && published.length === 0 && received.length === 0;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -443,7 +448,7 @@ export function HomeScreen({ navigation }: Props) {
         keyExtractor={item => item.id}
         renderItem={renderItem}
         renderSectionHeader={({ section: { title } }) => (
-          <Text style={[styles.sectionLabel, title === t.sectionPublished && drafts.length > 0 && styles.sectionLabelSpaced]}>
+          <Text style={[styles.sectionLabel, title !== sections[0]?.title && styles.sectionLabelSpaced]}>
             {title}
           </Text>
         )}
