@@ -39,12 +39,13 @@ export function PreviewScreen({ route, navigation }: Props) {
       });
   }, [recipe.id, recipe.status]);
 
-  const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
+  const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await Share.share({
-      message: `${recipe.creatorName} shared a recipe with you: ${shareUrl}`,
+      message: `${recipe.creatorName} shared a recipe with you: ${webUrl}`,
+      url: webUrl,
     });
   };
 
