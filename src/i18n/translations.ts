@@ -83,6 +83,9 @@ export interface Translations {
   voiceNoSpeechTitle: string;
   voiceNoSpeechBody: string;
   voiceFillFailedTitle: string;
+  voiceFailedModalTitle: string;
+  voiceFailedModalBody: string;
+  voiceFailedModalRetry: string;
 
   // Publish confirm
   publishConfirmHeadline: string;
@@ -144,6 +147,7 @@ export interface Translations {
   // Cloud / publish alerts
   cloudSyncFailedTitle: string;
   publishFailedTitle: string;
+  saveDraftFailedTitle: string;
   somethingWentWrong: string;
 }
 
@@ -221,6 +225,9 @@ const en: Translations = {
   voiceNoSpeechTitle: 'No speech detected',
   voiceNoSpeechBody: 'Please try recording again and speak clearly.',
   voiceFillFailedTitle: 'Voice fill failed',
+  voiceFailedModalTitle: "We couldn't hear you",
+  voiceFailedModalBody: "For some reason we could not get your voice. Could you try again and maybe speak a little louder?",
+  voiceFailedModalRetry: 'Try Again',
 
   publishConfirmHeadline: 'Ready to publish?',
   publishConfirmBody: 'Once published, this card is permanent. No edits, no take-backs. This is your recipe, exactly as it is right now.',
@@ -274,6 +281,7 @@ const en: Translations = {
 
   cloudSyncFailedTitle: 'Cloud sync failed',
   publishFailedTitle: 'Publish failed',
+  saveDraftFailedTitle: 'Save failed',
   somethingWentWrong: 'Something went wrong.',
 };
 
@@ -351,6 +359,9 @@ const pt: Translations = {
   voiceNoSpeechTitle: 'Nenhuma fala detectada',
   voiceNoSpeechBody: 'Por favor, tente gravar novamente e fale claramente.',
   voiceFillFailedTitle: 'Falha no preenchimento por voz',
+  voiceFailedModalTitle: 'Não conseguimos ouvir você',
+  voiceFailedModalBody: 'Por algum motivo não conseguimos captar sua voz. Poderia tentar novamente e falar um pouco mais alto?',
+  voiceFailedModalRetry: 'Tentar Novamente',
 
   publishConfirmHeadline: 'Pronto para publicar?',
   publishConfirmBody: 'Uma vez publicado, este cartão é permanente. Sem edições, sem volta. Esta é a sua receita, exatamente como está agora.',
@@ -404,6 +415,7 @@ const pt: Translations = {
 
   cloudSyncFailedTitle: 'Falha na sincronização',
   publishFailedTitle: 'Falha ao publicar',
+  saveDraftFailedTitle: 'Falha ao salvar',
   somethingWentWrong: 'Algo deu errado.',
 };
 
@@ -481,6 +493,9 @@ const de: Translations = {
   voiceNoSpeechTitle: 'Keine Sprache erkannt',
   voiceNoSpeechBody: 'Bitte versuche erneut aufzunehmen und sprich deutlich.',
   voiceFillFailedTitle: 'Sprachausfüllung fehlgeschlagen',
+  voiceFailedModalTitle: 'Wir konnten dich nicht hören',
+  voiceFailedModalBody: 'Aus irgendeinem Grund konnten wir deine Stimme nicht aufnehmen. Könntest du es nochmal versuchen und vielleicht etwas lauter sprechen?',
+  voiceFailedModalRetry: 'Nochmal versuchen',
 
   publishConfirmHeadline: 'Bereit zum Veröffentlichen?',
   publishConfirmBody: 'Einmal veröffentlicht, ist diese Karte dauerhaft. Keine Bearbeitung, kein Zurück. Das ist dein Rezept, genau so wie es jetzt ist.',
@@ -534,6 +549,7 @@ const de: Translations = {
 
   cloudSyncFailedTitle: 'Cloud-Sync fehlgeschlagen',
   publishFailedTitle: 'Veröffentlichung fehlgeschlagen',
+  saveDraftFailedTitle: 'Speichern fehlgeschlagen',
   somethingWentWrong: 'Etwas ist schief gelaufen.',
 };
 
@@ -611,6 +627,9 @@ const es: Translations = {
   voiceNoSpeechTitle: 'No se detectó voz',
   voiceNoSpeechBody: 'Por favor, intenta grabar de nuevo y habla con claridad.',
   voiceFillFailedTitle: 'Error al rellenar por voz',
+  voiceFailedModalTitle: 'No pudimos escucharte',
+  voiceFailedModalBody: 'Por alguna razón no pudimos captar tu voz. ¿Podrías intentarlo de nuevo y hablar un poco más alto?',
+  voiceFailedModalRetry: 'Intentar de nuevo',
 
   publishConfirmHeadline: '¿Listo para publicar?',
   publishConfirmBody: 'Una vez publicada, esta tarjeta es permanente. Sin ediciones, sin marcha atrás. Esta es tu receta, exactamente como está ahora.',
@@ -664,6 +683,7 @@ const es: Translations = {
 
   cloudSyncFailedTitle: 'Error de sincronización',
   publishFailedTitle: 'Error al publicar',
+  saveDraftFailedTitle: 'Error al guardar',
   somethingWentWrong: 'Algo salió mal.',
 };
 

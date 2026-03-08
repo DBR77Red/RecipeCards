@@ -23,6 +23,7 @@ import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { PhotoPickerModal } from './PhotoPickerModal';
 import { RecipeData } from './RecipeCard';
+import { VoiceFailedModal } from './VoiceFailedModal';
 
 // Replace with a free audio-wave JSON URL from https://lottiefiles.com/free-animations/audio-wave
 // Click an animation → Share → "Lottie Animation URL" → copy the .json link
@@ -340,13 +341,8 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       resetRecorder();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      if (msg === 'no_speech') {
-        Alert.alert(t.voiceNoSpeechTitle, t.voiceNoSpeechBody);
-      } else {
-        Alert.alert(t.voiceFillFailedTitle, msg);
-      }
+    } catch {
+      setShowVoiceFailed(true);
       resetRecorder();
     } finally {
       setProcessing(false);
@@ -377,7 +373,9 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       await onSaveDraft();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast();
-    } catch { /* silent */ }
+    } catch {
+      Alert.alert(t.saveDraftFailedTitle, t.somethingWentWrong);
+    }
   };
 
   const toastTranslateY = toastAnim.interpolate({
@@ -388,6 +386,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   // ── Publish confirmation modal ─────────────────────────────────────────────
 
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showVoiceFailed, setShowVoiceFailed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
@@ -558,6 +557,12 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
         onTakePhoto={handleTakePhoto}
         onChooseLibrary={handleChooseLibrary}
         onCancel={() => setShowPhotoPicker(false)}
+      />
+
+      <VoiceFailedModal
+        visible={showVoiceFailed}
+        onRetry={() => { setShowVoiceFailed(false); startRecording(); }}
+        onDismiss={() => setShowVoiceFailed(false)}
       />
 
       {/* Publish confirmation modal */}

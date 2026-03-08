@@ -23,8 +23,6 @@ export async function getDrafts(): Promise<RecipeData[]> {
     const raw = await AsyncStorage.getItem(DRAFTS_KEY);
     if (!raw) return [];
     const drafts: RecipeData[] = JSON.parse(raw);
-    console.log('Storage raw:', raw);
-    console.log('Storage parsed:', drafts.map(d => ({ id: d.id, status: d.status, title: d.title })));
     return [...drafts]
       .filter(d => !d.deletedAt)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

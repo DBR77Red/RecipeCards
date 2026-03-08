@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -350,6 +350,7 @@ export function HomeScreen({ navigation }: Props) {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
+  const listRef = useRef<SectionList<RecipeData>>(null);
 
   useEffect(() => {
     getUserName().then(setUserNameState);
@@ -444,6 +445,7 @@ export function HomeScreen({ navigation }: Props) {
     <SafeAreaView style={styles.screen}>
       {/* Recipe list */}
       <SectionList
+        ref={listRef}
         sections={sections}
         keyExtractor={item => item.id}
         renderItem={renderItem}
@@ -461,7 +463,9 @@ export function HomeScreen({ navigation }: Props) {
 
       {/* Tab bar */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => {}}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => {
+          if (sections.length > 0) listRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, animated: true });
+        }}>
           <HomeIcon color={C.terracotta} />
           <Text style={[styles.tabLabel, styles.tabLabelActive]}>{t.tabHome}</Text>
         </TouchableOpacity>
