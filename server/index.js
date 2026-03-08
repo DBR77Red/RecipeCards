@@ -144,6 +144,7 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log('RecipeCards API listening on http://localhost:3001');
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`RecipeCards API listening on port ${PORT}`);
 });

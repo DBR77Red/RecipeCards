@@ -110,6 +110,21 @@ export interface Translations {
   photoTakePhoto: string;
   photoChooseLibrary: string;
 
+  // RecipeCard component
+  cardBy: string;
+  cardServes: string;
+  cardPrep: string;
+  cardCook: string;
+  cardScanHint: string;
+  cardShareBtn: string;
+  cardReadyToShare: string;
+  cardPublishHint: string;
+  cardPublishing: string;
+  cardPublishBtn: string;
+  cardTapToFlip: string;
+  cardIngredients: string;
+  cardInstructions: string;
+
   // CardView screen
   cardViewBack: string;
   cardViewRecipeBy: string;
@@ -229,6 +244,20 @@ const en: Translations = {
   photoTakePhoto: 'Take Photo',
   photoChooseLibrary: 'Choose from Library',
 
+  cardBy: 'By',
+  cardServes: 'Serves',
+  cardPrep: 'Prep',
+  cardCook: 'Cook',
+  cardScanHint: 'Scan to receive this recipe',
+  cardShareBtn: 'Share Recipe',
+  cardReadyToShare: 'Ready to share?',
+  cardPublishHint: 'Publish to get your QR code',
+  cardPublishing: 'Publishing…',
+  cardPublishBtn: 'Publish to Share',
+  cardTapToFlip: 'Tap to flip back',
+  cardIngredients: 'Ingredients',
+  cardInstructions: 'Instructions',
+
   cardViewBack: '← Home',
   cardViewRecipeBy: 'Recipe by',
   cardViewNotFound: 'Recipe not found.',
@@ -344,6 +373,20 @@ const pt: Translations = {
   photoPickerSub: 'Como você gostaria de adicionar uma foto?',
   photoTakePhoto: 'Tirar Foto',
   photoChooseLibrary: 'Escolher da Biblioteca',
+
+  cardBy: 'Por',
+  cardServes: 'Porções',
+  cardPrep: 'Prep',
+  cardCook: 'Cozimento',
+  cardScanHint: 'Escaneie para receber esta receita',
+  cardShareBtn: 'Compartilhar Receita',
+  cardReadyToShare: 'Pronto para compartilhar?',
+  cardPublishHint: 'Publique para obter seu QR code',
+  cardPublishing: 'Publicando…',
+  cardPublishBtn: 'Publicar e Compartilhar',
+  cardTapToFlip: 'Toque para virar',
+  cardIngredients: 'Ingredientes',
+  cardInstructions: 'Instruções',
 
   cardViewBack: '← Início',
   cardViewRecipeBy: 'Receita de',
@@ -461,6 +504,20 @@ const de: Translations = {
   photoTakePhoto: 'Foto aufnehmen',
   photoChooseLibrary: 'Aus Bibliothek wählen',
 
+  cardBy: 'Von',
+  cardServes: 'Portionen',
+  cardPrep: 'Vorbereitung',
+  cardCook: 'Kochen',
+  cardScanHint: 'Scannen zum Empfangen dieses Rezepts',
+  cardShareBtn: 'Rezept teilen',
+  cardReadyToShare: 'Bereit zum Teilen?',
+  cardPublishHint: 'Veröffentlichen für QR-Code',
+  cardPublishing: 'Wird veröffentlicht…',
+  cardPublishBtn: 'Veröffentlichen & Teilen',
+  cardTapToFlip: 'Tippe zum Zurückdrehen',
+  cardIngredients: 'Zutaten',
+  cardInstructions: 'Anleitung',
+
   cardViewBack: '← Start',
   cardViewRecipeBy: 'Rezept von',
   cardViewNotFound: 'Rezept nicht gefunden.',
@@ -576,6 +633,20 @@ const es: Translations = {
   photoPickerSub: '¿Cómo quieres añadir una foto?',
   photoTakePhoto: 'Tomar Foto',
   photoChooseLibrary: 'Elegir de la Biblioteca',
+
+  cardBy: 'Por',
+  cardServes: 'Raciones',
+  cardPrep: 'Prep',
+  cardCook: 'Cocción',
+  cardScanHint: 'Escanea para recibir esta receta',
+  cardShareBtn: 'Compartir Receta',
+  cardReadyToShare: '¿Listo para compartir?',
+  cardPublishHint: 'Publica para obtener tu código QR',
+  cardPublishing: 'Publicando…',
+  cardPublishBtn: 'Publicar y Compartir',
+  cardTapToFlip: 'Toca para voltear',
+  cardIngredients: 'Ingredientes',
+  cardInstructions: 'Instrucciones',
 
   cardViewBack: '← Inicio',
   cardViewRecipeBy: 'Receta de',

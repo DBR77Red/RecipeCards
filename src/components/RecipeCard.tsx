@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { useLanguage } from '../context/LanguageContext';
 
 // LayoutAnimation requires this flag on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -80,6 +81,7 @@ function CardFront({
   onPublish?: () => void;
   publishing?: boolean;
 }) {
+  const { t } = useLanguage();
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
   const published = recipe.status === 'published';
 
@@ -113,17 +115,17 @@ function CardFront({
 
         <View style={styles.scrimText} pointerEvents="none">
           <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
-          <Text style={styles.photoMeta}>By {recipe.creatorName} · 🔀 —</Text>
+          <Text style={styles.photoMeta}>{t.cardBy} {recipe.creatorName} · 🔀 —</Text>
         </View>
       </Pressable>
 
       <Pressable style={[styles.bottomZone, published && styles.bottomZonePub]} onPress={onFlip}>
         <View style={styles.statsRow}>
-          <Stat label="Serves" value={recipe.servings} />
+          <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
-          <Stat label="Prep"   value={recipe.prepTime} />
+          <Stat label={t.cardPrep}   value={recipe.prepTime} />
           <View style={styles.statDivider} />
-          <Stat label="Cook"   value={recipe.cookTime} />
+          <Stat label={t.cardCook}   value={recipe.cookTime} />
         </View>
 
         <View style={styles.qrDivider} />
@@ -133,9 +135,9 @@ function CardFront({
             <View style={styles.qrBox}>
               <QRCode value={shareUrl} size={148} />
             </View>
-            <Text style={styles.qrLabel}>Scan to receive this recipe</Text>
+            <Text style={styles.qrLabel}>{t.cardScanHint}</Text>
             <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
-              <Text style={styles.shareBtnText}>Share Recipe</Text>
+              <Text style={styles.shareBtnText}>{t.cardShareBtn}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -143,15 +145,15 @@ function CardFront({
             <View style={styles.publishPlaceholder}>
               <Text style={styles.publishPlaceholderIcon}>✦</Text>
             </View>
-            <Text style={styles.publishTitle}>Ready to share?</Text>
-            <Text style={styles.qrLabel}>Publish to get your QR code</Text>
+            <Text style={styles.publishTitle}>{t.cardReadyToShare}</Text>
+            <Text style={styles.qrLabel}>{t.cardPublishHint}</Text>
             <TouchableOpacity
               style={[styles.shareBtn, styles.publishBtn, publishing && styles.publishBtnDisabled]}
               onPress={onPublish}
               disabled={publishing}
             >
               <Text style={styles.publishBtnText}>
-                {publishing ? 'Publishing…' : 'Publish to Share'}
+                {publishing ? t.cardPublishing : t.cardPublishBtn}
               </Text>
             </TouchableOpacity>
           </View>
@@ -168,17 +170,19 @@ function CardBack({ recipe, onFlip, onMeasured }: {
   onFlip: () => void;
   onMeasured: (h: number) => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <Pressable onPress={onFlip} onLayout={e => onMeasured(e.nativeEvent.layout.height)}>
       {/* Header */}
       <View style={styles.backHeader}>
         <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
-        <Text style={styles.backHint}>Tap to flip back</Text>
+        <Text style={styles.backHint}>{t.cardTapToFlip}</Text>
       </View>
 
       {/* Content — fully expanded, no clipping */}
       <View style={styles.backContentInner}>
-        <Text style={styles.sectionHeading}>Ingredients</Text>
+        <Text style={styles.sectionHeading}>{t.cardIngredients}</Text>
         {recipe.ingredients.map((ing, i) => (
           <View key={i} style={styles.bulletRow}>
             <View style={styles.bulletDot} />
@@ -186,7 +190,7 @@ function CardBack({ recipe, onFlip, onMeasured }: {
           </View>
         ))}
 
-        <Text style={[styles.sectionHeading, { marginTop: 14 }]}>Instructions</Text>
+        <Text style={[styles.sectionHeading, { marginTop: 14 }]}>{t.cardInstructions}</Text>
         {recipe.directions.map((step, i) => (
           <View key={i} style={styles.stepRow}>
             <Text style={styles.stepNum}>{i + 1}.</Text>
