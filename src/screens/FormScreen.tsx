@@ -48,11 +48,8 @@ export function FormScreen({ route, navigation }: Props) {
       navigation.replace('Preview', { recipe: local });
       try {
         await syncToCloud(local);
-      } catch (cloudErr: any) {
-        Alert.alert(
-          t.cloudSyncFailedTitle,
-          `Your card is saved locally and the QR works on this device, but other phones won't be able to load it.\n\nError: ${cloudErr?.message ?? 'Unknown error'}`
-        );
+      } catch {
+        // Card stays with cloudSyncStatus: 'pending' — App.tsx will retry on next foreground
       }
     } catch (err: any) {
       Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);

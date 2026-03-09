@@ -77,6 +77,7 @@ export async function markPublishedLocally(id: string): Promise<RecipeData> {
     status: 'published',
     updatedAt: now,
     shareUrl: `recipecards://card/${id}`,
+    cloudSyncStatus: 'pending',
   };
   drafts[idx] = published;
   await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
@@ -129,8 +130,8 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
   });
   if (dbError) throw new Error(`Database sync failed: ${dbError.message}`);
 
-  // Update local storage with the public cloud photo URL
-  const synced: RecipeData = { ...recipe, photo: photoUrl, updatedAt: now };
+  // Update local storage with the public cloud photo URL and mark as synced
+  const synced: RecipeData = { ...recipe, photo: photoUrl, updatedAt: now, cloudSyncStatus: 'synced' };
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);
   const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
   const idx = drafts.findIndex(d => d.id === recipe.id);

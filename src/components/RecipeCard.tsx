@@ -39,6 +39,7 @@ export interface RecipeData {
   deletedAt?: string;
   isReceived?: boolean;
   receiveCount?: number;
+  cloudSyncStatus?: 'synced' | 'pending' | 'failed';
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────

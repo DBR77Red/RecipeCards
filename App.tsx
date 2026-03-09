@@ -7,6 +7,7 @@ import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-d
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
@@ -17,6 +18,7 @@ import { PreviewScreen }  from './src/screens/PreviewScreen';
 import { ReceiveScreen }  from './src/screens/ReceiveScreen';
 import { RootStackParamList } from './src/types/navigation';
 import { purgeDeletedRecipes } from './src/utils/storage';
+import { retryPendingSyncs } from './src/utils/syncQueue';
 
 enableScreens();
 
@@ -39,7 +41,15 @@ export default function App() {
     DMSans_600SemiBold,
   });
 
-  useEffect(() => { purgeDeletedRecipes(); }, []);
+  useEffect(() => {
+    purgeDeletedRecipes();
+    retryPendingSyncs();
+
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') retryPendingSyncs();
+    });
+    return () => subscription.remove();
+  }, []);
 
   if (!fontsLoaded) return null;
 

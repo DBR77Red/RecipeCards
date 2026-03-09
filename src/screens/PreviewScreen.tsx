@@ -64,15 +64,13 @@ export function PreviewScreen({ route, navigation }: Props) {
       setRecipe(local);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Step 2: sync photo + recipe to Supabase
+      // Step 2: sync photo + recipe to Supabase (best-effort — retried on next foreground if it fails)
       try {
         const synced = await syncToCloud(local);
         setRecipe(synced);
-      } catch (cloudErr: any) {
-        Alert.alert(
-          t.cloudSyncFailedTitle,
-          `Your card is saved locally and the QR works on this device, but other phones won't be able to load it.\n\nError: ${cloudErr?.message ?? 'Unknown error'}\n\nCheck that the "recipes" table and "recipe-photos" bucket exist in Supabase and that the bucket is set to Public.`
-        );
+      } catch {
+        // Card stays with cloudSyncStatus: 'pending' — App.tsx will retry on next foreground
+        // and fire a local notification when it succeeds
       }
     } catch (err: any) {
       Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);

@@ -318,8 +318,13 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    if (recState === 'stopped' && audioUri) {
+    if (recState !== 'stopped') return;
+    if (audioUri) {
       handleVoiceComplete(audioUri);
+    } else {
+      // Recording stopped but no audio was captured (null URI) — show error instead of silently doing nothing
+      setShowVoiceFailed(true);
+      resetRecorder();
     }
   }, [recState, audioUri]);
 
@@ -341,7 +346,8 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       resetRecorder();
-    } catch {
+    } catch (err) {
+      console.warn('[voice] handleVoiceComplete failed:', err);
       setShowVoiceFailed(true);
       resetRecorder();
     } finally {

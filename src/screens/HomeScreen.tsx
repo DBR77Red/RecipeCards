@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   Image,
   Modal,
   SectionList,
@@ -21,6 +22,7 @@ import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
+import { onSyncComplete } from '../utils/notifications';
 import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -306,8 +308,13 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
             <Text style={[styles.draftBadgeText, styles.receivedBadgeHomeText]}>RECEIVED</Text>
           </View>
         ) : recipe.status === 'published' ? (
-          <View style={[styles.draftBadge, styles.publishedBadgeHome]}>
-            <Text style={[styles.draftBadgeText, styles.publishedBadgeHomeText]}>PUBLISHED</Text>
+          <View style={styles.publishedRow}>
+            <View style={[styles.draftBadge, styles.publishedBadgeHome]}>
+              <Text style={[styles.draftBadgeText, styles.publishedBadgeHomeText]}>PUBLISHED</Text>
+            </View>
+            {recipe.cloudSyncStatus === 'pending' && (
+              <Text style={styles.syncingLabel}>↑ syncing…</Text>
+            )}
           </View>
         ) : (
           <View style={styles.draftBadge}>
@@ -337,6 +344,44 @@ function EmptyState() {
   );
 }
 
+// ─── Sync toast ───────────────────────────────────────────────────────────────
+
+function SyncToast({ message }: { message: string | null }) {
+  const translateY = useRef(new Animated.Value(-80)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
+  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!message) return;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    // Slide in
+    Animated.parallel([
+      Animated.timing(translateY, { toValue: 0,   duration: 220, useNativeDriver: true }),
+      Animated.timing(opacity,    { toValue: 1,   duration: 220, useNativeDriver: true }),
+    ]).start();
+
+    // Slide out after 3s
+    timerRef.current = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(translateY, { toValue: -80, duration: 280, useNativeDriver: true }),
+        Animated.timing(opacity,    { toValue: 0,   duration: 280, useNativeDriver: true }),
+      ]).start();
+    }, 3000);
+
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [message]);
+
+  if (!message) return null;
+
+  return (
+    <Animated.View style={[styles.syncToast, { opacity, transform: [{ translateY }] }]}>
+      <Text style={styles.syncToastText}>✓ {message} is now live</Text>
+    </Animated.View>
+  );
+}
+
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
 export function HomeScreen({ navigation }: Props) {
@@ -350,7 +395,17 @@ export function HomeScreen({ navigation }: Props) {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
+  const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
   const listRef = useRef<SectionList<RecipeData>>(null);
+
+  // Listen for successful background syncs and refresh the list
+  useEffect(() => {
+    const unsub = onSyncComplete(title => {
+      setSyncToastMessage(title);
+      loadData(); // refresh badges
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     getUserName().then(setUserNameState);
@@ -560,6 +615,8 @@ export function HomeScreen({ navigation }: Props) {
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
       />
+
+      <SyncToast message={syncToastMessage} />
     </SafeAreaView>
   );
 }
@@ -808,6 +865,17 @@ const styles = StyleSheet.create({
     color: C.label,
     lineHeight: 20,
   },
+  publishedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  syncingLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 10,
+    color: C.muted,
+    letterSpacing: 0.2,
+  },
 
   // Language picker
   modalLanguageLabel: {
@@ -843,6 +911,30 @@ const styles = StyleSheet.create({
   },
   langPillTextActive: {
     color: C.btnText,
+  },
+
+  // Sync toast
+  syncToast: {
+    position: 'absolute',
+    top: 12,
+    left: 20,
+    right: 20,
+    backgroundColor: '#1C1917',
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  syncToastText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: '#F7F5F2',
+    letterSpacing: 0.2,
   },
 
   // Separator

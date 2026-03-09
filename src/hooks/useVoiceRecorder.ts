@@ -51,8 +51,11 @@ export function useVoiceRecorder(): VoiceRecorderResult {
     clearTick();
     try {
       await recorder.stop();
-      setAudioUri(recorder.uri ?? null);
-    } catch {
+      const uri = recorder.uri ?? null;
+      console.log('[voice] recorder.stop() uri:', uri);
+      setAudioUri(uri);
+    } catch (err) {
+      console.warn('[voice] recorder.stop() failed:', err);
       setAudioUri(null);
     }
     setState('stopped');
