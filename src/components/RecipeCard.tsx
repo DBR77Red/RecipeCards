@@ -55,8 +55,8 @@ const C = {
 
 const CARD_W      = 320;
 const CARD_H      = 460;
-const CARD_H_PUB  = 720; // published front: photo + stats + QR 148 + label + share btn
-const PHOTO_H     = Math.round(CARD_H * 0.65); // 299
+const CARD_H_PUB  = 760; // published front: photo + stats + QR + label + share btn
+const PHOTO_H     = 445; // golden ratio split — photo dominant at 58% of card height
 const RADIUS      = 16;
 const P           = 1400;
 
@@ -105,10 +105,10 @@ function CardFront({
           <Defs>
             <LinearGradient id="scrimGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <Stop offset="0%" stopColor="black" stopOpacity={0} />
-              <Stop offset="38%" stopColor="black" stopOpacity={0} />
-              <Stop offset="60%" stopColor="black" stopOpacity={0.18} />
-              <Stop offset="82%" stopColor="black" stopOpacity={0.32} />
-              <Stop offset="100%" stopColor="black" stopOpacity={0.5} />
+              <Stop offset="55%" stopColor="black" stopOpacity={0} />
+              <Stop offset="72%" stopColor="black" stopOpacity={0.25} />
+              <Stop offset="88%" stopColor="black" stopOpacity={0.5} />
+              <Stop offset="100%" stopColor="black" stopOpacity={0.72} />
             </LinearGradient>
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#scrimGradient)" />
@@ -145,7 +145,7 @@ function CardFront({
         {published ? (
           <View style={styles.qrCenter}>
             <View style={styles.qrBox}>
-              <QRCode value={shareUrl} size={148} />
+              <QRCode value={shareUrl} size={110} />
             </View>
             <Text style={styles.qrLabel}>{t.cardScanHint}</Text>
             <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
@@ -393,9 +393,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingTop: 14,
-    paddingBottom: 12,
-    gap: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    gap: 8,
   },
   statsRow: {
     flexDirection: 'row',
@@ -433,7 +433,8 @@ const styles = StyleSheet.create({
   },
   bottomZonePub: {
     justifyContent: 'flex-start',
-    gap: 16,
+    gap: 10,
+    paddingBottom: 24,
   },
   qrDivider: {
     width: '100%',
@@ -442,11 +443,11 @@ const styles = StyleSheet.create({
   },
   qrCenter: {
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
     width: '100%',
   },
   qrBox: {
-    padding: 14,
+    padding: 10,
     backgroundColor: C.white,
     borderRadius: 12,
     borderWidth: 1,
@@ -468,6 +469,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
     backgroundColor: C.bg,
+    marginBottom: 8,
   },
   shareBtnText: {
     fontFamily: 'DMSans_600SemiBold',

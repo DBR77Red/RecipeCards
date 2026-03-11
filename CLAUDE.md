@@ -91,7 +91,7 @@ The app has two palettes. Do not mix them across contexts.
 ## RecipeCard Rules
 
 - Card width: always `CARD_W = 320`
-- Front height: always `CARD_H_PUB = 720` regardless of draft/published status
+- Front height: always `CARD_H_PUB = 760` regardless of draft/published status
 - Back height: content-driven — measured via `onLayout`, stored in a `ref` (not state) so `handleFlip` always reads the latest value without stale-closure issues. Minimum clamped to `frontH`.
 - **Flip trigger placement**: the flip `Pressable` must only cover the photo zone on the front face, and the entire back face. Never wrap the whole card in a single `Pressable` — it blocks inner button touches (share, publish).
 - Both face shells use `pointerEvents="none"` when hidden (opacity 0) to prevent invisible views from intercepting touches.
