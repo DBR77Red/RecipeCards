@@ -390,11 +390,11 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
     borderTopWidth: 1,
     borderTopColor: C.border,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingTop: 10,
-    paddingBottom: 10,
+    paddingBottom: 24,
     gap: 8,
   },
   statsRow: {
@@ -432,9 +432,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bottomZonePub: {
-    justifyContent: 'flex-start',
     gap: 10,
-    paddingBottom: 24,
   },
   qrDivider: {
     width: '100%',
@@ -478,8 +476,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   publishPlaceholder: {
-    width: 176,
-    height: 176,
+    width: 130,
+    height: 130,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: C.border,
@@ -489,7 +487,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   publishPlaceholderIcon: {
-    fontSize: 36,
+    fontSize: 28,
     color: C.border,
   },
   publishTitle: {
