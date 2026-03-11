@@ -7,7 +7,7 @@ import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
-import { getDrafts } from '../utils/storage';
+import { getDrafts, incrementReceiveCount } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
@@ -42,6 +42,7 @@ export function CardViewScreen({ route, navigation }: Props) {
           updatedAt: data.updated_at,
           shareUrl: data.share_url,
         });
+        incrementReceiveCount(cardId);
       } else {
         // Fallback: check local storage (for recipes not yet published to cloud)
         const drafts = await getDrafts();

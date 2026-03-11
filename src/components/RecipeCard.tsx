@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Path, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 
 // LayoutAnimation requires this flag on Android
@@ -116,7 +116,18 @@ function CardFront({
 
         <View style={styles.scrimText} pointerEvents="none">
           <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
-          <Text style={styles.photoMeta}>{t.cardBy} {recipe.creatorName} · 🔀 —</Text>
+          <View style={styles.photoMetaRow}>
+            <Text style={styles.photoMeta}>{t.cardBy} {recipe.creatorName}</Text>
+            <View style={styles.photoMetaCount}>
+              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ marginRight: 4 }}>
+                <Circle cx="9" cy="7" r="3" stroke="#ffffff" strokeWidth="2" />
+                <Path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                <Circle cx="18" cy="8" r="2.2" stroke="#ffffff" strokeWidth="2" />
+                <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+              </Svg>
+              <Text style={styles.photoMetaCountText}>{recipe.receiveCount ?? 0}</Text>
+            </View>
+          </View>
         </View>
       </Pressable>
 
@@ -138,6 +149,12 @@ function CardFront({
             </View>
             <Text style={styles.qrLabel}>{t.cardScanHint}</Text>
             <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
+                <Circle cx="9" cy="7" r="3" stroke={C.amber} strokeWidth="1.8" />
+                <Path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round" />
+                <Circle cx="18" cy="8" r="2.2" stroke={C.amber} strokeWidth="1.8" />
+                <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round" />
+              </Svg>
               <Text style={styles.shareBtnText}>{t.cardShareBtn}</Text>
             </TouchableOpacity>
           </View>
@@ -338,6 +355,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 16,
     paddingBottom: 14,
+    zIndex: 1,
   },
   photoTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -350,6 +368,20 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     color: 'rgba(255,255,255,0.85)',
+  },
+  photoMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  photoMetaCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  photoMetaCountText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
   },
 
   // ── Front: bottom zone ──
@@ -428,6 +460,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,

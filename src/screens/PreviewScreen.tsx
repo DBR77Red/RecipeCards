@@ -107,7 +107,7 @@ export function PreviewScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <RecipeCard
-          recipe={recipe}
+          recipe={{ ...recipe, receiveCount: receiveCount ?? undefined }}
           onShare={handleShare}
           onPublish={handlePublish}
           publishing={publishing}

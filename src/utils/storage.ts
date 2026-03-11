@@ -143,25 +143,32 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
 }
 
 /**
+ * Increments the receive_count on a Supabase recipe row.
+ * Best-effort — silently ignores errors.
+ */
+export async function incrementReceiveCount(id: string): Promise<void> {
+  try {
+    const { data } = await supabase
+      .from('recipes')
+      .select('receive_count')
+      .eq('id', id)
+      .single();
+    const newCount = ((data?.receive_count as number) ?? 0) + 1;
+    await supabase
+      .from('recipes')
+      .update({ receive_count: newCount })
+      .eq('id', id);
+  } catch { /* non-critical */ }
+}
+
+/**
  * Saves a card received from another user as a read-only published record.
  * Never editable — always has isReceived: true.
  */
 export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> {
   const now = new Date().toISOString();
 
-  // Increment receive count on the original Supabase record (best-effort)
-  try {
-    const { data } = await supabase
-      .from('recipes')
-      .select('receive_count')
-      .eq('id', recipe.id)
-      .single();
-    const newCount = ((data?.receive_count as number) ?? 0) + 1;
-    await supabase
-      .from('recipes')
-      .update({ receive_count: newCount })
-      .eq('id', recipe.id);
-  } catch { /* non-critical — silently ignore */ }
+  await incrementReceiveCount(recipe.id);
 
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);
   const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
