@@ -4,6 +4,10 @@ import {
   DMSans_600SemiBold,
 } from '@expo-google-fonts/dm-sans';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import {
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
@@ -39,6 +43,8 @@ export default function App() {
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_600SemiBold,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
   });
 
   useEffect(() => {
