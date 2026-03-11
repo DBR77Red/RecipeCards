@@ -291,7 +291,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [320, 445],
       quality: 0.85,
     });
     if (!result.canceled) update('photo', result.assets[0].uri);
@@ -306,7 +306,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [320, 445],
       quality: 0.85,
     });
     if (!result.canceled) update('photo', result.assets[0].uri);
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
 
   photoPicker: {
     width: '100%',
-    height: 190,
+    aspectRatio: 320 / 445,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: C.photoBg,
