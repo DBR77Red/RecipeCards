@@ -25,6 +25,7 @@ import { FormScreen }        from './src/screens/FormScreen';
 import { HomeScreen }        from './src/screens/HomeScreen';
 import { OnboardingScreen, ONBOARDING_KEY } from './src/screens/OnboardingScreen';
 import { PreviewScreen }     from './src/screens/PreviewScreen';
+import { ProfileScreen }     from './src/screens/ProfileScreen';
 import { ReceiveScreen }     from './src/screens/ReceiveScreen';
 import { RootStackParamList } from './src/types/navigation';
 import { purgeDeletedRecipes } from './src/utils/storage';
@@ -80,6 +81,7 @@ export default function App() {
           <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false }} />
           <Stack.Screen name="Home"      component={HomeScreen}      />
           <Stack.Screen name="Favorites" component={FavoritesScreen} />
+          <Stack.Screen name="Profile"   component={ProfileScreen}   />
           <Stack.Screen name="Form"      component={FormScreen}      />
           <Stack.Screen name="Preview"   component={PreviewScreen}   />
           <Stack.Screen name="CardView"  component={CardViewScreen}  />

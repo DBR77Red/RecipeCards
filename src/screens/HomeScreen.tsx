@@ -21,10 +21,9 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
-import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
-import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished, toggleFavorite } from '../utils/storage';
+import { deleteDraft, getDrafts, softDeletePublished, toggleFavorite } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -112,76 +111,6 @@ function ProfileIcon({ color }: { color: string }) {
         stroke={color} strokeWidth={1.6} strokeLinecap="round"
       />
     </Svg>
-  );
-}
-
-// ─── Profile modal (name + language) ─────────────────────────────────────────
-
-function ProfileModal({ visible, currentName, onSave, onClose }: {
-  visible: boolean;
-  currentName: string;
-  onSave: (name: string) => void;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(currentName);
-  const { t, language, setLanguage } = useLanguage();
-
-  useEffect(() => {
-    setName(currentName);
-  }, [currentName, visible]);
-
-  const LANGS: { code: Language; label: string }[] = [
-    { code: 'en', label: 'EN' },
-    { code: 'pt', label: 'PT' },
-    { code: 'de', label: 'DE' },
-    { code: 'es', label: 'ES' },
-  ];
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{t.profileTitle}</Text>
-          <Text style={styles.modalSub}>{t.profileNameSub}</Text>
-          <TextInput
-            style={styles.modalInput}
-            value={name}
-            onChangeText={setName}
-            placeholder={t.profileNamePlaceholder}
-            placeholderTextColor={C.label}
-            autoFocus
-          />
-
-          {/* Language picker */}
-          <Text style={styles.modalLanguageLabel}>{t.profileLanguageLabel}</Text>
-          <View style={styles.languagePicker}>
-            {LANGS.map(({ code, label }) => (
-              <TouchableOpacity
-                key={code}
-                style={[styles.langPill, language === code && styles.langPillActive]}
-                onPress={() => setLanguage(code)}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.langPillText, language === code && styles.langPillTextActive]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.modalBtn, !name.trim() && styles.modalBtnDisabled]}
-            onPress={() => { onSave(name.trim()); onClose(); }}
-            disabled={!name.trim()}
-          >
-            <Text style={styles.modalBtnText}>{t.save}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.modalCancelBtn} onPress={onClose}>
-            <Text style={styles.modalCancelText}>{t.cancel}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
   );
 }
 
@@ -514,8 +443,6 @@ export function HomeScreen({ navigation }: Props) {
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
   const [published, setPublished] = useState<RecipeData[]>([]);
   const [received, setReceived] = useState<RecipeData[]>([]);
-  const [userName, setUserNameState] = useState('');
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
@@ -535,10 +462,6 @@ export function HomeScreen({ navigation }: Props) {
       loadData(); // refresh badges
     });
     return unsub;
-  }, []);
-
-  useEffect(() => {
-    getUserName().then(setUserNameState);
   }, []);
 
   const [key, setKey] = useState(0);
@@ -601,11 +524,6 @@ export function HomeScreen({ navigation }: Props) {
       }
     }
     loadData();
-  };
-
-  const handleSaveName = async (name: string) => {
-    await setUserName(name);
-    setUserNameState(name);
   };
 
   const handleQRScanned = (data: string) => {
@@ -767,18 +685,11 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={styles.tabLabel}>{t.tabExchange}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setShowProfileModal(true)}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => navigation.navigate('Profile')}>
           <ProfileIcon color={C.muted} />
           <Text style={styles.tabLabel}>{t.tabProfile}</Text>
         </TouchableOpacity>
       </View>
-
-      <ProfileModal
-        visible={showProfileModal}
-        currentName={userName}
-        onSave={handleSaveName}
-        onClose={() => setShowProfileModal(false)}
-      />
 
       <QRScannerModal
         visible={showQRScanner}
@@ -1174,42 +1085,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: C.muted,
     letterSpacing: 0.2,
-  },
-
-  // Language picker
-  modalLanguageLabel: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    color: C.muted,
-    textTransform: 'uppercase',
-    marginTop: 4,
-  },
-  languagePicker: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  langPill: {
-    flex: 1,
-    height: 42,
-    borderRadius: 100,
-    borderWidth: 1.5,
-    borderColor: C.divider,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  langPillActive: {
-    backgroundColor: C.btnBg,
-    borderColor: C.btnBg,
-  },
-  langPillText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
-    color: C.muted,
-    letterSpacing: 1,
-  },
-  langPillTextActive: {
-    color: C.btnText,
   },
 
   // Sync toast
