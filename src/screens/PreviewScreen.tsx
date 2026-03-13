@@ -19,6 +19,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
+import { useSound } from '../utils/useSound';
 
 const CELEBRATE_LOTTIE = require('../../assets/celebrate.json');
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -33,11 +34,13 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [receiveCount, setReceiveCount] = useState<number | null>(null);
   const shouldCelebrate = useRef(false);
+  const playCelebrate = useSound(require('../../assets/celebrate_sound.mp3'));
 
   useEffect(() => {
     if (route.params.celebrate) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowCelebration(true);
+      playCelebrate();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -104,6 +107,7 @@ export function PreviewScreen({ route, navigation }: Props) {
 
   const triggerCelebration = () => {
     setShowCelebration(true);
+    playCelebrate();
   };
 
   return (

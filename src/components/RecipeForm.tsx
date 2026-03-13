@@ -20,6 +20,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
+import { useSound } from '../utils/useSound';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { PhotoPickerModal } from './PhotoPickerModal';
 import { RecipeData } from './RecipeCard';
@@ -358,6 +359,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
 
   const toastAnim = useRef(new Animated.Value(0)).current;
   const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playsaved = useSound(require('../../assets/saved_sound.mp3'));
 
   useEffect(() => () => {
     if (toastTimeout.current) clearTimeout(toastTimeout.current);
@@ -372,6 +374,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start();
     setShowSaved(true);
+    playsaved();
   };
 
   const handleSaveDraft = async () => {

@@ -1,3 +1,6 @@
+import { patchAudioModule } from './src/utils/patchAudio';
+patchAudioModule();
+
 import {
   DMSans_400Regular,
   DMSans_500Medium,
