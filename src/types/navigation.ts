@@ -1,6 +1,7 @@
 import { RecipeData } from '../components/RecipeCard';
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   Home: undefined;
   Favorites: undefined;
   Form: { recipe?: RecipeData };

@@ -11,9 +11,10 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { CardViewScreen }     from './src/screens/CardViewScreen';
 import { FavoritesScreen }   from './src/screens/FavoritesScreen';
 import { FormScreen }        from './src/screens/FormScreen';
 import { HomeScreen }        from './src/screens/HomeScreen';
+import { OnboardingScreen, ONBOARDING_KEY } from './src/screens/OnboardingScreen';
 import { PreviewScreen }     from './src/screens/PreviewScreen';
 import { ReceiveScreen }     from './src/screens/ReceiveScreen';
 import { RootStackParamList } from './src/types/navigation';
@@ -51,9 +53,16 @@ export default function App() {
     Poppins_700Bold,
   });
 
+  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Home' | null>(null);
+
   useEffect(() => {
-    purgeDeletedRecipes();
-    retryPendingSyncs();
+    async function init() {
+      purgeDeletedRecipes();
+      retryPendingSyncs();
+      const done = await AsyncStorage.getItem(ONBOARDING_KEY);
+      setInitialRoute(done ? 'Home' : 'Onboarding');
+    }
+    init();
 
     const subscription = AppState.addEventListener('change', nextState => {
       if (nextState === 'active') retryPendingSyncs();
@@ -61,13 +70,14 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || !initialRoute) return null;
 
   return (
     <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
-        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false }} />
           <Stack.Screen name="Home"      component={HomeScreen}      />
           <Stack.Screen name="Favorites" component={FavoritesScreen} />
           <Stack.Screen name="Form"      component={FormScreen}      />

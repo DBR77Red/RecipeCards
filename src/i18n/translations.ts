@@ -1,6 +1,10 @@
 export type Language = 'en' | 'pt' | 'de' | 'es';
 
 export interface Translations {
+  // Onboarding
+  onboardingBody: string;
+  onboardingBtn: string;
+
   // Common
   cancel: string;
   save: string;
@@ -182,6 +186,9 @@ export interface Translations {
 // ─── English ──────────────────────────────────────────────────────────────────
 
 const en: Translations = {
+  onboardingBody: 'Welcome to Recipe Cards.\n\nThis app is made for friends and family at the moment, and is still under development. If you have suggestions or find bugs, please contact the developer.\n\nThanks for taking the time to test it out.',
+  onboardingBtn: 'Start using the app',
+
   cancel: 'Cancel',
   save: 'Save',
   untitledRecipe: 'Untitled Recipe',
@@ -339,6 +346,9 @@ const en: Translations = {
 // ─── Portuguese ───────────────────────────────────────────────────────────────
 
 const pt: Translations = {
+  onboardingBody: 'Bem-vindo ao Recipe Cards.\n\nEste aplicativo foi criado para amigos e família por enquanto, e ainda está em desenvolvimento. Se tiver sugestões ou encontrar bugs, por favor entre em contato com o desenvolvedor.\n\nObrigado por dedicar seu tempo para testá-lo.',
+  onboardingBtn: 'Começar a usar o app',
+
   cancel: 'Cancelar',
   save: 'Salvar',
   untitledRecipe: 'Receita sem título',
@@ -496,6 +506,9 @@ const pt: Translations = {
 // ─── German ───────────────────────────────────────────────────────────────────
 
 const de: Translations = {
+  onboardingBody: 'Willkommen bei Recipe Cards.\n\nDiese App ist momentan für Freunde und Familie gedacht und befindet sich noch in der Entwicklung. Wenn du Vorschläge hast oder Fehler findest, wende dich bitte an den Entwickler.\n\nVielen Dank, dass du dir die Zeit nimmst, sie zu testen.',
+  onboardingBtn: 'App starten',
+
   cancel: 'Abbrechen',
   save: 'Speichern',
   untitledRecipe: 'Unbenanntes Rezept',
@@ -653,6 +666,9 @@ const de: Translations = {
 // ─── Spanish ──────────────────────────────────────────────────────────────────
 
 const es: Translations = {
+  onboardingBody: 'Bienvenido a Recipe Cards.\n\nEsta app está hecha para amigos y familia por el momento, y todavía está en desarrollo. Si tienes sugerencias o encuentras errores, por favor contacta al desarrollador.\n\nGracias por tomarte el tiempo de probarla.',
+  onboardingBtn: 'Empezar a usar la app',
+
   cancel: 'Cancelar',
   save: 'Guardar',
   untitledRecipe: 'Receta sin título',
