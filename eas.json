@@ -16,7 +16,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_SERVER_URL": "https://recipecards-api.fly.dev"
+        "EXPO_PUBLIC_SERVER_URL": "https://recipecards-api.fly.dev",
+        "APP_ENV": "production"
       }
     },
     "production": {
@@ -24,7 +25,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_SERVER_URL": "https://recipecards-api.fly.dev"
+        "EXPO_PUBLIC_SERVER_URL": "https://recipecards-api.fly.dev",
+        "APP_ENV": "production"
       }
     }
   },
