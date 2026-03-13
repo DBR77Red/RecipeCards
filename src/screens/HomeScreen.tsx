@@ -8,6 +8,7 @@ import {
   Animated,
   Image,
   Modal,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -15,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { RecipeData } from '../components/RecipeCard';
@@ -260,9 +261,11 @@ interface DraftListItemProps {
   recipe: RecipeData;
   onPress: () => void;
   onLongPress: () => void;
+  selectionMode: boolean;
+  isSelected: boolean;
 }
 
-function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
+function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected }: DraftListItemProps) {
   const { t } = useLanguage();
   const displayTitle    = recipe.title.trim() || t.untitledRecipe;
   const isTitleEmpty    = !recipe.title.trim();
@@ -289,6 +292,11 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
             style={styles.thumbnailImg}
             resizeMode="cover"
           />
+        )}
+        {selectionMode && (
+          <View style={[styles.checkCircle, isSelected && styles.checkCircleSelected]}>
+            {isSelected && <Text style={styles.checkMark}>✓</Text>}
+          </View>
         )}
       </View>
 
@@ -324,10 +332,93 @@ function DraftListItem({ recipe, onPress, onLongPress }: DraftListItemProps) {
       </View>
 
       {/* Chevron */}
-      <Text style={styles.chevron}>›</Text>
+      {!selectionMode && <Text style={styles.chevron}>›</Text>}
     </TouchableOpacity>
   );
 }
+
+// ─── Selection bar ────────────────────────────────────────────────────────────
+
+function SelectionBar({ count, anim, onDelete, onCancel }: {
+  count: number;
+  anim: Animated.Value;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [120, 0] });
+
+  return (
+    <Animated.View style={[selBarStyles.bar, { paddingBottom: insets.bottom + 14, transform: [{ translateY }] }]} pointerEvents={count >= 0 ? 'box-none' : 'none'}>
+      <TouchableOpacity onPress={onCancel} style={selBarStyles.cancelBtn} activeOpacity={0.7}>
+        <Text style={selBarStyles.cancelText}>{t.cancel}</Text>
+      </TouchableOpacity>
+      <Text style={selBarStyles.countText}>{t.selectionCount(count)}</Text>
+      <TouchableOpacity
+        onPress={onDelete}
+        style={[selBarStyles.deleteBtn, count === 0 && selBarStyles.deleteBtnDisabled]}
+        activeOpacity={0.8}
+        disabled={count === 0}
+      >
+        <Text style={selBarStyles.deleteBtnText}>{t.selectionDelete}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+const selBarStyles = StyleSheet.create({
+  bar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E7E5E4',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 16,
+  },
+  cancelBtn: {
+    paddingVertical: 8,
+    paddingRight: 8,
+    minWidth: 64,
+  },
+  cancelText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: '#A8A29E',
+  },
+  countText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: '#1C1917',
+  },
+  deleteBtn: {
+    backgroundColor: '#DC2626',
+    borderRadius: 100,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  deleteBtnDisabled: {
+    opacity: 0.4,
+  },
+  deleteBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+});
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
@@ -340,6 +431,17 @@ function EmptyState() {
       </View>
       <Text style={styles.emptyTitle}>{t.emptyTitle}</Text>
       <Text style={styles.emptySub}>{t.emptySub}</Text>
+    </View>
+  );
+}
+
+// ─── Filter empty state ───────────────────────────────────────────────────────
+
+function FilterEmptyState({ title, sub }: { title: string; sub: string }) {
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptySub}>{sub}</Text>
     </View>
   );
 }
@@ -395,7 +497,12 @@ export function HomeScreen({ navigation }: Props) {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'received'>('all');
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectionBarAnim = useRef(new Animated.Value(0)).current;
   const listRef = useRef<SectionList<RecipeData>>(null);
 
   // Listen for successful background syncs and refresh the list
@@ -435,6 +542,44 @@ export function HomeScreen({ navigation }: Props) {
     }, [])
   );
 
+  const enterSelectionMode = (firstId: string) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([firstId]));
+    Animated.spring(selectionBarAnim, { toValue: 1, useNativeDriver: true, bounciness: 4 }).start();
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    Animated.timing(selectionBarAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
+  };
+
+  const toggleSelect = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+
+  const handleBatchDeleteConfirm = async () => {
+    const ids = Array.from(selectedIds);
+    const all = await getDrafts();
+    setShowBatchConfirm(false);
+    exitSelectionMode();
+    for (const id of ids) {
+      const recipe = all.find(r => r.id === id);
+      if (!recipe) continue;
+      if (recipe.status === 'draft') {
+        await deleteDraft(id);
+      } else {
+        await softDeletePublished(id);
+      }
+    }
+    loadData();
+  };
+
   const handleSaveName = async (name: string) => {
     await setUserName(name);
     setUserNameState(name);
@@ -450,9 +595,13 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const handleLongPress = (recipe: RecipeData) => {
+    if (selectionMode) {
+      toggleSelect(recipe.id);
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setDeleteTarget(recipe);
     setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 0);
+    enterSelectionMode(recipe.id);
   };
 
   const handleDeleteConfirm = async () => {
@@ -475,23 +624,30 @@ export function HomeScreen({ navigation }: Props) {
   const renderItem = ({ item }: { item: RecipeData }) => (
     <DraftListItem
       recipe={item}
-      onPress={() =>
+      selectionMode={selectionMode}
+      isSelected={selectedIds.has(item.id)}
+      onPress={() => {
+        if (selectionMode) { toggleSelect(item.id); return; }
         item.isReceived
           ? navigation.navigate('CardView', { cardId: item.id })
           : item.status === 'published'
           ? navigation.navigate('Preview', { recipe: item })
-          : navigation.navigate('Form', { recipe: item })
-      }
+          : navigation.navigate('Form', { recipe: item });
+      }}
       onLongPress={() => handleLongPress(item)}
     />
   );
 
   type ListSection = { title: string; data: RecipeData[] };
 
+  const showDrafts    = filter === 'all' || filter === 'draft';
+  const showPublished = filter === 'all' || filter === 'published';
+  const showReceived  = filter === 'all' || filter === 'received';
+
   const sections: ListSection[] = [
-    ...(drafts.length > 0 ? [{ title: t.sectionDrafts, data: drafts }] : []),
-    ...(published.length > 0 ? [{ title: t.sectionPublished, data: published }] : []),
-    ...(received.length > 0 ? [{ title: t.sectionReceived, data: received }] : []),
+    ...(showDrafts    && drafts.length > 0    ? [{ title: t.sectionDrafts,    data: drafts    }] : []),
+    ...(showPublished && published.length > 0 ? [{ title: t.sectionPublished, data: published }] : []),
+    ...(showReceived  && received.length > 0  ? [{ title: t.sectionReceived,  data: received  }] : []),
   ];
 
   const isEmpty = drafts.length === 0 && published.length === 0 && received.length === 0;
@@ -509,10 +665,46 @@ export function HomeScreen({ navigation }: Props) {
             {title}
           </Text>
         )}
-        ListEmptyComponent={isEmpty ? <EmptyState /> : null}
-        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+            style={styles.filterScroll}
+          >
+            {([
+              { key: 'all',       label: t.filterAll       },
+              { key: 'draft',     label: t.filterDrafts    },
+              { key: 'published', label: t.filterPublished },
+              { key: 'received',  label: t.filterReceived  },
+            ] as const).map(({ key: k, label }) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.filterPill, filter === k && styles.filterPillActive]}
+                onPress={() => setFilter(k)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.filterPillText, filter === k && styles.filterPillTextActive]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        }
+        ListEmptyComponent={
+          isEmpty
+            ? <EmptyState />
+            : filter === 'draft'
+            ? <FilterEmptyState title={t.filterEmptyDraftsTitle} sub={t.filterEmptyDraftsSub} />
+            : filter === 'published'
+            ? <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />
+            : filter === 'received'
+            ? <FilterEmptyState title={t.filterEmptyReceivedTitle} sub={t.filterEmptyReceivedSub} />
+            : null
+        }
+        contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
         showsVerticalScrollIndicator={false}
-        extraData={key}
+        extraData={[key, selectionMode, selectedIds]}
         stickySectionHeadersEnabled={false}
       />
 
@@ -616,6 +808,22 @@ export function HomeScreen({ navigation }: Props) {
         onCancel={handleDeleteCancel}
       />
 
+      <DeleteConfirmModal
+        visible={showBatchConfirm}
+        variant="batch"
+        recipeTitle=""
+        batchCount={selectedIds.size}
+        onConfirm={handleBatchDeleteConfirm}
+        onCancel={() => setShowBatchConfirm(false)}
+      />
+
+      <SelectionBar
+        count={selectedIds.size}
+        anim={selectionBarAnim}
+        onDelete={() => { if (selectedIds.size > 0) setShowBatchConfirm(true); }}
+        onCancel={exitSelectionMode}
+      />
+
       <SyncToast message={syncToastMessage} />
     </SafeAreaView>
   );
@@ -701,6 +909,9 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 100,
   },
+  listContentSelection: {
+    paddingBottom: 160,
+  },
 
   // Tab bar
   tabBar: {
@@ -754,6 +965,36 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: C.terracotta,
     fontFamily: 'DMSans_500Medium',
+  },
+
+  filterScroll: {
+    marginBottom: 20,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 4,
+  },
+  filterPill: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    borderWidth: 1.5,
+    borderColor: C.divider,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterPillActive: {
+    backgroundColor: C.btnBg,
+    borderColor: C.btnBg,
+  },
+  filterPillText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: C.muted,
+  },
+  filterPillTextActive: {
+    color: C.btnText,
   },
 
   sectionLabel: {
@@ -864,6 +1105,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: C.label,
     lineHeight: 20,
+  },
+  checkCircle: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkCircleSelected: {
+    backgroundColor: C.btnBg,
+    borderColor: C.btnBg,
+  },
+  checkMark: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: '#FFFFFF',
+    lineHeight: 14,
   },
   publishedRow: {
     flexDirection: 'row',

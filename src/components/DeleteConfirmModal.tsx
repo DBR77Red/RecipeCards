@@ -14,13 +14,14 @@ const C = {
 
 interface Props {
   visible: boolean;
-  variant: 'draft' | 'published';
+  variant: 'draft' | 'published' | 'batch';
   recipeTitle: string;
+  batchCount?: number;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, onCancel }: Props) {
+export function DeleteConfirmModal({ visible, variant, recipeTitle, batchCount = 0, onConfirm, onCancel }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
   const { t } = useLanguage();
 
@@ -38,10 +39,11 @@ export function DeleteConfirmModal({ visible, variant, recipeTitle, onConfirm, o
   });
 
   const isDraft = variant === 'draft';
+  const isBatch = variant === 'batch';
   const displayTitle = recipeTitle.trim() || t.untitledRecipe;
-  const heading     = isDraft ? t.deleteDraftTitle : t.deleteCardTitle;
-  const body        = isDraft ? t.deleteDraftBody(displayTitle) : t.deleteCardBody;
-  const confirmText = isDraft ? t.deleteDraftBtn : t.deleteCardBtn;
+  const heading     = isBatch ? t.deleteBatchTitle(batchCount) : isDraft ? t.deleteDraftTitle : t.deleteCardTitle;
+  const body        = isBatch ? t.deleteBatchBody : isDraft ? t.deleteDraftBody(displayTitle) : t.deleteCardBody;
+  const confirmText = isBatch ? t.deleteBatchBtn(batchCount) : isDraft ? t.deleteDraftBtn : t.deleteCardBtn;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>

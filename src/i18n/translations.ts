@@ -17,6 +17,20 @@ export interface Translations {
   sectionPublished: string;
   sectionReceived: string;
 
+  // Filter pills
+  filterAll: string;
+  filterDrafts: string;
+  filterPublished: string;
+  filterReceived: string;
+
+  // Filter empty states
+  filterEmptyDraftsTitle: string;
+  filterEmptyDraftsSub: string;
+  filterEmptyPublishedTitle: string;
+  filterEmptyPublishedSub: string;
+  filterEmptyReceivedTitle: string;
+  filterEmptyReceivedSub: string;
+
   // Empty state
   emptyTitle: string;
   emptySub: string;
@@ -107,6 +121,15 @@ export interface Translations {
   deleteDraftBtn: string;
   deleteCardBtn: string;
 
+  // Batch delete
+  deleteBatchTitle: (count: number) => string;
+  deleteBatchBody: string;
+  deleteBatchBtn: (count: number) => string;
+
+  // Selection bar
+  selectionCount: (count: number) => string;
+  selectionDelete: string;
+
   // Photo picker
   photoPickerTitle: string;
   photoPickerSub: string;
@@ -166,6 +189,18 @@ const en: Translations = {
   sectionDrafts: 'YOUR DRAFTS',
   sectionPublished: 'PUBLISHED',
   sectionReceived: 'RECEIVED',
+
+  filterAll: 'All',
+  filterDrafts: 'Drafts',
+  filterPublished: 'Published',
+  filterReceived: 'Received',
+
+  filterEmptyDraftsTitle: 'No draft cards yet',
+  filterEmptyDraftsSub: 'Save a draft to see it here.',
+  filterEmptyPublishedTitle: 'No published cards yet',
+  filterEmptyPublishedSub: 'Publish a recipe to see it here.',
+  filterEmptyReceivedTitle: 'No received cards yet',
+  filterEmptyReceivedSub: 'Exchange a card with someone to see it here.',
 
   emptyTitle: 'No recipes yet',
   emptySub: 'Tap New Recipe to get started.',
@@ -246,6 +281,13 @@ const en: Translations = {
   deleteDraftBtn: 'Delete forever',
   deleteCardBtn: 'Remove card',
 
+  deleteBatchTitle: (n) => `Delete ${n} cards?`,
+  deleteBatchBody: 'Drafts will be permanently deleted. Published cards will be hidden immediately — recipients keep their copy but cannot re-share.',
+  deleteBatchBtn: (n) => `Delete ${n} cards`,
+
+  selectionCount: (n) => n === 1 ? '1 selected' : `${n} selected`,
+  selectionDelete: 'Delete',
+
   photoPickerTitle: 'Add Photo',
   photoPickerSub: 'How would you like to add a photo?',
   photoTakePhoto: 'Take Photo',
@@ -300,6 +342,18 @@ const pt: Translations = {
   sectionDrafts: 'RASCUNHOS',
   sectionPublished: 'PUBLICADAS',
   sectionReceived: 'RECEBIDAS',
+
+  filterAll: 'Tudo',
+  filterDrafts: 'Rascunhos',
+  filterPublished: 'Publicadas',
+  filterReceived: 'Recebidas',
+
+  filterEmptyDraftsTitle: 'Nenhum rascunho ainda',
+  filterEmptyDraftsSub: 'Salve um rascunho para vê-lo aqui.',
+  filterEmptyPublishedTitle: 'Nenhuma receita publicada ainda',
+  filterEmptyPublishedSub: 'Publique uma receita para vê-la aqui.',
+  filterEmptyReceivedTitle: 'Nenhuma receita recebida ainda',
+  filterEmptyReceivedSub: 'Troque um cartão com alguém para ver aqui.',
 
   emptyTitle: 'Nenhuma receita ainda',
   emptySub: 'Toque em Nova Receita para começar.',
@@ -380,6 +434,13 @@ const pt: Translations = {
   deleteDraftBtn: 'Excluir para sempre',
   deleteCardBtn: 'Remover cartão',
 
+  deleteBatchTitle: (n) => `Excluir ${n} cartões?`,
+  deleteBatchBody: 'Rascunhos serão excluídos permanentemente. Cartões publicados serão ocultados imediatamente — quem recebeu mantém a cópia, mas não pode recompartilhar.',
+  deleteBatchBtn: (n) => `Excluir ${n} cartões`,
+
+  selectionCount: (n) => n === 1 ? '1 selecionado' : `${n} selecionados`,
+  selectionDelete: 'Excluir',
+
   photoPickerTitle: 'Adicionar Foto',
   photoPickerSub: 'Como você gostaria de adicionar uma foto?',
   photoTakePhoto: 'Tirar Foto',
@@ -434,6 +495,18 @@ const de: Translations = {
   sectionDrafts: 'ENTWÜRFE',
   sectionPublished: 'VERÖFFENTLICHT',
   sectionReceived: 'ERHALTEN',
+
+  filterAll: 'Alle',
+  filterDrafts: 'Entwürfe',
+  filterPublished: 'Veröffentlicht',
+  filterReceived: 'Erhalten',
+
+  filterEmptyDraftsTitle: 'Noch keine Entwürfe',
+  filterEmptyDraftsSub: 'Speichere einen Entwurf, um ihn hier zu sehen.',
+  filterEmptyPublishedTitle: 'Noch keine veröffentlichten Rezepte',
+  filterEmptyPublishedSub: 'Veröffentliche ein Rezept, um es hier zu sehen.',
+  filterEmptyReceivedTitle: 'Noch keine erhaltenen Karten',
+  filterEmptyReceivedSub: 'Tausche eine Karte mit jemandem aus, um sie hier zu sehen.',
 
   emptyTitle: 'Noch keine Rezepte',
   emptySub: 'Tippe auf Neues Rezept, um zu beginnen.',
@@ -514,6 +587,13 @@ const de: Translations = {
   deleteDraftBtn: 'Für immer löschen',
   deleteCardBtn: 'Karte entfernen',
 
+  deleteBatchTitle: (n) => `${n} Karten löschen?`,
+  deleteBatchBody: 'Entwürfe werden dauerhaft gelöscht. Veröffentlichte Karten werden sofort ausgeblendet — Empfänger behalten ihre Kopie, können sie aber nicht erneut teilen.',
+  deleteBatchBtn: (n) => `${n} Karten löschen`,
+
+  selectionCount: (n) => n === 1 ? '1 ausgewählt' : `${n} ausgewählt`,
+  selectionDelete: 'Löschen',
+
   photoPickerTitle: 'Foto hinzufügen',
   photoPickerSub: 'Wie möchtest du ein Foto hinzufügen?',
   photoTakePhoto: 'Foto aufnehmen',
@@ -568,6 +648,18 @@ const es: Translations = {
   sectionDrafts: 'BORRADORES',
   sectionPublished: 'PUBLICADAS',
   sectionReceived: 'RECIBIDAS',
+
+  filterAll: 'Todo',
+  filterDrafts: 'Borradores',
+  filterPublished: 'Publicadas',
+  filterReceived: 'Recibidas',
+
+  filterEmptyDraftsTitle: 'Sin borradores aún',
+  filterEmptyDraftsSub: 'Guarda un borrador para verlo aquí.',
+  filterEmptyPublishedTitle: 'Sin recetas publicadas aún',
+  filterEmptyPublishedSub: 'Publica una receta para verla aquí.',
+  filterEmptyReceivedTitle: 'Sin tarjetas recibidas aún',
+  filterEmptyReceivedSub: 'Intercambia una tarjeta con alguien para verla aquí.',
 
   emptyTitle: 'Sin recetas todavía',
   emptySub: 'Toca Nueva Receta para empezar.',
@@ -647,6 +739,13 @@ const es: Translations = {
   deleteCardBody: 'Todos con quienes la compartiste conservarán su copia, pero no podrán volver a compartir la tarjeta.',
   deleteDraftBtn: 'Eliminar para siempre',
   deleteCardBtn: 'Eliminar tarjeta',
+
+  deleteBatchTitle: (n) => `¿Eliminar ${n} tarjetas?`,
+  deleteBatchBody: 'Los borradores se eliminarán permanentemente. Las tarjetas publicadas se ocultarán de inmediato — los destinatarios conservan su copia pero no pueden recompartir.',
+  deleteBatchBtn: (n) => `Eliminar ${n} tarjetas`,
+
+  selectionCount: (n) => n === 1 ? '1 seleccionada' : `${n} seleccionadas`,
+  selectionDelete: 'Eliminar',
 
   photoPickerTitle: 'Añadir Foto',
   photoPickerSub: '¿Cómo quieres añadir una foto?',
