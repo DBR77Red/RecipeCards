@@ -61,11 +61,7 @@ export function ProfileScreen({ navigation }: Props) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>{t.profileTitle}</Text>
-          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView
@@ -135,27 +131,17 @@ const styles = StyleSheet.create({
   flex:   { flex: 1 },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 16,
   },
-  backText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 22,
-    color: C.body,
-    lineHeight: 28,
-  },
   headerTitle: {
-    flex: 1,
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 22,
     color: C.title,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
-  headerSpacer: { width: 22 },
 
   content: {
     paddingHorizontal: 20,
