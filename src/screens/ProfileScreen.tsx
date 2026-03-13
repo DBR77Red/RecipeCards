@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
+import { BottomTabBar } from '../components/BottomTabBar';
 import { getUserName, setUserName } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
@@ -124,6 +125,7 @@ export function ProfileScreen({ navigation }: Props) {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <BottomTabBar activeTab="Profile" />
     </SafeAreaView>
   );
 }

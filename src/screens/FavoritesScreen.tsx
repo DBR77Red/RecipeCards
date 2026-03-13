@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { BottomTabBar } from '../components/BottomTabBar';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
@@ -183,6 +184,7 @@ export function FavoritesScreen({ navigation }: Props) {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      <BottomTabBar activeTab="Favorites" />
     </SafeAreaView>
   );
 }
