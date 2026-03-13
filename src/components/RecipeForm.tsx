@@ -25,9 +25,8 @@ import { PhotoPickerModal } from './PhotoPickerModal';
 import { RecipeData } from './RecipeCard';
 import { VoiceFailedModal } from './VoiceFailedModal';
 
-// Replace with a free audio-wave JSON URL from https://lottiefiles.com/free-animations/audio-wave
-// Click an animation → Share → "Lottie Animation URL" → copy the .json link
-const VOICE_LOTTIE_URL = 'YOUR_LOTTIE_JSON_URL_HERE';
+const VOICE_LOTTIE_SRC = require('../../assets/audio-wave.json');
+const SAVED_LOTTIE = require('../../assets/saved.json');
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -205,7 +204,7 @@ function VoiceBar({
     return (
       <View style={styles.voiceBar}>
         <LottieView
-          source={{ uri: VOICE_LOTTIE_URL }}
+          source={VOICE_LOTTIE_SRC}
           autoPlay
           loop
           style={{ width: 40, height: 40 }}
@@ -372,6 +371,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       Animated.delay(1600),
       Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start();
+    setShowSaved(true);
   };
 
   const handleSaveDraft = async () => {
@@ -395,6 +395,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const [showVoiceFailed, setShowVoiceFailed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
 
   const openConfirm = () => {
@@ -604,6 +605,18 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           </Animated.View>
         </Animated.View>
       </Modal>
+
+      {showSaved && (
+        <View pointerEvents="none" style={styles.savedOverlay}>
+          <LottieView
+            source={SAVED_LOTTIE}
+            autoPlay
+            loop={false}
+            style={styles.savedLottie}
+            onAnimationFinish={() => setShowSaved(false)}
+          />
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -727,7 +740,7 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
   titleInput: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 28,
     lineHeight: 36,
     color: C.title,
@@ -932,6 +945,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#F7F5F2',
     letterSpacing: 0.2,
+  },
+
+  savedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedLottie: {
+    width: 300,
+    height: 300,
   },
 
   overlay: {

@@ -45,7 +45,7 @@ export function FormScreen({ route, navigation }: Props) {
     try {
       const saved = await saveDraft(recipe);
       const local = await markPublishedLocally(saved.id);
-      navigation.replace('Preview', { recipe: local });
+      navigation.replace('Preview', { recipe: local, celebrate: true });
       try {
         await syncToCloud(local);
       } catch {

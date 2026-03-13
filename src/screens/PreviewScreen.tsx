@@ -1,9 +1,11 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import LottieView from 'lottie-react-native';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   ScrollView,
   Share,
   StyleSheet,
@@ -18,6 +20,9 @@ import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
 
+const CELEBRATE_LOTTIE = require('../../assets/celebrate.json');
+const { width: SW, height: SH } = Dimensions.get('window');
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 
 export function PreviewScreen({ route, navigation }: Props) {
@@ -25,7 +30,17 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [receiveCount, setReceiveCount] = useState<number | null>(null);
+  const shouldCelebrate = useRef(false);
+
+  useEffect(() => {
+    if (route.params.celebrate) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowCelebration(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (recipe.status !== 'published' || !recipe.id) return;
@@ -55,14 +70,13 @@ export function PreviewScreen({ route, navigation }: Props) {
   };
 
   const doPublish = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPublishing(true);
     try {
       // Step 1: mark published locally — QR appears immediately
       const base = recipe.id ? recipe : await saveDraft(recipe);
+      shouldCelebrate.current = true;
       const local = await markPublishedLocally(base.id);
-      setRecipe(local);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setRecipe(local); // triggers useEffect → haptic + celebration
 
       // Step 2: sync photo + recipe to Supabase (best-effort — retried on next foreground if it fails)
       try {
@@ -77,6 +91,19 @@ export function PreviewScreen({ route, navigation }: Props) {
     } finally {
       setPublishing(false);
     }
+  };
+
+  useEffect(() => {
+    if (recipe.status === 'published' && shouldCelebrate.current) {
+      shouldCelebrate.current = false;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      triggerCelebration();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe.status]);
+
+  const triggerCelebration = () => {
+    setShowCelebration(true);
   };
 
   return (
@@ -120,6 +147,17 @@ export function PreviewScreen({ route, navigation }: Props) {
         )}
       </ScrollView>
 
+      {showCelebration && (
+        <View pointerEvents="none" style={styles.celebrationOverlay}>
+          <LottieView
+            source={CELEBRATE_LOTTIE}
+            autoPlay
+            loop={false}
+            style={{ width: SW, height: SH }}
+            onAnimationFinish={() => setShowCelebration(false)}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -146,6 +184,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.45)',
     letterSpacing: 0.3,
+  },
+  celebrationOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 100,
   },
   receiveCount: {
     fontFamily: 'DMSans_400Regular',

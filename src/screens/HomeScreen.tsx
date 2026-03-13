@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   draftTitle: {
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
     color: C.title,
     lineHeight: 20,
