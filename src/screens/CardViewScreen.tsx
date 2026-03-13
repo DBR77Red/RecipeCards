@@ -2,12 +2,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { RecipeCard } from '../components/RecipeCard';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
-import { getDrafts, incrementReceiveCount } from '../utils/storage';
+import * as Haptics from 'expo-haptics';
+import { getDrafts, incrementReceiveCount, toggleFavorite } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
@@ -16,6 +18,13 @@ export function CardViewScreen({ route, navigation }: Props) {
   const { cardId } = route.params;
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleToggleFavorite = async () => {
+    if (!recipe?.isReceived) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = await toggleFavorite(recipe.id);
+    setRecipe(r => r ? { ...r, isFavorite: newValue } : r);
+  };
 
   useEffect(() => {
     async function load() {
@@ -64,6 +73,20 @@ export function CardViewScreen({ route, navigation }: Props) {
         <Text style={styles.backBtnText}>{t.cardViewBack}</Text>
       </TouchableOpacity>
 
+      {recipe?.isReceived && (
+        <TouchableOpacity style={styles.heartBtn} onPress={handleToggleFavorite} activeOpacity={0.7}>
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            <Path
+              d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+              fill={recipe.isFavorite ? '#EA580C' : 'none'}
+              stroke={recipe.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
+              strokeWidth={1.6}
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </TouchableOpacity>
+      )}
+
       {loading ? (
         <ActivityIndicator size="large" color="rgba(255,255,255,0.3)" />
       ) : recipe ? (
@@ -93,6 +116,13 @@ const styles = StyleSheet.create({
     top: 52,
     left: 24,
     zIndex: 10,
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 48,
+    right: 24,
+    zIndex: 10,
+    padding: 4,
   },
   backBtnText: {
     fontFamily: 'DMSans_500Medium',

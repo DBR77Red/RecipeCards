@@ -24,7 +24,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
-import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished } from '../utils/storage';
+import { deleteDraft, getDrafts, getUserName, setUserName, softDeletePublished, toggleFavorite } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -263,9 +263,11 @@ interface DraftListItemProps {
   onLongPress: () => void;
   selectionMode: boolean;
   isSelected: boolean;
+  onToggleFavorite?: () => void;
 }
 
-function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected }: DraftListItemProps) {
+function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected, onToggleFavorite }: DraftListItemProps) {
+  const canFavorite = (recipe.status === 'published' || recipe.isReceived) && !!onToggleFavorite;
   const { t } = useLanguage();
   const displayTitle    = recipe.title.trim() || t.untitledRecipe;
   const isTitleEmpty    = !recipe.title.trim();
@@ -331,8 +333,29 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
         )}
       </View>
 
-      {/* Chevron */}
-      {!selectionMode && <Text style={styles.chevron}>›</Text>}
+      {/* Right actions */}
+      {!selectionMode && (
+        <View style={styles.rowRight}>
+          {canFavorite && (
+            <TouchableOpacity
+              onPress={onToggleFavorite}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}
+              activeOpacity={0.6}
+            >
+              <Svg width={20} height={20} viewBox="0 0 24 24">
+                <Path
+                  d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+                  fill={recipe.isFavorite ? C.terracotta : 'none'}
+                  stroke={recipe.isFavorite ? C.terracotta : C.label}
+                  strokeWidth={1.6}
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.chevron}>›</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -621,6 +644,12 @@ export function HomeScreen({ navigation }: Props) {
 
   const handleDeleteCancel = () => setDeleteTarget(null);
 
+  const handleToggleFavorite = async (item: RecipeData) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await toggleFavorite(item.id);
+    loadData();
+  };
+
   const renderItem = ({ item }: { item: RecipeData }) => (
     <DraftListItem
       recipe={item}
@@ -635,6 +664,7 @@ export function HomeScreen({ navigation }: Props) {
           : navigation.navigate('Form', { recipe: item });
       }}
       onLongPress={() => handleLongPress(item)}
+      onToggleFavorite={() => handleToggleFavorite(item)}
     />
   );
 
@@ -717,7 +747,7 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={[styles.tabLabel, styles.tabLabelActive]}>{t.tabHome}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => Alert.alert(t.comingSoonTitle, t.comingSoonBody)}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => navigation.navigate('Favorites')}>
           <FavoritesIcon color={C.muted} />
           <Text style={styles.tabLabel}>{t.tabFavorites}</Text>
         </TouchableOpacity>
@@ -1099,6 +1129,11 @@ const styles = StyleSheet.create({
   },
   receivedBadgeHomeText: {
     color: '#6366F1',
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   chevron: {
     fontFamily: 'DMSans_400Regular',

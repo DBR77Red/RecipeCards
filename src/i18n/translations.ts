@@ -66,6 +66,11 @@ export interface Translations {
   comingSoonTitle: string;
   comingSoonBody: string;
 
+  // Favorites screen
+  favoritesTitle: string;
+  favoritesEmptyTitle: string;
+  favoritesEmptySub: string;
+
   // Form
   formBack: string;
   formNewRecipe: string;
@@ -231,6 +236,10 @@ const en: Translations = {
   comingSoonTitle: 'Coming Soon',
   comingSoonBody: 'Favorites will be available in a future update.',
 
+  favoritesTitle: 'Favorites',
+  favoritesEmptyTitle: 'No favorites yet',
+  favoritesEmptySub: 'Tap the ♡ on a published or received card to save it here.',
+
   formBack: '← Home',
   formNewRecipe: 'NEW RECIPE',
   formTitlePlaceholder: 'Recipe title',
@@ -383,6 +392,10 @@ const pt: Translations = {
 
   comingSoonTitle: 'Em Breve',
   comingSoonBody: 'Favoritos estarão disponíveis em uma atualização futura.',
+
+  favoritesTitle: 'Favoritos',
+  favoritesEmptyTitle: 'Nenhum favorito ainda',
+  favoritesEmptySub: 'Toque no ♡ de um cartão publicado ou recebido para salvá-lo aqui.',
 
   formBack: '← Início',
   formNewRecipe: 'NOVA RECEITA',
@@ -537,6 +550,10 @@ const de: Translations = {
   comingSoonTitle: 'Demnächst',
   comingSoonBody: 'Favoriten werden in einem zukünftigen Update verfügbar sein.',
 
+  favoritesTitle: 'Favoriten',
+  favoritesEmptyTitle: 'Noch keine Favoriten',
+  favoritesEmptySub: 'Tippe auf ♡ bei einer veröffentlichten oder erhaltenen Karte, um sie hier zu speichern.',
+
   formBack: '← Start',
   formNewRecipe: 'NEUES REZEPT',
   formTitlePlaceholder: 'Rezepttitel',
@@ -689,6 +706,10 @@ const es: Translations = {
 
   comingSoonTitle: 'Próximamente',
   comingSoonBody: 'Los favoritos estarán disponibles en una próxima actualización.',
+
+  favoritesTitle: 'Favoritos',
+  favoritesEmptyTitle: 'Sin favoritos aún',
+  favoritesEmptySub: 'Toca el ♡ en una tarjeta publicada o recibida para guardarla aquí.',
 
   formBack: '← Inicio',
   formNewRecipe: 'NUEVA RECETA',

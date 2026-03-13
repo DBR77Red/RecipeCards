@@ -185,6 +185,19 @@ export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> 
   return saved;
 }
 
+/** Toggles isFavorite on a recipe. Returns the new value, or false if not found. */
+export async function toggleFavorite(id: string): Promise<boolean> {
+  const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+  if (!raw) return false;
+  const drafts: RecipeData[] = JSON.parse(raw);
+  const idx = drafts.findIndex(d => d.id === id);
+  if (idx < 0) return false;
+  const newValue = !drafts[idx].isFavorite;
+  drafts[idx] = { ...drafts[idx], isFavorite: newValue };
+  await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  return newValue;
+}
+
 /** Removes a draft by id. Silently does nothing if the id is not found. */
 export async function deleteDraft(id: string): Promise<void> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY);

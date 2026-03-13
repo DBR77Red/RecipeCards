@@ -38,6 +38,7 @@ export interface RecipeData {
   shareUrl?: string;
   deletedAt?: string;
   isReceived?: boolean;
+  isFavorite?: boolean;
   receiveCount?: number;
   cloudSyncStatus?: 'synced' | 'pending' | 'failed';
 }

@@ -13,12 +13,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { RecipeCard } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
-import { markPublishedLocally, saveDraft, syncToCloud } from '../utils/storage';
+import { markPublishedLocally, saveDraft, syncToCloud, toggleFavorite } from '../utils/storage';
 import { useSound } from '../utils/useSound';
 
 const CELEBRATE_LOTTIE = require('../../assets/celebrate.json');
@@ -58,6 +59,12 @@ export function PreviewScreen({ route, navigation }: Props) {
   }, [recipe.id, recipe.status]);
 
   const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
+
+  const handleToggleFavorite = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = await toggleFavorite(recipe.id);
+    setRecipe(r => ({ ...r, isFavorite: newValue }));
+  };
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -133,6 +140,20 @@ export function PreviewScreen({ route, navigation }: Props) {
         </Text>
       </TouchableOpacity>
 
+      {recipe.status === 'published' && (
+        <TouchableOpacity style={styles.heartBtn} onPress={handleToggleFavorite} activeOpacity={0.7}>
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            <Path
+              d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+              fill={recipe.isFavorite ? '#EA580C' : 'none'}
+              stroke={recipe.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
+              strokeWidth={1.6}
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </TouchableOpacity>
+      )}
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -182,6 +203,13 @@ const styles = StyleSheet.create({
     top: 52,
     left: 24,
     zIndex: 10,
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 48,
+    right: 24,
+    zIndex: 10,
+    padding: 4,
   },
   backBtnText: {
     fontFamily: 'DMSans_500Medium',

@@ -18,11 +18,12 @@ import { AppState } from 'react-native';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
-import { CardViewScreen } from './src/screens/CardViewScreen';
-import { FormScreen }     from './src/screens/FormScreen';
-import { HomeScreen }     from './src/screens/HomeScreen';
-import { PreviewScreen }  from './src/screens/PreviewScreen';
-import { ReceiveScreen }  from './src/screens/ReceiveScreen';
+import { CardViewScreen }     from './src/screens/CardViewScreen';
+import { FavoritesScreen }   from './src/screens/FavoritesScreen';
+import { FormScreen }        from './src/screens/FormScreen';
+import { HomeScreen }        from './src/screens/HomeScreen';
+import { PreviewScreen }     from './src/screens/PreviewScreen';
+import { ReceiveScreen }     from './src/screens/ReceiveScreen';
 import { RootStackParamList } from './src/types/navigation';
 import { purgeDeletedRecipes } from './src/utils/storage';
 import { retryPendingSyncs } from './src/utils/syncQueue';
@@ -67,11 +68,12 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
         <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Home"    component={HomeScreen}    />
-          <Stack.Screen name="Form"    component={FormScreen}    />
-          <Stack.Screen name="Preview"  component={PreviewScreen}  />
-          <Stack.Screen name="CardView" component={CardViewScreen} />
-          <Stack.Screen name="Receive"  component={ReceiveScreen}  />
+          <Stack.Screen name="Home"      component={HomeScreen}      />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} />
+          <Stack.Screen name="Form"      component={FormScreen}      />
+          <Stack.Screen name="Preview"   component={PreviewScreen}   />
+          <Stack.Screen name="CardView"  component={CardViewScreen}  />
+          <Stack.Screen name="Receive"   component={ReceiveScreen}   />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
