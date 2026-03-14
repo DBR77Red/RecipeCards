@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Dimensions,
   ScrollView,
   Share,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { ErrorModal } from '../components/ErrorModal';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { RecipeCard } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,6 +34,7 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [receiveCount, setReceiveCount] = useState<number | null>(null);
+  const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const shouldCelebrate = useRef(false);
   const playCelebrate = useSound(require('../../assets/celebrate_sound.mp3'));
 
@@ -97,7 +98,7 @@ export function PreviewScreen({ route, navigation }: Props) {
         // and fire a local notification when it succeeds
       }
     } catch (err: any) {
-      Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);
+      setErrorModal({ title: t.publishFailedTitle, body: err?.message ?? t.somethingWentWrong });
     } finally {
       setPublishing(false);
     }
@@ -183,6 +184,13 @@ export function PreviewScreen({ route, navigation }: Props) {
           />
         </View>
       )}
+
+      <ErrorModal
+        visible={!!errorModal}
+        title={errorModal?.title ?? ''}
+        body={errorModal?.body ?? ''}
+        onDismiss={() => setErrorModal(null)}
+      />
     </View>
   );
 }

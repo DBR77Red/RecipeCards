@@ -3,7 +3,6 @@ import * as ImagePicker from 'expo-image-picker';
 import LottieView from 'lottie-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Image,
   KeyboardAvoidingView,
@@ -22,6 +21,7 @@ import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { useSound } from '../utils/useSound';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
+import { ErrorModal } from './ErrorModal';
 import { PhotoPickerModal } from './PhotoPickerModal';
 import { RecipeData } from './RecipeCard';
 import { VoiceFailedModal } from './VoiceFailedModal';
@@ -171,6 +171,7 @@ function VoiceBar({
   onStart,
   onStop,
   onReset,
+  onMicError,
   t,
 }: {
   state: 'idle' | 'recording' | 'stopped';
@@ -180,6 +181,7 @@ function VoiceBar({
   onStart: () => void;
   onStop: () => void;
   onReset: () => void;
+  onMicError: () => void;
   t: Translations;
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -222,7 +224,7 @@ function VoiceBar({
           style={styles.micBtn}
           onPress={hasPermission
             ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onStart(); }
-            : () => Alert.alert(t.voiceMicPermTitle, t.voiceMicPermBody)
+            : onMicError
           }
           activeOpacity={0.75}
         >
@@ -383,7 +385,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast();
     } catch {
-      Alert.alert(t.saveDraftFailedTitle, t.somethingWentWrong);
+      setErrorModal({ title: t.saveDraftFailedTitle, body: t.somethingWentWrong });
     }
   };
 
@@ -397,6 +399,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showVoiceFailed, setShowVoiceFailed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
@@ -450,6 +453,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             onStart={startRecording}
             onStop={stopRecording}
             onReset={resetRecorder}
+            onMicError={() => setErrorModal({ title: t.voiceMicPermTitle, body: t.voiceMicPermBody })}
             t={t}
           />
         )}
@@ -573,6 +577,13 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
         visible={showVoiceFailed}
         onRetry={() => { setShowVoiceFailed(false); startRecording(); }}
         onDismiss={() => setShowVoiceFailed(false)}
+      />
+
+      <ErrorModal
+        visible={!!errorModal}
+        title={errorModal?.title ?? ''}
+        body={errorModal?.body ?? ''}
+        onDismiss={() => setErrorModal(null)}
       />
 
       {/* Publish confirmation modal */}

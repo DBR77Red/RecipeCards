@@ -4,7 +4,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Image,
   Modal,
@@ -20,6 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { ErrorModal } from '../components/ErrorModal';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
@@ -392,6 +392,7 @@ export function HomeScreen({ navigation }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
   const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
+  const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'received'>('all');
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -474,7 +475,7 @@ export function HomeScreen({ navigation }: Props) {
     if (match) {
       navigation.navigate('Receive', { cardId: match[1] });
     } else {
-      Alert.alert(t.qrInvalidTitle, t.qrInvalidBody);
+      setErrorModal({ title: t.qrInvalidTitle, body: t.qrInvalidBody });
     }
   };
 
@@ -682,6 +683,13 @@ export function HomeScreen({ navigation }: Props) {
       />
 
       <SyncToast message={syncToastMessage} />
+
+      <ErrorModal
+        visible={!!errorModal}
+        title={errorModal?.title ?? ''}
+        body={errorModal?.body ?? ''}
+        onDismiss={() => setErrorModal(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -996,7 +1004,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyIconText: {
-    fontFamily: 'DMSans_300Light',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 32,
     color: C.label,
     lineHeight: 36,

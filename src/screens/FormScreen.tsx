@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { ErrorModal } from '../components/ErrorModal';
 import { RecipeData } from '../components/RecipeCard';
 import { RecipeForm } from '../components/RecipeForm';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +15,7 @@ export function FormScreen({ route, navigation }: Props) {
   const incoming = route.params?.recipe;
   const [recipe, setRecipe] = useState<RecipeData>(emptyRecipe());
   const [initialized, setInitialized] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
     if (incoming?.status === 'published') {
@@ -52,18 +53,26 @@ export function FormScreen({ route, navigation }: Props) {
         // Card stays with cloudSyncStatus: 'pending' — App.tsx will retry on next foreground
       }
     } catch (err: any) {
-      Alert.alert(t.publishFailedTitle, err?.message ?? t.somethingWentWrong);
+      setErrorModal({ title: t.publishFailedTitle, body: err?.message ?? t.somethingWentWrong });
     }
   };
 
   return (
-    <RecipeForm
-      recipe={recipe}
-      onChange={setRecipe}
-      onSaveDraft={handleSaveDraft}
-      onPublish={handlePublish}
-      onPreview={() => navigation.navigate('Preview', { recipe })}
-      onBack={() => navigation.goBack()}
-    />
+    <>
+      <RecipeForm
+        recipe={recipe}
+        onChange={setRecipe}
+        onSaveDraft={handleSaveDraft}
+        onPublish={handlePublish}
+        onPreview={() => navigation.navigate('Preview', { recipe })}
+        onBack={() => navigation.goBack()}
+      />
+      <ErrorModal
+        visible={!!errorModal}
+        title={errorModal?.title ?? ''}
+        body={errorModal?.body ?? ''}
+        onDismiss={() => setErrorModal(null)}
+      />
+    </>
   );
 }

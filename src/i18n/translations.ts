@@ -7,6 +7,7 @@ export interface Translations {
 
   // Common
   cancel: string;
+  ok: string;
   save: string;
   untitledRecipe: string;
 
@@ -190,6 +191,7 @@ const en: Translations = {
   onboardingBtn: 'Start using the app',
 
   cancel: 'Cancel',
+  ok: 'OK',
   save: 'Save',
   untitledRecipe: 'Untitled Recipe',
 
@@ -350,6 +352,7 @@ const pt: Translations = {
   onboardingBtn: 'Começar a usar o app',
 
   cancel: 'Cancelar',
+  ok: 'OK',
   save: 'Salvar',
   untitledRecipe: 'Receita sem título',
 
@@ -510,6 +513,7 @@ const de: Translations = {
   onboardingBtn: 'App starten',
 
   cancel: 'Abbrechen',
+  ok: 'OK',
   save: 'Speichern',
   untitledRecipe: 'Unbenanntes Rezept',
 
@@ -670,6 +674,7 @@ const es: Translations = {
   onboardingBtn: 'Empezar a usar la app',
 
   cancel: 'Cancelar',
+  ok: 'OK',
   save: 'Guardar',
   untitledRecipe: 'Receta sin título',
 
