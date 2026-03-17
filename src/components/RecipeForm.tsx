@@ -295,6 +295,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
       allowsEditing: true,
       aspect: [320, 445],
       quality: 0.85,
+      cameraType: ImagePicker.CameraType.back,
     });
     if (!result.canceled) update('photo', result.assets[0].uri);
   };
