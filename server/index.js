@@ -3,9 +3,18 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['audio/m4a', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/x-m4a'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Invalid file type. Only audio files are accepted.'));
+  },
+});
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -19,8 +28,20 @@ async function fetchWithRetry(url, options, { retries = 3, baseDelayMs = 1000 } 
   }
 }
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://recipecards-api.fly.dev'],
+  methods: ['GET', 'POST', 'PATCH'],
+}));
 app.use(express.json());
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+});
+app.use('/api/', apiLimiter);
 
 const SYSTEM_PROMPT = `You are a recipe parser. Given a spoken recipe transcript, extract the following fields and return ONLY a valid JSON object with no extra text, markdown, or explanation.
 
@@ -77,11 +98,12 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
     });
     if (!dgRes.ok) {
       const text = await dgRes.text();
-      return res.status(502).json({ error: `Deepgram returned ${dgRes.status}: ${text}` });
+      console.error(`[voice] Deepgram error ${dgRes.status}: ${text}`);
+      return res.status(502).json({ error: 'Transcription service error. Please try again.' });
     }
     const dgData = await dgRes.json();
     const transcript = dgData?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? '';
-    console.log(`[voice] transcript (${transcript.length} chars): "${transcript.slice(0, 80)}${transcript.length > 80 ? '…' : ''}"`);
+    console.log(`[voice] transcript: ${transcript.length} chars`);
     if (!transcript.trim()) {
       return res.status(422).json({ error: 'no_speech' });
     }
@@ -113,7 +135,8 @@ app.post('/api/voice-to-recipe', upload.single('audio'), async (req, res) => {
     });
     if (!claudeRes.ok) {
       const text = await claudeRes.text();
-      return res.status(502).json({ error: `Anthropic returned ${claudeRes.status}: ${text}` });
+      console.error(`[voice] Anthropic error ${claudeRes.status}: ${text}`);
+      return res.status(502).json({ error: 'Recipe parsing service error. Please try again.' });
     }
     const claudeData = await claudeRes.json();
     const rawText = claudeData?.content?.[0]?.text ?? '{}';
@@ -190,14 +213,24 @@ app.get('/card/:id', async (req, res) => {
   res.send(cardPage({ recipe }));
 });
 
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function cardPage({ recipe, notFound } = {}) {
-  const deepLink = recipe ? `recipecards://card/${recipe.id}` : '';
-  const title    = recipe?.title        ?? 'Recipe not found';
-  const creator  = recipe?.creator_name ?? '';
-  const photo    = recipe?.photo_url    ?? '';
-  const serves   = recipe?.servings     ?? '';
-  const prep     = recipe?.prep_time    ?? '';
-  const cook     = recipe?.cook_time    ?? '';
+  const safeId   = esc(recipe?.id ?? '');
+  const deepLink = recipe ? `recipecards://card/${safeId}` : '';
+  const title    = esc(recipe?.title        ?? 'Recipe not found');
+  const creator  = esc(recipe?.creator_name ?? '');
+  const photo    = esc(recipe?.photo_url    ?? '');
+  const serves   = esc(recipe?.servings     ?? '');
+  const prep     = esc(recipe?.prep_time    ?? '');
+  const cook     = esc(recipe?.cook_time    ?? '');
   const ings     = Array.isArray(recipe?.ingredients) ? recipe.ingredients : [];
   const steps    = Array.isArray(recipe?.directions)  ? recipe.directions  : [];
 
@@ -208,11 +241,11 @@ function cardPage({ recipe, notFound } = {}) {
   ].filter(Boolean).join('<span class="dot">·</span>');
 
   const ingredientList = ings.slice(0, 6).map(i =>
-    `<li>${i}</li>`
+    `<li>${esc(i)}</li>`
   ).join('') + (ings.length > 6 ? `<li class="more">+ ${ings.length - 6} more…</li>` : '');
 
   const stepList = steps.slice(0, 4).map((s, i) =>
-    `<li><span class="num">${i + 1}</span>${s}</li>`
+    `<li><span class="num">${i + 1}</span>${esc(s)}</li>`
   ).join('') + (steps.length > 4 ? `<li class="more step-more">+ ${steps.length - 4} more steps…</li>` : '');
 
   return `<!DOCTYPE html>
@@ -220,7 +253,7 @@ function cardPage({ recipe, notFound } = {}) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${notFound ? 'Recipe not found' : `${title} — RecipeCards`}</title>
+  <title>${notFound ? 'Recipe not found' : `${title} \u2014 RecipeCards`}</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -263,7 +296,7 @@ ${notFound ? `
 ` : `
   <div class="card">
     ${photo
-      ? `<img class="photo" src="${photo}" alt="${title}" />`
+      ? `<img class="photo" src="${photo}" alt="${title}" referrerpolicy="no-referrer" />`
       : `<div class="photo-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#1C1917" stroke-width="1.5"/><circle cx="12" cy="13" r="4" stroke="#1C1917" stroke-width="1.5"/></svg></div>`
     }
     <div class="body">
@@ -283,17 +316,18 @@ ${notFound ? `
       ` : ''}
     </div>
     <div class="actions">
-      <a class="btn-open" href="${deepLink}" id="openBtn">Open in RecipeCards</a>
+      <a class="btn-open" id="openBtn">Open in RecipeCards</a>
       <p class="hint" id="hint">Don't have the app? <a href="https://recipecards-api.fly.dev">Get RecipeCards</a></p>
     </div>
   </div>
   <script>
+    var deepLink = ${JSON.stringify(deepLink)};
     document.getElementById('openBtn').addEventListener('click', function(e) {
       e.preventDefault();
-      window.location.href = '${deepLink}';
+      window.location.href = deepLink;
       setTimeout(function() {
-        document.getElementById('hint').innerHTML =
-          "Looks like the app isn\\'t installed yet. Download it to open this recipe.";
+        document.getElementById('hint').textContent =
+          "Looks like the app isn't installed yet. Download it to open this recipe.";
       }, 1500);
     });
   </script>

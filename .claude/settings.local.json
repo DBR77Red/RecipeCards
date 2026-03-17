@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx expo:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(grep -q '\"\"expo-crypto\"\"' package.json)"
     ]
   }
 }

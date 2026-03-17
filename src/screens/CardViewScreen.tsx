@@ -15,7 +15,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
 export function CardViewScreen({ route, navigation }: Props) {
   const { t } = useLanguage();
-  const { cardId } = route.params;
+  const { cardId: rawCardId } = route.params;
+  const cardId = /^[\w-]{1,64}$/.test(rawCardId ?? '') ? rawCardId : '';
   const [recipe, setRecipe] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState(true);
 

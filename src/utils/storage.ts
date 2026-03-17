@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { RecipeData } from '../components/RecipeCard';
 import { supabase } from '../lib/supabase';
 
@@ -50,7 +51,7 @@ export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
   } else {
     saved = {
       ...recipe,
-      id: String(Date.now()),
+      id: Crypto.randomUUID(),
       status: 'draft',
       createdAt: now,
       updatedAt: now,
@@ -174,7 +175,7 @@ export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> 
   const drafts: RecipeData[] = raw ? JSON.parse(raw) : [];
   const saved: RecipeData = {
     ...recipe,
-    id: String(Date.now()),
+    id: Crypto.randomUUID(),
     status: 'published',
     isReceived: true,
     createdAt: now,

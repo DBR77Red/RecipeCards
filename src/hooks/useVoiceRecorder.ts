@@ -52,7 +52,7 @@ export function useVoiceRecorder(): VoiceRecorderResult {
     try {
       await recorder.stop();
       const uri = recorder.uri ?? null;
-      console.log('[voice] recorder.stop() uri:', uri);
+      if (__DEV__) console.log('[voice] recorder.stop() uri:', uri);
       setAudioUri(uri);
     } catch (err) {
       console.warn('[voice] recorder.stop() failed:', err);
