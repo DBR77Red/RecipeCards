@@ -2,8 +2,6 @@
 
 <img width="735" height="342" alt="image" src="https://github.com/user-attachments/assets/3f065ae2-5766-47c5-85be-6acd5f896332" />
 
-<img width="668" height="490" alt="image" src="https://github.com/user-attachments/assets/b46db77e-ca7b-4529-8a77-9f44a689308a" />
-
 
 A mobile app for creating, saving, and sharing recipes as beautiful skeuomorphic index cards.
 
