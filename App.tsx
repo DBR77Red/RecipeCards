@@ -1,3 +1,4 @@
+import 'react-native-reanimated';
 import { patchAudioModule } from './src/utils/patchAudio';
 patchAudioModule();
 
@@ -16,10 +17,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { CardViewScreen }     from './src/screens/CardViewScreen';
+import { DeckScreen }        from './src/screens/DeckScreen';
 import { FavoritesScreen }   from './src/screens/FavoritesScreen';
 import { FormScreen }        from './src/screens/FormScreen';
 import { HomeScreen }        from './src/screens/HomeScreen';
@@ -74,6 +77,7 @@ export default function App() {
   if (!fontsLoaded || !initialRoute) return null;
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
@@ -85,10 +89,12 @@ export default function App() {
           <Stack.Screen name="Form"      component={FormScreen}      />
           <Stack.Screen name="Preview"   component={PreviewScreen}   />
           <Stack.Screen name="CardView"  component={CardViewScreen}  />
+          <Stack.Screen name="Deck"      component={DeckScreen}      />
           <Stack.Screen name="Receive"   component={ReceiveScreen}   />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
     </LanguageProvider>
+    </GestureHandlerRootView>
   );
 }

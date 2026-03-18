@@ -4,13 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Dimensions,
   ScrollView,
   Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { ErrorModal } from '../components/ErrorModal';
@@ -23,12 +23,12 @@ import { markPublishedLocally, saveDraft, syncToCloud, toggleFavorite } from '..
 import { useSound } from '../utils/useSound';
 
 const CELEBRATE_LOTTIE = require('../../assets/celebrate.json');
-const { width: SW, height: SH } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 
 export function PreviewScreen({ route, navigation }: Props) {
   const { t } = useLanguage();
+  const { width: SW, height: SH } = useWindowDimensions();
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);

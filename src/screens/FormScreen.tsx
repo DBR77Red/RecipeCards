@@ -25,7 +25,7 @@ export function FormScreen({ route, navigation }: Props) {
 
     async function init() {
       const userName = await getUserName();
-      const initial = incoming ?? emptyRecipe();
+      const initial = { ...(incoming ?? emptyRecipe()) };
       if (!initial.creatorName && userName) {
         initial.creatorName = userName;
       }

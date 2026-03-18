@@ -166,6 +166,10 @@ export interface Translations {
   cardViewRecipeBy: string;
   cardViewNotFound: string;
 
+  // Deck screen
+  deckPosition: (current: number, total: number) => string;
+  deckTapHint: string;
+
   // Receive screen
   receiveBack: string;
   receiveLoading: string;
@@ -329,6 +333,9 @@ const en: Translations = {
   cardViewRecipeBy: 'Recipe by',
   cardViewNotFound: 'Recipe not found.',
 
+  deckPosition: (c, t) => `${c} of ${t}`,
+  deckTapHint: 'Tap to view · swipe to browse',
+
   receiveBack: '← Back',
   receiveLoading: 'Loading recipe…',
   receiveNotFoundTitle: 'Recipe not found',
@@ -489,6 +496,9 @@ const pt: Translations = {
   cardViewBack: '← Início',
   cardViewRecipeBy: 'Receita de',
   cardViewNotFound: 'Receita não encontrada.',
+
+  deckPosition: (c, t) => `${c} de ${t}`,
+  deckTapHint: 'Toque para ver · deslize para navegar',
 
   receiveBack: '← Voltar',
   receiveLoading: 'Carregando receita…',
@@ -651,6 +661,9 @@ const de: Translations = {
   cardViewRecipeBy: 'Rezept von',
   cardViewNotFound: 'Rezept nicht gefunden.',
 
+  deckPosition: (c, t) => `${c} von ${t}`,
+  deckTapHint: 'Tippen zum Ansehen · Wischen zum Blättern',
+
   receiveBack: '← Zurück',
   receiveLoading: 'Rezept wird geladen…',
   receiveNotFoundTitle: 'Rezept nicht gefunden',
@@ -811,6 +824,9 @@ const es: Translations = {
   cardViewBack: '← Inicio',
   cardViewRecipeBy: 'Receta de',
   cardViewNotFound: 'Receta no encontrada.',
+
+  deckPosition: (c, t) => `${c} de ${t}`,
+  deckTapHint: 'Toca para ver · desliza para explorar',
 
   receiveBack: '← Volver',
   receiveLoading: 'Cargando receta…',

@@ -25,6 +25,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
   const [hasError, setHasError] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     fetchSharedRecipe(route.params.cardId)
@@ -36,12 +37,15 @@ export function ReceiveScreen({ route, navigation }: Props) {
   const handleAdd = async () => {
     if (!recipe || saving) return;
     setSaving(true);
+    setSaveError(false);
     try {
       await saveReceivedCard(recipe);
       setSaved(true);
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }, 900);
+    } catch {
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -99,6 +103,10 @@ export function ReceiveScreen({ route, navigation }: Props) {
               {saved ? t.receiveAdded : saving ? t.receiveSaving : t.receiveAddBtn}
             </Text>
           </TouchableOpacity>
+
+          {saveError && (
+            <Text style={styles.saveErrorText}>{t.somethingWentWrong}</Text>
+          )}
         </ScrollView>
       )}
     </View>
@@ -193,5 +201,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0F172A',
     letterSpacing: 0.2,
+  },
+  saveErrorText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: 'rgba(220,38,38,0.8)',
+    marginTop: 12,
+    textAlign: 'center',
   },
 });

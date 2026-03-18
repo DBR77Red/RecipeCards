@@ -9,4 +9,5 @@ export type RootStackParamList = {
   Preview: { recipe: RecipeData; celebrate?: boolean };
   CardView: { cardId: string };
   Receive: { cardId: string };
+  Deck: { recipes: RecipeData[]; startCardId?: string };
 };

@@ -27,10 +27,22 @@ export async function voiceToRecipe(localUri: string, currentRecipe?: Partial<Re
     formData.append('currentRecipe', JSON.stringify(context));
   }
 
-  const response = await fetch(`${getServerUrl()}/api/voice-to-recipe`, {
-    method: 'POST',
-    body: formData,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${getServerUrl()}/api/voice-to-recipe`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') throw new Error('Voice request timed out. Please try again.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const json = await response.json().catch(() => ({}));

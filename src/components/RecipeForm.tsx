@@ -381,12 +381,16 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   };
 
   const handleSaveDraft = async () => {
+    if (saving) return;
+    setSaving(true);
     try {
       await onSaveDraft();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast();
     } catch {
       setErrorModal({ title: t.saveDraftFailedTitle, body: t.somethingWentWrong });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -401,6 +405,7 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
   const [showVoiceFailed, setShowVoiceFailed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
@@ -421,8 +426,12 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPublishing(true);
     closeConfirm();
-    await onPublish();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      await onPublish();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -550,7 +559,11 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
             <Text style={styles.previewBtnText}>{t.formPreviewCard}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.saveDraftBtn} onPress={handleSaveDraft}>
+          <TouchableOpacity
+            style={[styles.saveDraftBtn, saving && { opacity: 0.4 }]}
+            onPress={handleSaveDraft}
+            disabled={saving}
+          >
             <Text style={styles.saveDraftBtnText}>{t.formSaveDraft}</Text>
           </TouchableOpacity>
         </View>

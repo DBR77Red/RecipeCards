@@ -392,6 +392,7 @@ export function HomeScreen({ navigation }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<RecipeData | null>(null);
   const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
+  const [syncToastCount, setSyncToastCount] = useState(0);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'received'>('all');
   const [selectionMode, setSelectionMode] = useState(false);
@@ -403,6 +404,7 @@ export function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     const unsub = onSyncComplete(title => {
       setSyncToastMessage(title);
+      setSyncToastCount(c => c + 1);
       loadData(); // refresh badges
     });
     return unsub;
@@ -410,8 +412,9 @@ export function HomeScreen({ navigation }: Props) {
 
   const [key, setKey] = useState(0);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isActive?: () => boolean) => {
     const all = await getDrafts();
+    if (isActive && !isActive()) return;
     const draftsList = all.filter(r => r.status === 'draft');
     const publishedList = all.filter(r => r.status === 'published' && !r.isReceived);
     const receivedList = all.filter(r => r.isReceived);
@@ -425,11 +428,9 @@ export function HomeScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      if (active) {
-        loadData();
-      }
+      loadData(() => active);
       return () => { active = false; };
-    }, [])
+    }, [loadData])
   );
 
   const enterSelectionMode = (firstId: string) => {
@@ -471,7 +472,7 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const handleQRScanned = (data: string) => {
-    const match = data.match(/recipecards:\/\/card\/(.+)/);
+    const match = data.match(/^recipecards:\/\/card\/([\w-]{1,64})$/);
     if (match) {
       navigation.navigate('Receive', { cardId: match[1] });
     } else {
@@ -519,11 +520,8 @@ export function HomeScreen({ navigation }: Props) {
       isSelected={selectedIds.has(item.id)}
       onPress={() => {
         if (selectionMode) { toggleSelect(item.id); return; }
-        item.isReceived
-          ? navigation.navigate('CardView', { cardId: item.id })
-          : item.status === 'published'
-          ? navigation.navigate('Preview', { recipe: item })
-          : navigation.navigate('Form', { recipe: item });
+        const flatRecipes = sections.flatMap(s => s.data);
+        navigation.navigate('Deck', { recipes: flatRecipes, startCardId: item.id });
       }}
       onLongPress={() => handleLongPress(item)}
       onToggleFavorite={() => handleToggleFavorite(item)}
@@ -682,7 +680,7 @@ export function HomeScreen({ navigation }: Props) {
         onCancel={exitSelectionMode}
       />
 
-      <SyncToast message={syncToastMessage} />
+      <SyncToast key={syncToastCount} message={syncToastMessage} />
 
       <ErrorModal
         visible={!!errorModal}

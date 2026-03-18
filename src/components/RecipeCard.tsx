@@ -2,23 +2,15 @@ import React, { useRef, useState } from 'react';
 import {
   Animated,
   Image,
-  LayoutAnimation,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Svg, { Circle, Path, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
-
-// LayoutAnimation requires this flag on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -202,7 +194,7 @@ function CardBack({ recipe, onFlip, onMeasured }: {
       {/* Content — fully expanded, no clipping */}
       <View style={styles.backContentInner}>
         <Text style={styles.sectionHeading}>{t.cardIngredients}</Text>
-        {recipe.ingredients.map((ing, i) => (
+        {recipe.ingredients.filter(ing => ing.trim()).map((ing, i) => (
           <View key={i} style={styles.bulletRow}>
             <View style={styles.bulletDot} />
             <Text style={styles.bulletText}>{ing}</Text>
@@ -210,7 +202,7 @@ function CardBack({ recipe, onFlip, onMeasured }: {
         ))}
 
         <Text style={[styles.sectionHeading, { marginTop: 14 }]}>{t.cardInstructions}</Text>
-        {recipe.directions.map((step, i) => (
+        {recipe.directions.filter(step => step.trim()).map((step, i) => (
           <View key={i} style={styles.stepRow}>
             <Text style={styles.stepNum}>{i + 1}.</Text>
             <Text style={styles.stepText}>{step}</Text>
