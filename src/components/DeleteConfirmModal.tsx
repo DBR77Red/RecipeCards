@@ -4,11 +4,11 @@ import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-nativ
 import { useLanguage } from '../context/LanguageContext';
 
 const C = {
-  bg:      '#F7F5F2',
-  title:   '#1C1917',
-  muted:   '#78716C',
-  label:   '#A8A29E',
-  red:     '#DC2626',
+  bg:      '#FAF5EE',
+  title:   '#1C0A00',
+  muted:   '#8B6444',
+  label:   '#C4A882',
+  red:     '#C0392B',
   redText: '#FFFFFF',
 };
 
@@ -80,10 +80,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 24,
     color: C.title,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   body: {
     fontFamily: 'DMSans_400Regular',

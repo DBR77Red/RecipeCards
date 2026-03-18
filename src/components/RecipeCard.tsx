@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import {
   Animated,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -38,12 +39,17 @@ export interface RecipeData {
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  bg:       '#fdf8f0',
-  border:   '#e8d5b0',
-  amber:    '#d4820a',
-  darkText: '#2c1810',
-  bodyText: '#5a3e2b',
-  white:    '#ffffff',
+  bg:         '#F5EDD9',   // parchment cream — photo zone & back face
+  border:     '#E8D8B8',   // warm beige border
+  amber:      '#D4780A',   // amber accent labels
+  darkText:   '#1C0A00',   // deep warm black
+  bodyText:   '#4A2D1A',   // warm brown body
+  white:      '#FFFFFF',
+  panel:      '#1C0F06',   // espresso dark — bottom zone
+  panelAmber: '#D4780A',   // amber on dark
+  panelText:  '#F5EDD9',   // parchment on dark
+  panelMuted: '#C4A882',   // muted on dark
+  panelDiv:   'rgba(255,255,255,0.08)', // divider on dark
 };
 
 const CARD_W      = 320;
@@ -293,13 +299,13 @@ const styles = StyleSheet.create({
     // height is animated — no static value here
     borderRadius: RADIUS,
     ...Platform.select({
-      web: { boxShadow: '0px 20px 40px rgba(0,0,0,0.2)' },
+      web: { boxShadow: '0px 32px 64px rgba(28,10,0,0.35)' },
       default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 20 },
-        shadowOpacity: 0.2,
-        shadowRadius: 40,
-        elevation: 20,
+        shadowColor: '#1C0A00',
+        shadowOffset: { width: 0, height: 24 },
+        shadowOpacity: 0.30,
+        shadowRadius: 48,
+        elevation: 24,
       },
     }),
   },
@@ -311,7 +317,7 @@ const styles = StyleSheet.create({
     height: CARD_H,
     backgroundColor: C.bg,
     borderRadius: RADIUS,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: C.border,
     overflow: 'hidden',
   },
@@ -322,7 +328,7 @@ const styles = StyleSheet.create({
     width: CARD_W,
     backgroundColor: C.bg,
     borderRadius: RADIUS,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: C.border,
   },
   face: {
@@ -377,16 +383,16 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
   },
 
-  // ── Front: bottom zone ──
+  // ── Front: bottom zone (dark espresso panel) ──
   bottomZone: {
     flex: 1,
-    backgroundColor: C.bg,
-    borderTopWidth: 1,
-    borderTopColor: C.border,
+    backgroundColor: C.panel,
+    borderTopWidth: 2,
+    borderTopColor: C.panelAmber,
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 12,
     paddingBottom: 24,
     gap: 8,
   },
@@ -403,25 +409,25 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 10,
-    color: C.amber,
+    color: C.panelAmber,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   statValue: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
-    color: C.darkText,
+    color: C.panelText,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: C.border,
+    backgroundColor: C.panelDiv,
   },
   frontHint: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontStyle: 'italic',
-    color: C.amber,
+    color: C.panelAmber,
     textAlign: 'center',
   },
   bottomZonePub: {
@@ -430,7 +436,7 @@ const styles = StyleSheet.create({
   qrDivider: {
     width: '100%',
     height: 1,
-    backgroundColor: C.border,
+    backgroundColor: C.panelDiv,
   },
   qrCenter: {
     alignItems: 'center',
@@ -442,13 +448,13 @@ const styles = StyleSheet.create({
     backgroundColor: C.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   qrLabel: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     letterSpacing: 0.3,
-    color: C.bodyText,
+    color: C.panelMuted,
     textAlign: 'center',
   },
   shareBtn: {
@@ -458,14 +464,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.bg,
+    borderColor: 'rgba(212,120,10,0.4)',
+    backgroundColor: 'rgba(212,120,10,0.1)',
     marginBottom: 8,
   },
   shareBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
-    color: C.amber,
+    color: C.panelAmber,
     letterSpacing: 0.3,
   },
   publishPlaceholder: {
@@ -473,25 +479,25 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: 'rgba(212,120,10,0.3)',
     borderStyle: 'dashed',
-    backgroundColor: 'rgba(212,130,10,0.04)',
+    backgroundColor: 'rgba(212,120,10,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   publishPlaceholderIcon: {
     fontSize: 28,
-    color: C.border,
+    color: C.panelAmber,
   },
   publishTitle: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 15,
-    color: C.darkText,
+    color: C.panelText,
     textAlign: 'center',
   },
   publishBtn: {
-    backgroundColor: C.amber,
-    borderColor: C.amber,
+    backgroundColor: '#E8521A',
+    borderColor: '#E8521A',
   },
   publishBtnDisabled: {
     opacity: 0.5,

@@ -21,15 +21,15 @@ import { getUserName, setUserName } from '../utils/storage';
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 const C = {
-  bg:      '#FAFAF9',
+  bg:      '#FAF5EE',
   card:    '#FFFFFF',
-  title:   '#1C1917',
-  body:    '#44403C',
-  muted:   '#78716C',
-  label:   '#A8A29E',
-  divider: '#E7E5E4',
-  btnBg:   '#1C1917',
-  btnText: '#F7F5F2',
+  title:   '#1C0A00',
+  body:    '#4A2D1A',
+  muted:   '#8B6444',
+  label:   '#C4A882',
+  divider: '#E0D0B8',
+  btnBg:   '#E8521A',
+  btnText: '#FFFFFF',
 };
 
 const LANGS: { code: Language; label: string; name: string }[] = [
@@ -136,11 +136,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 22,
     color: C.title,
     textAlign: 'center',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
 
   content: {
@@ -225,6 +225,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 36,
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
   },
   saveBtnDisabled: {
     opacity: 0.4,

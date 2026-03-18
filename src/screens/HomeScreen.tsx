@@ -31,20 +31,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:         '#FAFAF9',
-  title:      '#1C1917',
-  body:       '#57534E',
-  muted:      '#A8A29E',
-  label:      '#D6D3D1',
-  divider:    '#E7E5E4',
-  terracotta: '#EA580C',
-  sage:       '#059669',
-  btnBg:      '#18181B',
-  btnText:    '#FAFAFA',
-  photoBg:    '#F5F5F4',
-  photoMark:  'rgba(0,0,0,0.06)',
-  cardBg:     '#FFFFFF',
-  shadow:     'rgba(0,0,0,0.08)',
+  bg:         '#FAF5EE',
+  title:      '#1C0A00',
+  body:       '#4A2D1A',
+  muted:      '#8B6444',
+  label:      '#C4A882',
+  divider:    '#E0D0B8',
+  terracotta: '#E8521A',
+  sage:       '#2D7A4F',
+  btnBg:      '#E8521A',
+  btnText:    '#FFFFFF',
+  photoBg:    '#F2E9D8',
+  photoMark:  'rgba(28,10,0,0.08)',
+  cardBg:     '#FAF5EE',
+  shadow:     'rgba(28,10,0,0.08)',
+  panel:      '#1C0F06',
+  panelText:  '#F5EDD9',
+  panelMuted: '#C4A882',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -271,16 +274,15 @@ const selBarStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E7E5E4',
+    backgroundColor: '#1C0F06',
+    borderTopWidth: 0,
     paddingHorizontal: 20,
     paddingTop: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 16,
+    shadowColor: '#1C0A00',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
   },
   cancelBtn: {
     paddingVertical: 8,
@@ -290,15 +292,15 @@ const selBarStyles = StyleSheet.create({
   cancelText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 15,
-    color: '#A8A29E',
+    color: '#C4A882',
   },
   countText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
-    color: '#1C1917',
+    color: '#F5EDD9',
   },
   deleteBtn: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#C0392B',
     borderRadius: 100,
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -544,6 +546,45 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* Dark espresso header */}
+      <View style={styles.darkHeader}>
+        <View style={styles.darkHeaderTop}>
+          <Text style={styles.darkHeaderAppName}>RecipeCards</Text>
+          <TouchableOpacity
+            style={styles.darkHeaderAvatar}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.darkHeaderAvatarText}>👤</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.darkHeaderTitle}>Your{'\n'}<Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          style={styles.filterScroll}
+        >
+          {([
+            { key: 'all',       label: t.filterAll       },
+            { key: 'draft',     label: t.filterDrafts    },
+            { key: 'published', label: t.filterPublished },
+            { key: 'received',  label: t.filterReceived  },
+          ] as const).map(({ key: k, label }) => (
+            <TouchableOpacity
+              key={k}
+              style={[styles.filterPill, filter === k && styles.filterPillActive]}
+              onPress={() => setFilter(k)}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.filterPillText, filter === k && styles.filterPillTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* Recipe list */}
       <SectionList
         ref={listRef}
@@ -555,32 +596,7 @@ export function HomeScreen({ navigation }: Props) {
             {title}
           </Text>
         )}
-        ListHeaderComponent={
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-            style={styles.filterScroll}
-          >
-            {([
-              { key: 'all',       label: t.filterAll       },
-              { key: 'draft',     label: t.filterDrafts    },
-              { key: 'published', label: t.filterPublished },
-              { key: 'received',  label: t.filterReceived  },
-            ] as const).map(({ key: k, label }) => (
-              <TouchableOpacity
-                key={k}
-                style={[styles.filterPill, filter === k && styles.filterPillActive]}
-                onPress={() => setFilter(k)}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.filterPillText, filter === k && styles.filterPillTextActive]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        }
+        ListHeaderComponent={null}
         ListEmptyComponent={
           isEmpty
             ? <EmptyState />
@@ -697,7 +713,53 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: C.panel,
+  },
+
+  // ── Dark header ────────────────────────────────────────────────────────────
+  darkHeader: {
+    backgroundColor: C.panel,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
+  darkHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  darkHeaderAppName: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 13,
+    fontWeight: '800',
+    color: C.panelText,
+    letterSpacing: 1.5,
+  },
+  darkHeaderAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: 'rgba(232,82,26,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  darkHeaderAvatarText: {
+    fontSize: 16,
+  },
+  darkHeaderTitle: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 36,
+    color: C.panelText,
+    lineHeight: 42,
+    letterSpacing: -1,
+    marginBottom: 20,
+  },
+  darkHeaderAccent: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 32,
+    color: '#E8521A',
+    fontStyle: 'italic',
   },
 
   // Modal — matches app-wide design standard
@@ -711,16 +773,16 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#F7F5F2',
-    borderRadius: 24,
+    backgroundColor: '#FAF5EE',
+    borderRadius: 28,
     padding: 32,
     gap: 16,
   },
   modalTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 24,
     color: C.title,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   modalSub: {
     fontFamily: 'DMSans_400Regular',
@@ -733,11 +795,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     color: C.title,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F2E9D8',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.divider,
   },
   modalBtn: {
@@ -747,6 +809,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalBtnDisabled: {
     opacity: 0.4,
@@ -769,50 +836,53 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 20,
     paddingBottom: 100,
+    backgroundColor: C.bg,
+    minHeight: '100%',
   },
   listContentSelection: {
     paddingBottom: 160,
   },
 
-
   filterScroll: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
     paddingRight: 4,
+    paddingBottom: 16,
   },
   filterPill: {
     height: 34,
     paddingHorizontal: 14,
     borderRadius: 100,
     borderWidth: 1.5,
-    borderColor: C.divider,
+    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   filterPillActive: {
-    backgroundColor: C.btnBg,
-    borderColor: C.btnBg,
+    backgroundColor: '#E8521A',
+    borderColor: '#E8521A',
   },
   filterPillText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
-    color: C.muted,
+    color: 'rgba(245,237,217,0.5)',
   },
   filterPillTextActive: {
-    color: C.btnText,
+    color: '#FFFFFF',
   },
 
   sectionLabel: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 11,
-    letterSpacing: 1.5,
+    fontSize: 10,
+    letterSpacing: 2,
     color: C.muted,
-    marginBottom: 8,
+    marginBottom: 10,
     textTransform: 'uppercase',
   },
   sectionLabelSpaced: {
@@ -825,15 +895,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     gap: 14,
-    backgroundColor: C.cardBg,
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     paddingHorizontal: 14,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 10,
+    shadowColor: '#1C0A00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: C.divider,
   },
   thumbnail: {
     width: 56,
@@ -872,8 +944,8 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   draftTitle: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 15,
     color: C.title,
     lineHeight: 20,
   },
@@ -962,21 +1034,21 @@ const styles = StyleSheet.create({
     top: 12,
     left: 20,
     right: 20,
-    backgroundColor: '#1C1917',
-    borderRadius: 14,
+    backgroundColor: '#1C0F06',
+    borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
     zIndex: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowColor: '#1C0A00',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
   },
   syncToastText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 14,
-    color: '#F7F5F2',
+    color: '#F5EDD9',
     letterSpacing: 0.2,
   },
 

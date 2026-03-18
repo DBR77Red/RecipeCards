@@ -54,7 +54,7 @@ export function OnboardingScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F7F5F2',
+    backgroundColor: '#1C0F06',
     paddingHorizontal: 32,
     justifyContent: 'center',
   },
@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   appName: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 32,
-    color: '#1C1917',
+    color: '#F5EDD9',
     letterSpacing: -0.5,
   },
   bodyArea: {
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   bodyText: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 16,
-    color: '#78716C',
+    color: '#C4A882',
     lineHeight: 26,
     textAlign: 'center',
   },
@@ -85,22 +85,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startBtn: {
-    backgroundColor: '#1C1917',
+    backgroundColor: '#E8521A',
     borderRadius: 100,
     height: 54,
     paddingHorizontal: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 8,
   },
   startBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
-    color: '#F7F5F2',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
 });

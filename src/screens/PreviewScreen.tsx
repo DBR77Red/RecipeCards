@@ -198,7 +198,7 @@ export function PreviewScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#1C0F06',
   },
   scrollContent: {
     flexGrow: 1,

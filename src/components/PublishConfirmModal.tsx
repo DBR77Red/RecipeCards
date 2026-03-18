@@ -3,12 +3,12 @@ import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react
 import { useLanguage } from '../context/LanguageContext';
 
 const C = {
-  bg:     '#F7F5F2',
-  title:  '#1C1917',
-  muted:  '#78716C',
-  label:  '#A8A29E',
-  btnBg:  '#1C1917',
-  btnText:'#F7F5F2',
+  bg:     '#FAF5EE',
+  title:  '#1C0A00',
+  muted:  '#8B6444',
+  label:  '#C4A882',
+  btnBg:  '#E8521A',
+  btnText:'#FFFFFF',
 };
 
 interface Props {
@@ -68,20 +68,20 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     backgroundColor: C.bg,
-    borderRadius: 24,
+    borderRadius: 28,
     padding: 32,
     gap: 16,
   },
   recipeTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 24,
     color: C.title,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
     marginBottom: 4,
   },
   headline: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 20,
+    fontSize: 17,
     color: C.title,
   },
   body: {
@@ -97,6 +97,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
   },
   confirmBtnText: {
     fontFamily: 'DMSans_600SemiBold',

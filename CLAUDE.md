@@ -17,14 +17,14 @@
 ### Typography
 | Role | Font | Size | Color |
 |---|---|---|---|
-| Title | `PlayfairDisplay_700Bold` | 26 | `#1C1917` |
-| Body | `DMSans_400Regular` | 15, lineHeight 24 | `#78716C` |
-| Primary btn | `DMSans_600SemiBold` | 15 | `#F7F5F2` |
-| Cancel | `DMSans_500Medium` | 14 | `#A8A29E` |
+| Title | `Poppins_700Bold` | 24 | `#1C0A00` |
+| Body | `DMSans_400Regular` | 15, lineHeight 24 | `#8B6444` |
+| Primary btn | `DMSans_600SemiBold` | 15 | `#FFFFFF` |
+| Cancel | `DMSans_500Medium` | 14 | `#C4A882` |
 
 ### Buttons
-- **Primary**: `backgroundColor: '#1C1917'`, `borderRadius: 100` (pill), `height: 54`, `marginTop: 8`
-- **Destructive**: same shape, `backgroundColor: '#DC2626'`
+- **Primary**: `backgroundColor: '#E8521A'`, `borderRadius: 100` (pill), `height: 54`, `marginTop: 8`, orange glow shadow
+- **Destructive**: same shape, `backgroundColor: '#C0392B'`
 - **Secondary/outline**: same shape, `borderWidth: 1.5`, `borderColor: '#E7E5E4'`, transparent bg
 - **Cancel**: plain text, `paddingVertical: 16`, centered — no border, no background
 
@@ -41,7 +41,8 @@ Only these fonts are used. Never use system fonts.
 
 | Token | Family | Usage |
 |---|---|---|
-| Display | `PlayfairDisplay_700Bold` | Screen titles, card titles, modal headings |
+| Display | `Poppins_700Bold` | Screen titles, section headers, modal headings, list item titles |
+| Accent | `PlayfairDisplay_700Bold` | Card recipe names on dark panel (italic), hero accent words |
 | Body regular | `DMSans_400Regular` | Body text, labels, hints |
 | Body medium | `DMSans_500Medium` | Navigation, secondary actions |
 | Body semibold | `DMSans_600SemiBold` | Buttons, stat values, section headings |
@@ -55,25 +56,34 @@ The app has two palettes. Do not mix them across contexts.
 ### Screen / UI palette (screens, modals, HomeScreen)
 | Name | Value | Usage |
 |---|---|---|
-| bg | `#F7F5F2` | Screen backgrounds, modal sheets |
-| title | `#1C1917` | Primary text, button bg |
-| body | `#44403C` | Secondary text |
-| muted | `#78716C` | Captions, body in modals |
-| label | `#A8A29E` | Placeholder, cancel text |
-| divider | `#E7E5E4` | Borders, separators |
-| terracotta | `#EA580C` | Active tab, draft badge |
-| sage | `#059669` | Published badge |
-| btnBg | `#1C1917` | Primary button background |
-| btnText | `#F7F5F2` | Primary button text |
+| bg | `#FAF5EE` | Screen backgrounds, modal sheets (warm cream) |
+| surface | `#F2E9D8` | Input areas, sheet fills |
+| panel | `#1C0F06` | Nav bar, dark headers, voice bar (deep espresso) |
+| title | `#1C0A00` | Primary text on light |
+| body | `#4A2D1A` | Secondary text on light |
+| muted | `#8B6444` | Captions, body in modals |
+| label | `#C4A882` | Placeholder, cancel text |
+| textInv | `#F5EDD9` | Parchment text on dark |
+| textInvMuted | `#C4A882` | Muted text on dark |
+| divider | `#E0D0B8` | Borders, separators |
+| terracotta | `#E8521A` | Primary CTA, active tab, draft badge |
+| accentWarm | `#D4780A` | Amber, secondary accent |
+| sage | `#2D7A4F` | Published badge |
+| btnBg | `#E8521A` | Primary button background (orange) |
+| btnText | `#FFFFFF` | Primary button text |
+| destructive | `#C0392B` | Delete, danger |
 
 ### Card palette (RecipeCard component only)
 | Name | Value | Usage |
 |---|---|---|
-| bg | `#fdf8f0` | Card background (cream paper) |
-| border | `#e8d5b0` | Card border, dividers |
-| amber | `#d4820a` | Accent, stat labels, share button |
-| darkText | `#2c1810` | Card titles |
-| bodyText | `#5a3e2b` | Card body text |
+| bg | `#F5EDD9` | Card parchment cream (photo zone, back face) |
+| border | `#E8D8B8` | Card border, dividers |
+| amber | `#D4780A` | Accent, stat labels on dark panel |
+| panel | `#1C0F06` | Card bottom info panel (dark espresso) |
+| panelText | `#F5EDD9` | Title text on dark panel |
+| panelMuted | `#C4A882` | Muted text on dark panel |
+| darkText | `#1C0A00` | Back face headings |
+| bodyText | `#4A2D1A` | Back face body text |
 
 ---
 

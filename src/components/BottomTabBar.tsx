@@ -16,6 +16,11 @@ interface Props {
   onExchange?: () => void;
 }
 
+// ─── Tokens ───────────────────────────────────────────────────────────────────
+
+const ACTIVE   = '#E8521A';  // terracotta orange
+const INACTIVE = '#C4A882';  // muted parchment
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function HomeIcon({ color }: { color: string }) {
@@ -68,9 +73,6 @@ function ProfileIcon({ color }: { color: string }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const TERRACOTTA = '#EA580C';
-const MUTED      = '#A8A29E';
-
 export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
   const navigation = useNavigation<Nav>();
   const { t } = useLanguage();
@@ -84,7 +86,9 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
         activeOpacity={0.7}
         onPress={() => activeTab === 'Home' ? onHomePress?.() : go('Home')}
       >
-        <HomeIcon color={activeTab === 'Home' ? TERRACOTTA : MUTED} />
+        <View style={[styles.iconWrap, activeTab === 'Home' && styles.iconWrapActive]}>
+          <HomeIcon color={activeTab === 'Home' ? ACTIVE : INACTIVE} />
+        </View>
         <Text style={[styles.tabLabel, activeTab === 'Home' && styles.tabLabelActive]}>
           {t.tabHome}
         </Text>
@@ -95,7 +99,9 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
         activeOpacity={0.7}
         onPress={() => go('Favorites')}
       >
-        <FavoritesIcon color={activeTab === 'Favorites' ? TERRACOTTA : MUTED} />
+        <View style={[styles.iconWrap, activeTab === 'Favorites' && styles.iconWrapActive]}>
+          <FavoritesIcon color={activeTab === 'Favorites' ? ACTIVE : INACTIVE} />
+        </View>
         <Text style={[styles.tabLabel, activeTab === 'Favorites' && styles.tabLabelActive]}>
           {t.tabFavorites}
         </Text>
@@ -116,7 +122,9 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
         activeOpacity={0.7}
         onPress={() => onExchange ? onExchange() : go('Home')}
       >
-        <ExchangeIcon color={MUTED} />
+        <View style={styles.iconWrap}>
+          <ExchangeIcon color={INACTIVE} />
+        </View>
         <Text style={styles.tabLabel}>{t.tabExchange}</Text>
       </TouchableOpacity>
 
@@ -125,7 +133,9 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
         activeOpacity={0.7}
         onPress={() => go('Profile')}
       >
-        <ProfileIcon color={activeTab === 'Profile' ? TERRACOTTA : MUTED} />
+        <View style={[styles.iconWrap, activeTab === 'Profile' && styles.iconWrapActive]}>
+          <ProfileIcon color={activeTab === 'Profile' ? ACTIVE : INACTIVE} />
+        </View>
         <Text style={[styles.tabLabel, activeTab === 'Profile' && styles.tabLabelActive]}>
           {t.tabProfile}
         </Text>
@@ -140,19 +150,33 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E7E5E4',
+    backgroundColor: '#1C0F06',
+    borderTopWidth: 0,
     paddingBottom: 8,
-    paddingTop: 4,
+    paddingTop: 6,
     paddingHorizontal: 4,
+    shadowColor: '#1C0A00',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 24,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingVertical: 6,
+    paddingVertical: 4,
     gap: 3,
+  },
+  iconWrap: {
+    width: 44,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapActive: {
+    backgroundColor: 'rgba(232,82,26,0.15)',
   },
   tabItemCenter: {
     flex: 1,
@@ -163,30 +187,31 @@ const styles = StyleSheet.create({
   tabCenterBtn: {
     width: 52,
     height: 52,
-    borderRadius: 26,
-    backgroundColor: '#18181B',
+    borderRadius: 18,
+    backgroundColor: '#E8521A',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 8,
   },
   tabCenterPlus: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 28,
-    color: '#FAFAFA',
+    color: '#FFFFFF',
     lineHeight: 32,
   },
   tabLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
-    color: MUTED,
+    fontSize: 10,
+    color: INACTIVE,
+    letterSpacing: 0.3,
   },
   tabLabelActive: {
-    color: TERRACOTTA,
+    color: ACTIVE,
     fontFamily: 'DMSans_500Medium',
   },
 });

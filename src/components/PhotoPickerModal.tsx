@@ -3,13 +3,13 @@ import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react
 import { useLanguage } from '../context/LanguageContext';
 
 const C = {
-  bg:      '#F7F5F2',
-  title:   '#1C1917',
-  muted:   '#78716C',
-  label:   '#A8A29E',
-  btnBg:   '#1C1917',
-  btnText: '#F7F5F2',
-  border:  '#E7E5E4',
+  bg:      '#FAF5EE',
+  title:   '#1C0A00',
+  muted:   '#8B6444',
+  label:   '#C4A882',
+  btnBg:   '#E8521A',
+  btnText: '#FFFFFF',
+  border:  '#E0D0B8',
 };
 
 interface Props {
@@ -78,10 +78,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 26,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 24,
     color: C.title,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   body: {
     fontFamily: 'DMSans_400Regular',

@@ -23,16 +23,16 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Favorites'>;
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:         '#FAFAF9',
-  title:      '#1C1917',
-  body:       '#57534E',
-  muted:      '#A8A29E',
-  label:      '#D6D3D1',
-  divider:    '#E7E5E4',
-  terracotta: '#EA580C',
-  sage:       '#059669',
+  bg:         '#FAF5EE',
+  title:      '#1C0A00',
+  body:       '#4A2D1A',
+  muted:      '#8B6444',
+  label:      '#C4A882',
+  divider:    '#E0D0B8',
+  terracotta: '#E8521A',
+  sage:       '#2D7A4F',
   cardBg:     '#FFFFFF',
-  photoBg:    '#F5F5F4',
+  photoBg:    '#F2E9D8',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -211,11 +211,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 22,
     color: C.title,
     textAlign: 'center',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   headerSpacer: {
     width: 22,
@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   rowTitle: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 15,
     color: C.title,
     lineHeight: 20,
   },
