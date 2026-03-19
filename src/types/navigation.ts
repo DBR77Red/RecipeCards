@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Home: undefined;
   Favorites: undefined;
   Profile: undefined;
+  Settings: undefined;
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData; celebrate?: boolean };
   CardView: { cardId: string };

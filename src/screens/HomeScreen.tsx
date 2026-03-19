@@ -549,7 +549,7 @@ export function HomeScreen({ navigation }: Props) {
       {/* Dark espresso header */}
       <View style={styles.darkHeader}>
         <View style={styles.darkHeaderTop}>
-          <Text style={styles.darkHeaderAppName}>RecipeCards</Text>
+          <Text style={styles.darkHeaderTitle}>Your <Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
           <TouchableOpacity
             style={styles.darkHeaderAvatar}
             onPress={() => navigation.navigate('Profile')}
@@ -558,7 +558,6 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.darkHeaderAvatarText}>👤</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.darkHeaderTitle}>Your <Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -720,14 +719,14 @@ const styles = StyleSheet.create({
   darkHeader: {
     backgroundColor: C.panel,
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 18,
     paddingBottom: 0,
   },
   darkHeaderTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   darkHeaderAppName: {
     fontFamily: 'Poppins_700Bold',
@@ -753,7 +752,6 @@ const styles = StyleSheet.create({
     color: C.panelText,
     lineHeight: 42,
     letterSpacing: -1,
-    marginBottom: 12,
   },
   darkHeaderAccent: {
     fontFamily: 'PlayfairDisplay_700Bold',

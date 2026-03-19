@@ -16,6 +16,7 @@ export interface Translations {
   tabFavorites: string;
   tabExchange: string;
   tabProfile: string;
+  tabSettings: string;
 
   // List sections
   sectionDrafts: string;
@@ -44,7 +45,8 @@ export interface Translations {
   ingredient: string;
   ingredients: string;
 
-  // Profile modal
+  // Profile / Settings
+  settingsTitle: string;
   profileTitle: string;
   profileNameSub: string;
   profileNamePlaceholder: string;
@@ -203,6 +205,7 @@ const en: Translations = {
   tabFavorites: 'Favorites',
   tabExchange: 'Exchange',
   tabProfile: 'Profile',
+  tabSettings: 'Settings',
 
   sectionDrafts: 'YOUR DRAFTS',
   sectionPublished: 'PUBLISHED',
@@ -226,6 +229,7 @@ const en: Translations = {
   ingredient: 'ingredient',
   ingredients: 'ingredients',
 
+  settingsTitle: 'Settings',
   profileTitle: 'Profile',
   profileNameSub: 'This name will appear on your recipe cards.',
   profileNamePlaceholder: 'Enter your name',
@@ -367,6 +371,7 @@ const pt: Translations = {
   tabFavorites: 'Favoritos',
   tabExchange: 'Trocar',
   tabProfile: 'Perfil',
+  tabSettings: 'Definições',
 
   sectionDrafts: 'RASCUNHOS',
   sectionPublished: 'PUBLICADAS',
@@ -390,6 +395,7 @@ const pt: Translations = {
   ingredient: 'ingrediente',
   ingredients: 'ingredientes',
 
+  settingsTitle: 'Configurações',
   profileTitle: 'Perfil',
   profileNameSub: 'Este nome aparecerá nos seus cartões de receita.',
   profileNamePlaceholder: 'Digite seu nome',
@@ -531,6 +537,7 @@ const de: Translations = {
   tabFavorites: 'Favoriten',
   tabExchange: 'Austausch',
   tabProfile: 'Profil',
+  tabSettings: 'Einstellungen',
 
   sectionDrafts: 'ENTWÜRFE',
   sectionPublished: 'VERÖFFENTLICHT',
@@ -554,6 +561,7 @@ const de: Translations = {
   ingredient: 'Zutat',
   ingredients: 'Zutaten',
 
+  settingsTitle: 'Einstellungen',
   profileTitle: 'Profil',
   profileNameSub: 'Dieser Name erscheint auf Ihren Rezeptkarten.',
   profileNamePlaceholder: 'Namen eingeben',
@@ -695,6 +703,7 @@ const es: Translations = {
   tabFavorites: 'Favoritos',
   tabExchange: 'Compartir',
   tabProfile: 'Perfil',
+  tabSettings: 'Ajustes',
 
   sectionDrafts: 'BORRADORES',
   sectionPublished: 'PUBLICADAS',
@@ -718,6 +727,7 @@ const es: Translations = {
   ingredient: 'ingrediente',
   ingredients: 'ingredientes',
 
+  settingsTitle: 'Ajustes',
   profileTitle: 'Perfil',
   profileNameSub: 'Este nombre aparecerá en tus tarjetas de receta.',
   profileNamePlaceholder: 'Escribe tu nombre',

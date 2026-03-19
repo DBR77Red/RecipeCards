@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-export type ActiveTab = 'Home' | 'Favorites' | 'Profile';
+export type ActiveTab = 'Home' | 'Favorites' | 'Settings';
 
 interface Props {
   activeTab: ActiveTab;
@@ -64,9 +64,14 @@ function ExchangeIcon({ color }: { color: string }) {
 function ProfileIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth={1.6} />
-      <Path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
-        stroke={color} strokeWidth={1.6} strokeLinecap="round" />
+      <Path
+        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        stroke={color} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"
+      />
+      <Path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+        stroke={color} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"
+      />
     </Svg>
   );
 }
@@ -77,7 +82,7 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
   const navigation = useNavigation<Nav>();
   const { t } = useLanguage();
 
-  const go = (screen: ActiveTab) => navigation.navigate(screen);
+  const go = (screen: keyof RootStackParamList) => navigation.navigate(screen as any);
 
   return (
     <View style={styles.tabBar}>
@@ -131,13 +136,13 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => go('Profile')}
+        onPress={() => go('Settings')}
       >
-        <View style={[styles.iconWrap, activeTab === 'Profile' && styles.iconWrapActive]}>
-          <ProfileIcon color={activeTab === 'Profile' ? ACTIVE : INACTIVE} />
+        <View style={[styles.iconWrap, activeTab === 'Settings' && styles.iconWrapActive]}>
+          <ProfileIcon color={activeTab === 'Settings' ? ACTIVE : INACTIVE} />
         </View>
-        <Text style={[styles.tabLabel, activeTab === 'Profile' && styles.tabLabelActive]}>
-          {t.tabProfile}
+        <Text style={[styles.tabLabel, activeTab === 'Settings' && styles.tabLabelActive]}>
+          {t.tabSettings}
         </Text>
       </TouchableOpacity>
     </View>
