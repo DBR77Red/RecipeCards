@@ -86,9 +86,9 @@ function CardFront({
   const published = recipe.status === 'published';
 
   return (
-    <View style={styles.face}>
-      {/* Flip target: only the photo zone — keeps buttons below free from conflicts */}
-      <Pressable onPress={onFlip} style={styles.photoZone}>
+    <Pressable onPress={onFlip} style={styles.face}>
+      {/* Photo zone — plain View; parent Pressable handles flip */}
+      <View style={styles.photoZone}>
         {recipe.photo ? (
           <Image source={{ uri: recipe.photo }} style={styles.photo} resizeMode="cover" />
         ) : (
@@ -128,9 +128,10 @@ function CardFront({
             </View>
           </View>
         </View>
-      </Pressable>
+      </View>
 
-      <Pressable style={[styles.bottomZone, published && styles.bottomZonePub]} onPress={onFlip}>
+      {/* Bottom zone — plain View; share/publish buttons absorb their own touches */}
+      <View style={[styles.bottomZone, published && styles.bottomZonePub]}>
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
@@ -175,8 +176,8 @@ function CardFront({
             </TouchableOpacity>
           </View>
         )}
-      </Pressable>
-    </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -197,7 +198,7 @@ function CardBack({ recipe, onFlip, onMeasured }: {
         <Text style={styles.backHint}>{t.cardTapToFlip}</Text>
       </View>
 
-      {/* Content — fully expanded, no clipping */}
+      {/* Content */}
       <View style={styles.backContentInner}>
         <Text style={styles.sectionHeading}>{t.cardIngredients}</Text>
         {recipe.ingredients.filter(ing => ing.trim()).map((ing, i) => (
