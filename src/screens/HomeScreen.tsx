@@ -558,7 +558,7 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.darkHeaderAvatarText}>👤</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.darkHeaderTitle}>Your{'\n'}<Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
+        <Text style={styles.darkHeaderTitle}>Your <Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   darkHeaderAppName: {
     fontFamily: 'Poppins_700Bold',
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     color: C.panelText,
     lineHeight: 42,
     letterSpacing: -1,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   darkHeaderAccent: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 12,
     paddingBottom: 100,
     backgroundColor: C.bg,
     minHeight: '100%',
@@ -846,13 +846,13 @@ const styles = StyleSheet.create({
   },
 
   filterScroll: {
-    marginBottom: 16,
+    marginBottom: 4,
   },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
     paddingRight: 4,
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   filterPill: {
     height: 34,

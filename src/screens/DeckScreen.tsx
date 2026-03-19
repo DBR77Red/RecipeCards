@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   Platform,
@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Easing,
   Extrapolation,
   interpolate,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -47,7 +47,7 @@ const SCALE_OFFSET_Y = -(CARD_H_PUB * (1 - CARD_SCALE)) / 2;
 // Swipe config
 const SWIPE_THRESHOLD     = 100;
 const SWIPE_VEL_THRESHOLD = 700;
-const FLY_DURATION        = 280;
+const FLY_DURATION        = 220;
 
 // Palette
 const BG_DARK = '#0f0d0b';
@@ -164,12 +164,15 @@ export function DeckScreen({ route, navigation }: Props) {
   // Recipes passed directly from HomeScreen — no async delay
   const recipes = route.params.recipes;
   const initialIdx = recipes.findIndex(r => r.id === route.params.startCardId);
-  const [currentIndex, setCurrentIndex] = useState(initialIdx >= 0 ? initialIdx : 0);
+  const startIdx = initialIdx >= 0 ? initialIdx : 0;
+  const [currentIndex, setCurrentIndex] = useState(startIdx);
+  const [behindIndex, setBehindIndex]   = useState(startIdx < recipes.length - 1 ? startIdx + 1 : -1);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const canGoNext  = useSharedValue(initialIdx < recipes.length - 1);
-  const canGoPrev  = useSharedValue(initialIdx > 0);
+  const topOpacity = useSharedValue(1);
+  const canGoNext  = useSharedValue(startIdx < recipes.length - 1);
+  const canGoPrev  = useSharedValue(startIdx > 0);
 
   // Entrance animation
   const entrance = useSharedValue(0);
@@ -180,34 +183,49 @@ export function DeckScreen({ route, navigation }: Props) {
   // Refs for stable worklet callbacks
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
+  const isFirstLayout = useRef(true);
 
   useEffect(() => {
     canGoNext.value = currentIndex < recipes.length - 1;
     canGoPrev.value = currentIndex > 0;
   }, [currentIndex, recipes.length]);
 
+  // KEY FIX: After React commits the new currentIndex, the top <RecipeCard>
+  // now renders the NEW recipe data. Only now do we reset translateX to 0 and
+  // restore opacity to 1. Both shared-value writes are dispatched to the UI
+  // thread in the same JS microtask, so Reanimated applies them atomically --
+  // the new card appears at center, never the old card.
+  useLayoutEffect(() => {
+    if (isFirstLayout.current) {
+      isFirstLayout.current = false;
+      return;
+    }
+    // Reset position and reveal — dispatched together to UI thread
+    translateX.value = 0;
+    translateY.value = 0;
+    topOpacity.value = 1;
+    // Now that the top card is visible, update the behind card to the real next recipe.
+    // This triggers another render, but the top card already covers the behind slot.
+    setBehindIndex(currentIndex < recipes.length - 1 ? currentIndex + 1 : -1);
+  }, [currentIndex]);
+
   // ── Callbacks ──
 
-  const goNext = useCallback(() => {
+  const handleSwipeComplete = useCallback((dir: 'next' | 'prev') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const delta = dir === 'next' ? 1 : -1;
+    const newIdx = currentIndexRef.current + delta;
+    // Hide the top card on the UI thread. The card is already off-screen
+    // (fly-out just finished), so this is invisible to the user.
+    topOpacity.value = 0;
+    // Set behindIndex to the NEW top card index — it acts as a visible stand-in
+    // while the top card is hidden. This way the user sees the correct card
+    // throughout the transition, never the card after it.
+    setBehindIndex(newIdx);
     setCurrentIndex(i => {
-      const next = i + 1;
-      currentIndexRef.current = next;
-      return next;
+      currentIndexRef.current = newIdx;
+      return newIdx;
     });
-    translateX.value = 0;
-    translateY.value = 0;
-  }, []);
-
-  const goPrev = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setCurrentIndex(i => {
-      const prev = i - 1;
-      currentIndexRef.current = prev;
-      return prev;
-    });
-    translateX.value = 0;
-    translateY.value = 0;
   }, []);
 
   const handleTap = useCallback(() => {
@@ -226,7 +244,7 @@ export function DeckScreen({ route, navigation }: Props) {
       'worklet';
       let tx = e.translationX;
       // Rubber band at boundaries
-      if ((tx > 0 && !canGoNext.value) || (tx < 0 && !canGoPrev.value)) {
+      if ((tx > 0 && !canGoPrev.value) || (tx < 0 && !canGoNext.value)) {
         tx = tx * 0.2;
       }
       translateX.value = tx;
@@ -234,24 +252,24 @@ export function DeckScreen({ route, navigation }: Props) {
     })
     .onEnd((e) => {
       'worklet';
-      const swipedRight =
-        (e.translationX > SWIPE_THRESHOLD || e.velocityX > SWIPE_VEL_THRESHOLD) &&
-        canGoNext.value;
       const swipedLeft =
         (e.translationX < -SWIPE_THRESHOLD || e.velocityX < -SWIPE_VEL_THRESHOLD) &&
+        canGoNext.value;
+      const swipedRight =
+        (e.translationX > SWIPE_THRESHOLD || e.velocityX > SWIPE_VEL_THRESHOLD) &&
         canGoPrev.value;
 
-      if (swipedRight) {
-        translateX.value = withTiming(SCREEN_W + SCALED_W, { duration: FLY_DURATION }, () => {
-          runOnJS(goNext)();
-        });
-      } else if (swipedLeft) {
+      if (swipedLeft) {
         translateX.value = withTiming(-SCREEN_W - SCALED_W, { duration: FLY_DURATION }, () => {
-          runOnJS(goPrev)();
+          runOnJS(handleSwipeComplete)('next');
+        });
+      } else if (swipedRight) {
+        translateX.value = withTiming(SCREEN_W + SCALED_W, { duration: FLY_DURATION }, () => {
+          runOnJS(handleSwipeComplete)('prev');
         });
       } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
-        translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+        translateX.value = withTiming(0, { duration: 240, easing: Easing.out(Easing.cubic) });
+        translateY.value = withTiming(0, { duration: 240, easing: Easing.out(Easing.cubic) });
       }
     });
 
@@ -285,21 +303,11 @@ export function DeckScreen({ route, navigation }: Props) {
       Extrapolation.CLAMP,
     );
     return {
+      opacity: topOpacity.value,
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value },
         { rotate: `${rotate}deg` },
-      ],
-    };
-  });
-
-  const behindStyle = useAnimatedStyle(() => {
-    'worklet';
-    const p = Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1);
-    return {
-      transform: [
-        { scale: interpolate(p, [0, 1], [0.95, 1]) },
-        { translateY: interpolate(p, [0, 1], [-8, 0]) },
       ],
     };
   });
@@ -344,8 +352,9 @@ export function DeckScreen({ route, navigation }: Props) {
   const recipe = recipes[currentIndex];
   if (!recipe) return null;
 
-  const hasNext     = currentIndex < recipes.length - 1;
-  const hasNextNext = currentIndex < recipes.length - 2;
+  const behindRecipe = behindIndex >= 0 && behindIndex < recipes.length ? recipes[behindIndex] : null;
+  const hasNext      = behindRecipe !== null;
+  const hasNextNext  = behindIndex >= 0 && behindIndex < recipes.length - 1;
 
   return (
     <View style={styles.screen}>
@@ -381,11 +390,16 @@ export function DeckScreen({ route, navigation }: Props) {
             </Animated.View>
           )}
 
-          {/* Second card (behind) */}
+          {/* Second card (behind) — full-size stand-in, always stationary */}
           {hasNext && (
-            <Animated.View style={[styles.cardSlot, behindStyle, { zIndex: 2 }]}>
-              <CardShell />
-            </Animated.View>
+            <View style={[styles.cardSlot, { zIndex: 2 }]}>
+              <View
+                style={[styles.cardInner, { marginLeft: SCALE_OFFSET_X, marginTop: SCALE_OFFSET_Y }]}
+                pointerEvents="none"
+              >
+                <RecipeCard recipe={behindRecipe!} />
+              </View>
+            </View>
           )}
 
           {/* Top card (interactive) — full-size RecipeCard front face */}
