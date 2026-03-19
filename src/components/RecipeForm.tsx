@@ -80,23 +80,58 @@ function MetaField({
   value,
   placeholder,
   onChangeText,
+  suffix,
+  maxLength,
 }: {
   label: string;
   value: string;
   placeholder: string;
   onChangeText: (v: string) => void;
+  suffix?: string;
+  maxLength?: number;
 }) {
+  const displayValue = value.replace(/\D/g, '');
   return (
     <View style={styles.metaField}>
       <Text style={styles.metaFieldLabel}>{label}</Text>
-      <TextInput
-        style={styles.metaFieldInput}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={C.placeholder}
-        returnKeyType="next"
-      />
+      <View style={styles.metaFieldRow}>
+        <TextInput
+          style={styles.metaFieldInput}
+          value={displayValue}
+          onChangeText={v => onChangeText(v.replace(/\D/g, ''))}
+          placeholder={placeholder}
+          placeholderTextColor={C.placeholder}
+          returnKeyType="next"
+          keyboardType="number-pad"
+          selectTextOnFocus
+          maxLength={maxLength}
+        />
+        {suffix ? <Text style={styles.metaFieldSuffix}>{suffix}</Text> : null}
+      </View>
+    </View>
+  );
+}
+
+function ServesField({ label, value, onChange }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const num = parseInt(value.replace(/\D/g, ''), 10) || 0;
+  const dec = () => { if (num > 1) onChange(String(num - 1)); };
+  const inc = () => { if (num < 99) onChange(String(num + 1)); };
+  return (
+    <View style={styles.metaField}>
+      <Text style={styles.metaFieldLabel}>{label}</Text>
+      <View style={styles.stepperRow}>
+        <TouchableOpacity onPress={dec} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.stepperBtn}>
+          <Text style={styles.stepperBtnText}>−</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepperValue}>{num > 0 ? String(num) : '—'}</Text>
+        <TouchableOpacity onPress={inc} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.stepperBtn}>
+          <Text style={styles.stepperBtnText}>+</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -505,14 +540,13 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
 
         {/* Meta */}
         <View style={styles.metaRow}>
-          <MetaField label={t.formServes} value={recipe.servings} placeholder="4"
-            onChangeText={v => update('servings', v)} />
+          <ServesField label={t.formServes} value={recipe.servings} onChange={v => update('servings', v)} />
           <View style={styles.metaSep} />
-          <MetaField label={t.formPrep} value={recipe.prepTime} placeholder="15 min"
-            onChangeText={v => update('prepTime', v)} />
+          <MetaField label={t.formPrep} value={recipe.prepTime} placeholder="15"
+            onChangeText={v => update('prepTime', v)} suffix="min" maxLength={3} />
           <View style={styles.metaSep} />
-          <MetaField label={t.formCook} value={recipe.cookTime} placeholder="20 min"
-            onChangeText={v => update('cookTime', v)} />
+          <MetaField label={t.formCook} value={recipe.cookTime} placeholder="20"
+            onChangeText={v => update('cookTime', v)} suffix="min" maxLength={3} />
         </View>
 
         <View style={styles.sectionDivider} />
@@ -828,13 +862,54 @@ const styles = StyleSheet.create({
     color: C.label,
     marginBottom: 8,
   },
+  metaFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    borderBottomWidth: 1,
+    borderBottomColor: C.divider,
+  },
   metaFieldInput: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     color: C.title,
     paddingVertical: 6,
+    flex: 1,
+  },
+  metaFieldSuffix: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: C.muted,
+    paddingBottom: 6,
+    paddingLeft: 2,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: C.divider,
+    paddingVertical: 4,
+  },
+  stepperBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: C.divider,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: C.body,
+    lineHeight: 18,
+  },
+  stepperValue: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: C.title,
+    textAlign: 'center',
+    minWidth: 24,
   },
   metaSep: {
     width: 1,

@@ -134,9 +134,9 @@ function CardFront({
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
-          <Stat label={t.cardPrep}   value={recipe.prepTime} />
+          <Stat label={t.cardPrep}   value={recipe.prepTime ? recipe.prepTime.replace(/\D/g, '') + ' min' : ''} />
           <View style={styles.statDivider} />
-          <Stat label={t.cardCook}   value={recipe.cookTime} />
+          <Stat label={t.cardCook}   value={recipe.cookTime ? recipe.cookTime.replace(/\D/g, '') + ' min' : ''} />
         </View>
 
         <View style={styles.qrDivider} />
