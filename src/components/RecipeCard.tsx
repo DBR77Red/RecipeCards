@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -221,12 +221,16 @@ function CardBack({ recipe, onFlip, onMeasured }: {
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 
-export function RecipeCard({ recipe, onShare, onPublish, publishing }: {
+export interface RecipeCardRef {
+  flip: () => void;
+}
+
+export const RecipeCard = React.forwardRef<RecipeCardRef, {
   recipe: RecipeData;
   onShare?: () => void;
   onPublish?: () => void;
   publishing?: boolean;
-}) {
+}>(function RecipeCard({ recipe, onShare, onPublish, publishing }, ref) {
   const frontH = CARD_H_PUB; // always the same height regardless of status
 
   const [flipped,    setFlipped]    = useState(false);
@@ -253,6 +257,8 @@ export function RecipeCard({ recipe, onShare, onPublish, publishing }: {
       useNativeDriver: true,
     }).start();
   };
+
+  useImperativeHandle(ref, () => ({ flip: handleFlip }));
 
   const frontSpin    = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
   const backSpin     = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   });
@@ -288,7 +294,7 @@ export function RecipeCard({ recipe, onShare, onPublish, publishing }: {
       </Animated.View>
     </View>
   );
-}
+});
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 

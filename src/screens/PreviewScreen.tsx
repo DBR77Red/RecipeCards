@@ -84,7 +84,7 @@ export function PreviewScreen({ route, navigation }: Props) {
     setPublishing(true);
     try {
       // Step 1: mark published locally — QR appears immediately
-      const base = recipe.id ? recipe : await saveDraft(recipe);
+      const base = await saveDraft(recipe);
       shouldCelebrate.current = true;
       const local = await markPublishedLocally(base.id);
       setRecipe(local); // triggers useEffect → haptic + celebration

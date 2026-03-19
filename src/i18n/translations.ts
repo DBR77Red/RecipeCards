@@ -338,7 +338,7 @@ const en: Translations = {
   cardViewNotFound: 'Recipe not found.',
 
   deckPosition: (c, t) => `${c} of ${t}`,
-  deckTapHint: 'Tap to view · swipe to browse',
+  deckTapHint: 'Tap to flip · swipe to browse',
 
   receiveBack: '← Back',
   receiveLoading: 'Loading recipe…',
@@ -504,7 +504,7 @@ const pt: Translations = {
   cardViewNotFound: 'Receita não encontrada.',
 
   deckPosition: (c, t) => `${c} de ${t}`,
-  deckTapHint: 'Toque para ver · deslize para navegar',
+  deckTapHint: 'Toque para virar · deslize para navegar',
 
   receiveBack: '← Voltar',
   receiveLoading: 'Carregando receita…',
@@ -670,7 +670,7 @@ const de: Translations = {
   cardViewNotFound: 'Rezept nicht gefunden.',
 
   deckPosition: (c, t) => `${c} von ${t}`,
-  deckTapHint: 'Tippen zum Ansehen · Wischen zum Blättern',
+  deckTapHint: 'Tippen zum Wenden · Wischen zum Blättern',
 
   receiveBack: '← Zurück',
   receiveLoading: 'Rezept wird geladen…',
@@ -836,7 +836,7 @@ const es: Translations = {
   cardViewNotFound: 'Receta no encontrada.',
 
   deckPosition: (c, t) => `${c} de ${t}`,
-  deckTapHint: 'Toca para ver · desliza para explorar',
+  deckTapHint: 'Toca para voltear · desliza para explorar',
 
   receiveBack: '← Volver',
   receiveLoading: 'Cargando receta…',

@@ -8,7 +8,7 @@ export type RootStackParamList = {
   Settings: undefined;
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData; celebrate?: boolean };
-  CardView: { cardId: string };
+  CardView: { cardId: string; recipes?: RecipeData[] };
   Receive: { cardId: string };
   Deck: { recipes: RecipeData[]; startCardId?: string };
 };

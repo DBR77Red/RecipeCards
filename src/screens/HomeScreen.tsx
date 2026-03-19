@@ -522,8 +522,12 @@ export function HomeScreen({ navigation }: Props) {
       isSelected={selectedIds.has(item.id)}
       onPress={() => {
         if (selectionMode) { toggleSelect(item.id); return; }
-        const flatRecipes = sections.flatMap(s => s.data);
-        navigation.navigate('Deck', { recipes: flatRecipes, startCardId: item.id });
+        if (item.status === 'draft') {
+          navigation.navigate('Form', { recipe: item });
+        } else {
+          const flatRecipes = sections.flatMap(s => s.data).filter(r => r.status !== 'draft');
+          navigation.navigate('CardView', { cardId: item.id, recipes: flatRecipes });
+        }
       }}
       onLongPress={() => handleLongPress(item)}
       onToggleFavorite={() => handleToggleFavorite(item)}
