@@ -82,7 +82,7 @@ export default function App() {
     <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
-        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FAF5EE' } }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false }} />
           <Stack.Screen name="Home"      component={HomeScreen}      />
           <Stack.Screen name="Favorites" component={FavoritesScreen} />

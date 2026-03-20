@@ -51,6 +51,8 @@ export interface Translations {
   profileNameSub: string;
   profileNamePlaceholder: string;
   profileLanguageLabel: string;
+  saveNameConfirmHeadline: string;
+  saveNameConfirmBody: string;
 
   // View card modal
   viewCardTitle: string;
@@ -234,6 +236,8 @@ const en: Translations = {
   profileNameSub: 'This name will appear on your recipe cards.',
   profileNamePlaceholder: 'Enter your name',
   profileLanguageLabel: 'Language',
+  saveNameConfirmHeadline: 'Save your name?',
+  saveNameConfirmBody: 'This name will appear on all recipe cards you create.',
 
   viewCardTitle: 'View Shared Card',
   viewCardSub: 'Paste the card ID from a shared recipe link.',
@@ -400,6 +404,8 @@ const pt: Translations = {
   profileNameSub: 'Este nome aparecerá nos seus cartões de receita.',
   profileNamePlaceholder: 'Digite seu nome',
   profileLanguageLabel: 'Idioma',
+  saveNameConfirmHeadline: 'Salvar seu nome?',
+  saveNameConfirmBody: 'Este nome aparecerá em todos os cartões de receita que você criar.',
 
   viewCardTitle: 'Ver Cartão Compartilhado',
   viewCardSub: 'Cole o ID do cartão de um link de receita compartilhado.',
@@ -566,6 +572,8 @@ const de: Translations = {
   profileNameSub: 'Dieser Name erscheint auf Ihren Rezeptkarten.',
   profileNamePlaceholder: 'Namen eingeben',
   profileLanguageLabel: 'Sprache',
+  saveNameConfirmHeadline: 'Namen speichern?',
+  saveNameConfirmBody: 'Dieser Name erscheint auf allen Rezeptkarten, die Sie erstellen.',
 
   viewCardTitle: 'Geteilte Karte ansehen',
   viewCardSub: 'Füge die Karten-ID aus einem geteilten Rezeptlink ein.',
@@ -732,6 +740,8 @@ const es: Translations = {
   profileNameSub: 'Este nombre aparecerá en tus tarjetas de receta.',
   profileNamePlaceholder: 'Escribe tu nombre',
   profileLanguageLabel: 'Idioma',
+  saveNameConfirmHeadline: '¿Guardar tu nombre?',
+  saveNameConfirmBody: 'Este nombre aparecerá en todas las tarjetas de receta que crees.',
 
   viewCardTitle: 'Ver Tarjeta Compartida',
   viewCardSub: 'Pega el ID de tarjeta de un enlace de receta compartido.',
