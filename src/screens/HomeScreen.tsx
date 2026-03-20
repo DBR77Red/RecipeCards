@@ -466,6 +466,8 @@ export function HomeScreen({ navigation }: Props) {
   const [isReorderMode, setIsReorderMode] = useState(false);
   const selectionBarAnim = useRef(new Animated.Value(0)).current;
   const listScrollRef = useRef<ScrollView>(null);
+  const listFadeAnim = useRef(new Animated.Value(0)).current;
+  const listSlideAnim = useRef(new Animated.Value(16)).current;
 
   // Listen for successful background syncs and refresh the list
   useEffect(() => {
@@ -489,6 +491,13 @@ export function HomeScreen({ navigation }: Props) {
     setPublished(publishedList);
     setReceived(receivedList);
     setKey(k => k + 1);
+    // Animate list in after data loads
+    listFadeAnim.setValue(0);
+    listSlideAnim.setValue(16);
+    Animated.parallel([
+      Animated.timing(listFadeAnim,  { toValue: 1, duration: 320, useNativeDriver: true }),
+      Animated.timing(listSlideAnim, { toValue: 0, duration: 320, useNativeDriver: true }),
+    ]).start();
   }, []);
 
   // Reload list every time this screen comes into focus
@@ -664,6 +673,7 @@ export function HomeScreen({ navigation }: Props) {
       </View>
 
       {/* Recipe list */}
+      <Animated.View style={[styles.flex, { opacity: listFadeAnim, transform: [{ translateY: listSlideAnim }] }]}>
       <ScrollViewContainer
         ref={listScrollRef}
         contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
@@ -750,6 +760,7 @@ export function HomeScreen({ navigation }: Props) {
           </>
         )}
       </ScrollViewContainer>
+      </Animated.View>
 
       <BottomTabBar
         activeTab="Home"

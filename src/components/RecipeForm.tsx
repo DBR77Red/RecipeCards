@@ -222,33 +222,16 @@ function VoiceBar({
   onMicError: () => void;
   t: Translations;
 }) {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (state === 'recording') {
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.18, duration: 600, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-        ])
-      );
-      loop.start();
-      return () => loop.stop();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [state]);
-
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   if (processing) {
     return (
-      <View style={styles.voiceBar}>
+      <View style={[styles.voiceBar, styles.voiceBarColumn]}>
         <LottieView
           source={VOICE_LOTTIE_SRC}
           autoPlay
           loop
-          style={{ width: 40, height: 40 }}
+          style={styles.voiceWave}
         />
         <Text style={styles.voiceProcessingText}>{t.voiceTranscribing}</Text>
       </View>
@@ -277,14 +260,19 @@ function VoiceBar({
 
   if (state === 'recording') {
     return (
-      <View style={styles.voiceBar}>
-        <Animated.View style={[styles.micBtnActive, { transform: [{ scale: pulseAnim }] }]}>
-          <Text style={styles.micIcon}>🎙</Text>
-        </Animated.View>
-        <Text style={styles.voiceElapsed}>{formatTime(elapsed)} / 1:00</Text>
-        <TouchableOpacity style={styles.stopBtn} onPress={onStop} activeOpacity={0.75}>
-          <Text style={styles.stopBtnText}>{t.voiceStop}</Text>
-        </TouchableOpacity>
+      <View style={[styles.voiceBar, styles.voiceBarColumn]}>
+        <LottieView
+          source={VOICE_LOTTIE_SRC}
+          autoPlay
+          loop
+          style={styles.voiceWave}
+        />
+        <View style={styles.voiceRecordingRow}>
+          <Text style={styles.voiceElapsed}>{formatTime(elapsed)} / 1:00</Text>
+          <TouchableOpacity style={styles.stopBtn} onPress={onStop} activeOpacity={0.75}>
+            <Text style={styles.stopBtnText}>{t.voiceStop}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -733,6 +721,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 16,
     elevation: 6,
+  },
+  voiceBarColumn: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 4,
+    paddingVertical: 8,
+  },
+  voiceWave: {
+    width: '100%',
+    height: 48,
+  },
+  voiceRecordingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   micBtn: {
     width: 40,

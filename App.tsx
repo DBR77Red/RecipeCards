@@ -88,11 +88,11 @@ export default function App() {
           <Stack.Screen name="Favorites" component={FavoritesScreen} />
           <Stack.Screen name="Profile"   component={ProfileScreen}   />
           <Stack.Screen name="Settings"  component={SettingsScreen}  />
-          <Stack.Screen name="Form"      component={FormScreen}      />
-          <Stack.Screen name="Preview"   component={PreviewScreen}   />
-          <Stack.Screen name="CardView"  component={CardViewScreen}  />
-          <Stack.Screen name="Deck"      component={DeckScreen}      />
-          <Stack.Screen name="Receive"   component={ReceiveScreen}   />
+          <Stack.Screen name="Form"      component={FormScreen}      options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="Preview"   component={PreviewScreen}   options={{ animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="CardView"  component={CardViewScreen}  options={{ animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="Deck"      component={DeckScreen}      options={{ animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="Receive"   component={ReceiveScreen}   options={{ animation: 'slide_from_bottom' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
