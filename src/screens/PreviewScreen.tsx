@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   ScrollView,
   Share,
   StyleSheet,
@@ -37,6 +38,7 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const shouldCelebrate = useRef(false);
   const playCelebrate = useSound(require('../../assets/celebrate_sound.mp3'));
+  const heartScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (route.params.celebrate) {
@@ -62,7 +64,24 @@ export function PreviewScreen({ route, navigation }: Props) {
   const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
 
   const handleToggleFavorite = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const becomingFavorite = !recipe.isFavorite;
+    Haptics.impactAsync(
+      becomingFavorite ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+    );
+    Animated.sequence([
+      Animated.timing(heartScale, {
+        toValue: becomingFavorite ? 1.35 : 1.2,
+        duration: becomingFavorite ? 100 : 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heartScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        damping: becomingFavorite ? 6 : 12,
+        stiffness: 220,
+        mass: 0.8,
+      }),
+    ]).start();
     const newValue = await toggleFavorite(recipe.id);
     setRecipe(r => ({ ...r, isFavorite: newValue }));
   };
@@ -142,17 +161,22 @@ export function PreviewScreen({ route, navigation }: Props) {
       </TouchableOpacity>
 
       {recipe.status === 'published' && (
-        <TouchableOpacity style={styles.heartBtn} onPress={handleToggleFavorite} activeOpacity={0.7}>
-          <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Path
-              d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
-              fill={recipe.isFavorite ? '#EA580C' : 'none'}
-              stroke={recipe.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
-              strokeWidth={1.6}
-              strokeLinejoin="round"
-            />
-          </Svg>
-        </TouchableOpacity>
+        <Animated.View
+          collapsable={false}
+          style={[styles.heartBtn, { transform: [{ scale: heartScale }] }]}
+        >
+          <TouchableOpacity onPress={handleToggleFavorite} activeOpacity={0.7}>
+            <Svg width={24} height={24} viewBox="0 0 24 24">
+              <Path
+                d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+                fill={recipe.isFavorite ? '#EA580C' : 'none'}
+                stroke={recipe.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
+                strokeWidth={1.6}
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+        </Animated.View>
       )}
 
       <ScrollView

@@ -5,6 +5,42 @@ import { supabase } from '../lib/supabase';
 
 const DRAFTS_KEY = '@recipecards/drafts';
 const USER_NAME_KEY = '@recipecards/userName';
+const ORDER_KEY = '@recipecards/order';
+
+interface SectionOrder {
+  drafts: string[];
+  published: string[];
+  received: string[];
+}
+
+export async function loadOrder(): Promise<SectionOrder> {
+  try {
+    const raw = await AsyncStorage.getItem(ORDER_KEY);
+    return raw ? JSON.parse(raw) : { drafts: [], published: [], received: [] };
+  } catch {
+    return { drafts: [], published: [], received: [] };
+  }
+}
+
+export async function saveOrder(
+  section: keyof SectionOrder,
+  orderedIds: string[],
+): Promise<void> {
+  try {
+    const current = await loadOrder();
+    current[section] = orderedIds;
+    await AsyncStorage.setItem(ORDER_KEY, JSON.stringify(current));
+  } catch {}
+}
+
+export function applyOrder(recipes: RecipeData[], savedIds: string[]): RecipeData[] {
+  if (!savedIds.length) return recipes;
+  const map = new Map(recipes.map(r => [r.id, r]));
+  const ordered = savedIds.map(id => map.get(id)).filter(Boolean) as RecipeData[];
+  const seen = new Set(savedIds);
+  recipes.forEach(r => { if (!seen.has(r.id)) ordered.push(r); });
+  return ordered;
+}
 
 // Serialized queue to prevent concurrent read-modify-write races on AsyncStorage.
 // Every function that reads→modifies→writes DRAFTS_KEY must go through this lock.

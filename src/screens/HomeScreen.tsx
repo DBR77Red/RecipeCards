@@ -8,15 +8,20 @@ import {
   Image,
   Modal,
   ScrollView,
-  SectionList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  NestedReorderableList,
+  ScrollViewContainer,
+  reorderItems,
+  useReorderableDrag,
+} from 'react-native-reorderable-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { ErrorModal } from '../components/ErrorModal';
@@ -24,7 +29,7 @@ import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
-import { deleteDraft, getDrafts, softDeletePublished, toggleFavorite } from '../utils/storage';
+import { applyOrder, deleteDraft, getDrafts, loadOrder, saveOrder, softDeletePublished, toggleFavorite } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -139,11 +144,36 @@ interface DraftListItemProps {
   selectionMode: boolean;
   isSelected: boolean;
   onToggleFavorite?: () => void;
+  drag?: () => void;
 }
 
-function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected, onToggleFavorite }: DraftListItemProps) {
+function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected, onToggleFavorite, drag }: DraftListItemProps) {
   const canFavorite = (recipe.status === 'published' || recipe.isReceived) && !!onToggleFavorite;
   const { t } = useLanguage();
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  const handleHeartPress = () => {
+    if (!onToggleFavorite) return;
+    const becomingFavorite = !recipe.isFavorite;
+    Haptics.impactAsync(
+      becomingFavorite ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+    );
+    Animated.sequence([
+      Animated.timing(heartScale, {
+        toValue: becomingFavorite ? 1.35 : 1.2,
+        duration: becomingFavorite ? 100 : 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heartScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        damping: becomingFavorite ? 6 : 12,
+        stiffness: 220,
+        mass: 0.8,
+      }),
+    ]).start();
+    onToggleFavorite();
+  };
   const displayTitle    = recipe.title.trim() || t.untitledRecipe;
   const isTitleEmpty    = !recipe.title.trim();
   const ingredientCount = recipe.ingredients.filter(i => i.trim()).length;
@@ -152,11 +182,12 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
     : `${ingredientCount} ${t.ingredients}`;
 
   return (
+    <View collapsable={false}>
     <TouchableOpacity
       style={styles.draftRow}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
+      onPress={drag ? undefined : onPress}
+      onLongPress={drag ? undefined : onLongPress}
+      activeOpacity={drag ? 1 : 0.7}
       delayLongPress={400}
     >
       {/* Thumbnail */}
@@ -211,28 +242,61 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
       {/* Right actions */}
       {!selectionMode && (
         <View style={styles.rowRight}>
-          {canFavorite && (
+          {drag ? (
             <TouchableOpacity
-              onPress={onToggleFavorite}
+              onPressIn={drag}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}
-              activeOpacity={0.6}
+              activeOpacity={0.5}
+              style={styles.dragHandle}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24">
-                <Path
-                  d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
-                  fill={recipe.isFavorite ? C.terracotta : 'none'}
-                  stroke={recipe.isFavorite ? C.terracotta : C.label}
-                  strokeWidth={1.6}
-                  strokeLinejoin="round"
-                />
+              <Svg width={18} height={14} viewBox="0 0 18 14">
+                <Rect x="0" y="0"  width="18" height="2" rx="1" fill={C.label} />
+                <Rect x="0" y="6"  width="18" height="2" rx="1" fill={C.label} />
+                <Rect x="0" y="12" width="18" height="2" rx="1" fill={C.label} />
               </Svg>
             </TouchableOpacity>
+          ) : (
+            <>
+              {canFavorite && (
+                <Animated.View
+                  collapsable={false}
+                  style={{ transform: [{ scale: heartScale }] }}
+                >
+                  <TouchableOpacity
+                    onPress={handleHeartPress}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}
+                    activeOpacity={0.6}
+                  >
+                    <Svg width={20} height={20} viewBox="0 0 24 24">
+                      <Path
+                        d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+                        fill={recipe.isFavorite ? C.terracotta : 'none'}
+                        stroke={recipe.isFavorite ? C.terracotta : C.label}
+                        strokeWidth={1.6}
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+              <Text style={styles.chevron}>›</Text>
+            </>
           )}
-          <Text style={styles.chevron}>›</Text>
         </View>
       )}
     </TouchableOpacity>
+    </View>
   );
+}
+
+// ─── Drag handle wrapper ───────────────────────────────────────────────────────
+
+function ReorderableItemWrapper({
+  isReorderMode,
+  ...props
+}: DraftListItemProps & { isReorderMode: boolean }) {
+  const drag = useReorderableDrag();
+  return <DraftListItem {...props} drag={isReorderMode ? drag : undefined} />;
 }
 
 // ─── Selection bar ────────────────────────────────────────────────────────────
@@ -399,8 +463,9 @@ export function HomeScreen({ navigation }: Props) {
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'received'>('all');
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isReorderMode, setIsReorderMode] = useState(false);
   const selectionBarAnim = useRef(new Animated.Value(0)).current;
-  const listRef = useRef<SectionList<RecipeData>>(null);
+  const listScrollRef = useRef<ScrollView>(null);
 
   // Listen for successful background syncs and refresh the list
   useEffect(() => {
@@ -415,11 +480,11 @@ export function HomeScreen({ navigation }: Props) {
   const [key, setKey] = useState(0);
 
   const loadData = useCallback(async (isActive?: () => boolean) => {
-    const all = await getDrafts();
+    const [all, order] = await Promise.all([getDrafts(), loadOrder()]);
     if (isActive && !isActive()) return;
-    const draftsList = all.filter(r => r.status === 'draft');
-    const publishedList = all.filter(r => r.status === 'published' && !r.isReceived);
-    const receivedList = all.filter(r => r.isReceived);
+    const draftsList    = applyOrder(all.filter(r => r.status === 'draft'), order.drafts);
+    const publishedList = applyOrder(all.filter(r => r.status === 'published' && !r.isReceived), order.published);
+    const receivedList  = applyOrder(all.filter(r => r.isReceived), order.received);
     setDrafts(draftsList);
     setPublished(publishedList);
     setReceived(receivedList);
@@ -436,6 +501,7 @@ export function HomeScreen({ navigation }: Props) {
   );
 
   const enterSelectionMode = (firstId: string) => {
+    setIsReorderMode(false);
     setSelectionMode(true);
     setSelectedIds(new Set([firstId]));
     Animated.spring(selectionBarAnim, { toValue: 1, useNativeDriver: true, bounciness: 4 }).start();
@@ -510,42 +576,33 @@ export function HomeScreen({ navigation }: Props) {
   const handleDeleteCancel = () => setDeleteTarget(null);
 
   const handleToggleFavorite = async (item: RecipeData) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await toggleFavorite(item.id);
     loadData();
   };
 
-  const renderItem = ({ item }: { item: RecipeData }) => (
-    <DraftListItem
-      recipe={item}
-      selectionMode={selectionMode}
-      isSelected={selectedIds.has(item.id)}
-      onPress={() => {
-        if (selectionMode) { toggleSelect(item.id); return; }
-        if (item.status === 'draft') {
-          navigation.navigate('Form', { recipe: item });
-        } else {
-          const flatRecipes = sections.flatMap(s => s.data).filter(r => r.status !== 'draft');
-          navigation.navigate('CardView', { cardId: item.id, recipes: flatRecipes });
-        }
-      }}
-      onLongPress={() => handleLongPress(item)}
-      onToggleFavorite={() => handleToggleFavorite(item)}
-    />
-  );
-
-  type ListSection = { title: string; data: RecipeData[] };
+  const makeItemProps = (item: RecipeData, sectionData: RecipeData[]) => ({
+    recipe: item,
+    selectionMode,
+    isSelected: selectedIds.has(item.id),
+    onPress: () => {
+      if (selectionMode) { toggleSelect(item.id); return; }
+      if (item.status === 'draft') {
+        navigation.navigate('Form', { recipe: item });
+      } else {
+        const nonDraft = sectionData.filter(r => r.status !== 'draft');
+        navigation.navigate('CardView', { cardId: item.id, recipes: nonDraft });
+      }
+    },
+    onLongPress: () => handleLongPress(item),
+    onToggleFavorite: () => handleToggleFavorite(item),
+    isReorderMode,
+  });
 
   const showDrafts    = filter === 'all' || filter === 'draft';
   const showPublished = filter === 'all' || filter === 'published';
   const showReceived  = filter === 'all' || filter === 'received';
 
-  const sections: ListSection[] = [
-    ...(showDrafts    && drafts.length > 0    ? [{ title: t.sectionDrafts,    data: drafts    }] : []),
-    ...(showPublished && published.length > 0 ? [{ title: t.sectionPublished, data: published }] : []),
-    ...(showReceived  && received.length > 0  ? [{ title: t.sectionReceived,  data: received  }] : []),
-  ];
-
+  const allNonDraft = [...published, ...received];
   const isEmpty = drafts.length === 0 && published.length === 0 && received.length === 0;
 
   return (
@@ -554,13 +611,31 @@ export function HomeScreen({ navigation }: Props) {
       <View style={styles.darkHeader}>
         <View style={styles.darkHeaderTop}>
           <Text style={styles.darkHeaderTitle}>Your <Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
-          <TouchableOpacity
-            style={styles.darkHeaderAvatar}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.darkHeaderAvatarText}>👤</Text>
-          </TouchableOpacity>
+          <View style={styles.darkHeaderActions}>
+            {!selectionMode && (
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsReorderMode(v => !v);
+                }}
+                activeOpacity={0.7}
+                style={styles.reorderBtn}
+              >
+                <Text style={[styles.reorderBtnText, isReorderMode && styles.reorderBtnTextActive]}>
+                  {isReorderMode ? 'Done' : 'Reorder'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {!isReorderMode && (
+              <TouchableOpacity
+                style={styles.darkHeaderAvatar}
+                onPress={() => navigation.navigate('Profile')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.darkHeaderAvatarText}>👤</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <ScrollView
           horizontal
@@ -589,38 +664,97 @@ export function HomeScreen({ navigation }: Props) {
       </View>
 
       {/* Recipe list */}
-      <SectionList
-        ref={listRef}
-        sections={sections}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        renderSectionHeader={({ section: { title } }) => (
-          <Text style={[styles.sectionLabel, title !== sections[0]?.title && styles.sectionLabelSpaced]}>
-            {title}
-          </Text>
-        )}
-        ListHeaderComponent={null}
-        ListEmptyComponent={
-          isEmpty
-            ? <EmptyState />
-            : filter === 'draft'
-            ? <FilterEmptyState title={t.filterEmptyDraftsTitle} sub={t.filterEmptyDraftsSub} />
-            : filter === 'published'
-            ? <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />
-            : filter === 'received'
-            ? <FilterEmptyState title={t.filterEmptyReceivedTitle} sub={t.filterEmptyReceivedSub} />
-            : null
-        }
+      <ScrollViewContainer
+        ref={listScrollRef}
         contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
         showsVerticalScrollIndicator={false}
-        extraData={[key, selectionMode, selectedIds]}
-        stickySectionHeadersEnabled={false}
-      />
+        style={styles.flex}
+      >
+        {isEmpty ? (
+          <EmptyState />
+        ) : (
+          <>
+            {/* Drafts section */}
+            {showDrafts && drafts.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
+                <NestedReorderableList
+                  data={drafts}
+                  keyExtractor={item => item.id}
+                  dragEnabled={isReorderMode}
+                  onReorder={({ from, to }) => {
+                    const next = reorderItems(drafts, from, to);
+                    setDrafts(next);
+                    saveOrder('drafts', next.map(r => r.id));
+                  }}
+                  renderItem={({ item }) => (
+                    <ReorderableItemWrapper {...makeItemProps(item, drafts)} />
+                  )}
+                  scrollEnabled={false}
+                  style={styles.nestedList}
+                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                />
+              </>
+            )}
+
+            {/* Published section */}
+            {showPublished && published.length > 0 && (
+              <>
+                <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
+                <NestedReorderableList
+                  data={published}
+                  keyExtractor={item => item.id}
+                  dragEnabled={isReorderMode}
+                  onReorder={({ from, to }) => {
+                    const next = reorderItems(published, from, to);
+                    setPublished(next);
+                    saveOrder('published', next.map(r => r.id));
+                  }}
+                  renderItem={({ item }) => (
+                    <ReorderableItemWrapper {...makeItemProps(item, allNonDraft)} />
+                  )}
+                  scrollEnabled={false}
+                  style={styles.nestedList}
+                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                />
+              </>
+            )}
+
+            {/* Received section */}
+            {showReceived && received.length > 0 && (
+              <>
+                <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
+                <NestedReorderableList
+                  data={received}
+                  keyExtractor={item => item.id}
+                  dragEnabled={isReorderMode}
+                  onReorder={({ from, to }) => {
+                    const next = reorderItems(received, from, to);
+                    setReceived(next);
+                    saveOrder('received', next.map(r => r.id));
+                  }}
+                  renderItem={({ item }) => (
+                    <ReorderableItemWrapper {...makeItemProps(item, allNonDraft)} />
+                  )}
+                  style={styles.nestedList}
+                  scrollEnabled={false}
+                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                />
+              </>
+            )}
+
+            {/* Filter-specific empty states */}
+            {!isEmpty && filter === 'draft'     && drafts.length === 0    && <FilterEmptyState title={t.filterEmptyDraftsTitle}    sub={t.filterEmptyDraftsSub} />}
+            {!isEmpty && filter === 'published' && published.length === 0 && <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />}
+            {!isEmpty && filter === 'received'  && received.length === 0  && <FilterEmptyState title={t.filterEmptyReceivedTitle}  sub={t.filterEmptyReceivedSub} />}
+          </>
+        )}
+      </ScrollViewContainer>
 
       <BottomTabBar
         activeTab="Home"
         onHomePress={() => {
-          if (sections.length > 0) listRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, animated: true });
+          listScrollRef.current?.scrollTo({ y: 0, animated: true });
         }}
         onExchange={() => setShowQRScanner(true)}
       />
@@ -762,6 +896,36 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#E8521A',
     fontStyle: 'italic',
+  },
+  darkHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reorderBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  reorderBtnText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: C.panelMuted,
+  },
+  reorderBtnTextActive: {
+    color: C.terracotta,
+  },
+  flex: {
+    flex: 1,
+  },
+  dragHandle: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nestedList: {
+    flexGrow: 0,
   },
 
   // Modal — matches app-wide design standard

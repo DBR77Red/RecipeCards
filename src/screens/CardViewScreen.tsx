@@ -17,6 +17,8 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -78,6 +80,10 @@ export function CardViewScreen({ route, navigation }: Props) {
   // ── Reanimated values ──
   const translateX = useSharedValue(0);
   const cardOpacity = useSharedValue(1);
+  const heartScale = useSharedValue(1);
+  const heartAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+  }));
 
   // After index changes, reset position and fade in the new card
   useLayoutEffect(() => {
@@ -127,7 +133,14 @@ export function CardViewScreen({ route, navigation }: Props) {
   // ── Favorite toggle ──
   const handleToggleFavorite = async () => {
     if (!displayRecipe || !canFavorite) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const becomingFavorite = !displayRecipe.isFavorite;
+    Haptics.impactAsync(
+      becomingFavorite ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+    );
+    heartScale.value = withSequence(
+      withTiming(becomingFavorite ? 1.35 : 1.2, { duration: becomingFavorite ? 100 : 80 }),
+      withSpring(1, { damping: becomingFavorite ? 6 : 12, stiffness: 220, mass: 0.8 })
+    );
     const newValue = await toggleFavorite(displayRecipe.id);
     if (isDeckMode) {
       setLocalFavoriteOverrides(prev => ({ ...prev, [displayRecipe.id]: newValue }));
@@ -272,17 +285,19 @@ export function CardViewScreen({ route, navigation }: Props) {
         )}
 
         {canFavorite ? (
-          <TouchableOpacity onPress={handleToggleFavorite} activeOpacity={0.7} hitSlop={12}>
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path
-                d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
-                fill={displayRecipe?.isFavorite ? '#EA580C' : 'none'}
-                stroke={displayRecipe?.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
-                strokeWidth={1.6}
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </TouchableOpacity>
+          <Animated.View collapsable={false} style={heartAnimStyle}>
+            <TouchableOpacity onPress={handleToggleFavorite} activeOpacity={0.7} hitSlop={12}>
+              <Svg width={24} height={24} viewBox="0 0 24 24">
+                <Path
+                  d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"
+                  fill={displayRecipe?.isFavorite ? '#EA580C' : 'none'}
+                  stroke={displayRecipe?.isFavorite ? '#EA580C' : 'rgba(255,255,255,0.45)'}
+                  strokeWidth={1.6}
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+          </Animated.View>
         ) : (
           <View style={styles.headerSpacer} />
         )}
