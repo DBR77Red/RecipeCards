@@ -94,8 +94,8 @@ export interface Translations {
   formAddStep: string;
   formPublish: string;
   formPreviewCard: string;
-  formSaveDraft: string;
-  formDraftSaved: string;
+  formSaving: string;
+  formSaved: string;
   formIngredientPrefix: string;
   formStepPrefix: string;
 
@@ -277,8 +277,8 @@ const en: Translations = {
   formAddStep: '+ Add step',
   formPublish: 'Publish',
   formPreviewCard: 'Preview Card',
-  formSaveDraft: 'Save draft',
-  formDraftSaved: '✓  Draft saved',
+  formSaving: 'Saving…',
+  formSaved: 'Saved ✓',
   formIngredientPrefix: 'Ingredient',
   formStepPrefix: 'Step',
 
@@ -448,8 +448,8 @@ const pt: Translations = {
   formAddStep: '+ Adicionar passo',
   formPublish: 'Publicar',
   formPreviewCard: 'Visualizar Cartão',
-  formSaveDraft: 'Salvar rascunho',
-  formDraftSaved: '✓  Rascunho salvo',
+  formSaving: 'Salvando…',
+  formSaved: 'Salvo ✓',
   formIngredientPrefix: 'Ingrediente',
   formStepPrefix: 'Passo',
 
@@ -619,8 +619,8 @@ const de: Translations = {
   formAddStep: '+ Schritt hinzufügen',
   formPublish: 'Veröffentlichen',
   formPreviewCard: 'Karte ansehen',
-  formSaveDraft: 'Entwurf speichern',
-  formDraftSaved: '✓  Entwurf gespeichert',
+  formSaving: 'Speichern…',
+  formSaved: 'Gespeichert ✓',
   formIngredientPrefix: 'Zutat',
   formStepPrefix: 'Schritt',
 
@@ -790,8 +790,8 @@ const es: Translations = {
   formAddStep: '+ Añadir paso',
   formPublish: 'Publicar',
   formPreviewCard: 'Vista previa',
-  formSaveDraft: 'Guardar borrador',
-  formDraftSaved: '✓  Borrador guardado',
+  formSaving: 'Guardando…',
+  formSaved: 'Guardado ✓',
   formIngredientPrefix: 'Ingrediente',
   formStepPrefix: 'Paso',
 

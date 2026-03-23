@@ -19,7 +19,6 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
-import { useSound } from '../utils/useSound';
 import { voiceToRecipe } from '../utils/voiceToRecipe';
 import { ErrorModal } from './ErrorModal';
 import { PhotoPickerModal } from './PhotoPickerModal';
@@ -27,7 +26,6 @@ import { RecipeData } from './RecipeCard';
 import { VoiceFailedModal } from './VoiceFailedModal';
 
 const VOICE_LOTTIE_SRC = require('../../assets/audio-wave.json');
-const SAVED_LOTTIE = require('../../assets/saved.json');
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -59,10 +57,10 @@ const C = {
 interface RecipeFormProps {
   recipe: RecipeData;
   onChange: (recipe: RecipeData) => void;
-  onSaveDraft: () => Promise<void>;
   onPublish: () => Promise<void>;
   onPreview: () => void;
   onBack: () => void;
+  saveStatus: 'idle' | 'saving' | 'saved';
 }
 
 // ─── Small pieces ─────────────────────────────────────────────────────────────
@@ -301,7 +299,7 @@ function VoiceBar({
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview, onBack }: RecipeFormProps) {
+export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, saveStatus }: RecipeFormProps) {
   const { t } = useLanguage();
   const update = <K extends keyof RecipeData>(key: K, value: RecipeData[K]) =>
     onChange({ ...recipe, [key]: value });
@@ -396,56 +394,13 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
     }
   };
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
-
-  const toastAnim = useRef(new Animated.Value(0)).current;
-  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const playsaved = useSound(require('../../assets/saved_sound.mp3'));
-
-  useEffect(() => () => {
-    if (toastTimeout.current) clearTimeout(toastTimeout.current);
-  }, []);
-
-  const showToast = () => {
-    if (toastTimeout.current) clearTimeout(toastTimeout.current);
-    toastAnim.setValue(0);
-    Animated.sequence([
-      Animated.timing(toastAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.delay(1600),
-      Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-    ]).start();
-    setShowSaved(true);
-    playsaved();
-  };
-
-  const handleSaveDraft = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await onSaveDraft();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast();
-    } catch {
-      setErrorModal({ title: t.saveDraftFailedTitle, body: t.somethingWentWrong });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toastTranslateY = toastAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-6, 0],
-  });
-
   // ── Publish confirmation modal ─────────────────────────────────────────────
 
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showVoiceFailed, setShowVoiceFailed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
-  const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
   const confirmAnim = useRef(new Animated.Value(0)).current;
 
   const openConfirm = () => {
@@ -488,7 +443,9 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Text style={styles.backLink}>{t.formBack}</Text>
           </TouchableOpacity>
-          <Text style={styles.formLabel}>{t.formNewRecipe}</Text>
+          {saveStatus === 'saving' && <Text style={styles.saveStatusSaving}>{t.formSaving}</Text>}
+          {saveStatus === 'saved'  && <Text style={styles.saveStatusSaved}>{t.formSaved}</Text>}
+          {saveStatus === 'idle'   && <Text style={styles.formLabel}>{t.formNewRecipe}</Text>}
         </View>
 
         {/* Voice bar */}
@@ -586,36 +543,16 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
           <Text style={styles.publishBtnText}>{t.formPublish}</Text>
         </TouchableOpacity>
 
-        <View style={styles.secondaryRow}>
-          <TouchableOpacity
-            style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
-            onPress={onPreview}
-            disabled={!recipe.title.trim()}
-            accessibilityState={{ disabled: !recipe.title.trim() }}
-          >
-            <Text style={styles.previewBtnText}>{t.formPreviewCard}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.saveDraftBtn, saving && { opacity: 0.4 }]}
-            onPress={handleSaveDraft}
-            disabled={saving}
-          >
-            <Text style={styles.saveDraftBtnText}>{t.formSaveDraft}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.previewBtn, !recipe.title.trim() && styles.previewBtnDisabled]}
+          onPress={onPreview}
+          disabled={!recipe.title.trim()}
+          accessibilityState={{ disabled: !recipe.title.trim() }}
+        >
+          <Text style={styles.previewBtnText}>{t.formPreviewCard}</Text>
+        </TouchableOpacity>
 
       </ScrollView>
-
-      {/* Toast */}
-      <Animated.View
-        style={[
-          styles.toast,
-          { opacity: toastAnim, transform: [{ translateY: toastTranslateY }], pointerEvents: 'none' },
-        ]}
-      >
-        <Text style={styles.toastText}>{t.formDraftSaved}</Text>
-      </Animated.View>
 
       <PhotoPickerModal
         visible={showPhotoPicker}
@@ -671,17 +608,6 @@ export function RecipeForm({ recipe, onChange, onSaveDraft, onPublish, onPreview
         </Animated.View>
       </Modal>
 
-      {showSaved && (
-        <View pointerEvents="none" style={styles.savedOverlay}>
-          <LottieView
-            source={SAVED_LOTTIE}
-            autoPlay
-            loop={false}
-            style={styles.savedLottie}
-            onAnimationFinish={() => setShowSaved(false)}
-          />
-        </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
@@ -1016,16 +942,10 @@ const styles = StyleSheet.create({
     color: C.btnText,
   },
 
-  secondaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    gap: 24,
-  },
   previewBtn: {
     paddingVertical: 16,
     alignItems: 'center',
+    marginTop: 12,
   },
   previewBtnDisabled: { opacity: 0.35 },
   previewBtnText: {
@@ -1034,51 +954,18 @@ const styles = StyleSheet.create({
     color: C.muted,
     letterSpacing: 0.3,
   },
-  saveDraftBtn: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  saveDraftBtnText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
+
+  saveStatusSaving: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
     color: C.muted,
     letterSpacing: 0.3,
   },
-
-  toast: {
-    position: 'absolute',
-    top: 58,
-    alignSelf: 'center',
-    backgroundColor: '#1C0F06',
-    paddingHorizontal: 18,
-    paddingVertical: 11,
-    borderRadius: 100,
-    shadowColor: '#1C0A00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  toastText: {
+  saveStatusSaved: {
     fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: '#F5EDD9',
-    letterSpacing: 0.2,
-  },
-
-  savedOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  savedLottie: {
-    width: 300,
-    height: 300,
+    fontSize: 11,
+    color: C.sage,
+    letterSpacing: 0.3,
   },
 
   overlay: {
