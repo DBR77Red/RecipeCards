@@ -1287,7 +1287,7 @@ const qrStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   overlayTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 20,
     color: '#fff',
     marginBottom: 32,
@@ -1331,7 +1331,7 @@ const qrStyles = StyleSheet.create({
     gap: 16,
   },
   permTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 24,
     color: '#fff',
     textAlign: 'center',

@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { ErrorModal } from '../components/ErrorModal';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
+import { ShareQRModal } from '../components/ShareQRModal';
 import { RecipeCard } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
@@ -33,6 +33,7 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [recipe, setRecipe] = useState(route.params.recipe);
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [receiveCount, setReceiveCount] = useState<number | null>(null);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
@@ -86,12 +87,9 @@ export function PreviewScreen({ route, navigation }: Props) {
     setRecipe(r => ({ ...r, isFavorite: newValue }));
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await Share.share({
-      message: `${recipe.creatorName} shared a recipe with you: ${webUrl}`,
-      url: webUrl,
-    });
+    setShowQRModal(true);
   };
 
   const handlePublish = () => {
@@ -144,6 +142,14 @@ export function PreviewScreen({ route, navigation }: Props) {
         recipeTitle={recipe.title}
         onConfirm={() => { setShowPublishModal(false); doPublish(); }}
         onCancel={() => setShowPublishModal(false)}
+      />
+      <ShareQRModal
+        visible={showQRModal}
+        recipeTitle={recipe.title}
+        qrUrl={recipe.shareUrl ?? `recipecards://card/${recipe.id}`}
+        shareUrl={webUrl}
+        creatorName={recipe.creatorName}
+        onClose={() => setShowQRModal(false)}
       />
       <StatusBar style="light" />
 

@@ -157,6 +157,9 @@ export interface Translations {
   cardCook: string;
   cardScanHint: string;
   cardShareBtn: string;
+  shareModalSubtitle: string;
+  shareModalScanHint: string;
+  shareModalShareBtn: string;
   cardReadyToShare: string;
   cardPublishHint: string;
   cardPublishing: string;
@@ -329,6 +332,9 @@ const en: Translations = {
   cardCook: 'Cook',
   cardScanHint: 'Scan to receive this recipe',
   cardShareBtn: 'Share Recipe',
+  shareModalSubtitle: 'Share this recipe with friends & family',
+  shareModalScanHint: 'Scan to open on any device',
+  shareModalShareBtn: 'Share link',
   cardReadyToShare: 'Ready to share?',
   cardPublishHint: 'Publish to get your QR code',
   cardPublishing: 'Publishing…',
@@ -497,6 +503,9 @@ const pt: Translations = {
   cardCook: 'Cozimento',
   cardScanHint: 'Escaneie para receber esta receita',
   cardShareBtn: 'Compartilhar Receita',
+  shareModalSubtitle: 'Compartilhe esta receita com amigos e família',
+  shareModalScanHint: 'Escaneie para abrir em qualquer dispositivo',
+  shareModalShareBtn: 'Compartilhar link',
   cardReadyToShare: 'Pronto para compartilhar?',
   cardPublishHint: 'Publique para obter seu QR code',
   cardPublishing: 'Publicando…',
@@ -665,6 +674,9 @@ const de: Translations = {
   cardCook: 'Kochen',
   cardScanHint: 'Scannen zum Empfangen dieses Rezepts',
   cardShareBtn: 'Rezept teilen',
+  shareModalSubtitle: 'Dieses Rezept mit Freunden und Familie teilen',
+  shareModalScanHint: 'Scannen zum Öffnen auf jedem Gerät',
+  shareModalShareBtn: 'Link teilen',
   cardReadyToShare: 'Bereit zum Teilen?',
   cardPublishHint: 'Veröffentlichen für QR-Code',
   cardPublishing: 'Wird veröffentlicht…',
@@ -833,6 +845,9 @@ const es: Translations = {
   cardCook: 'Cocción',
   cardScanHint: 'Escanea para recibir esta receta',
   cardShareBtn: 'Compartir Receta',
+  shareModalSubtitle: 'Comparte esta receta con amigos y familia',
+  shareModalScanHint: 'Escanea para abrir en cualquier dispositivo',
+  shareModalShareBtn: 'Compartir enlace',
   cardReadyToShare: '¿Listo para compartir?',
   cardPublishHint: 'Publica para obtener tu código QR',
   cardPublishing: 'Publicando…',

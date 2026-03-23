@@ -42,7 +42,7 @@ Only these fonts are used. Never use system fonts.
 | Token | Family | Usage |
 |---|---|---|
 | Display | `Poppins_700Bold` | Screen titles, section headers, modal headings, list item titles |
-| Accent | `PlayfairDisplay_700Bold` | Card recipe names on dark panel (italic), hero accent words |
+| Accent | `PlayfairDisplay_700Bold` | Card recipe names on **both card faces** (always italic, regardless of background), hero accent words — scoped to card content only, never used in screen chrome or modals |
 | Body regular | `DMSans_400Regular` | Body text, labels, hints |
 | Body medium | `DMSans_500Medium` | Navigation, secondary actions |
 | Body semibold | `DMSans_600SemiBold` | Buttons, stat values, section headings |

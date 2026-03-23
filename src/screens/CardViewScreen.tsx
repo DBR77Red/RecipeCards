@@ -5,7 +5,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -27,6 +26,7 @@ import { RecipeCard } from '../components/RecipeCard';
 import { RecipeData } from '../components/RecipeCard';
 import { ErrorModal } from '../components/ErrorModal';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
+import { ShareQRModal } from '../components/ShareQRModal';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
@@ -64,6 +64,7 @@ export function CardViewScreen({ route, navigation }: Props) {
 
   const [publishing, setPublishing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
 
   // ── Current recipe ──
@@ -179,14 +180,10 @@ export function CardViewScreen({ route, navigation }: Props) {
   };
 
   // ── Share ──
-  const handleShare = async () => {
+  const handleShare = () => {
     if (!recipe) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
-    await Share.share({
-      message: `${recipe.creatorName} shared a recipe with you: ${webUrl}`,
-      url: webUrl,
-    });
+    setShowQRModal(true);
   };
 
   // ── Swipe navigation (deck mode only) ──
@@ -261,6 +258,14 @@ export function CardViewScreen({ route, navigation }: Props) {
         recipeTitle={displayRecipe?.title ?? ''}
         onConfirm={() => { setShowPublishModal(false); doPublish(); }}
         onCancel={() => setShowPublishModal(false)}
+      />
+      <ShareQRModal
+        visible={showQRModal}
+        recipeTitle={displayRecipe?.title ?? ''}
+        qrUrl={displayRecipe?.shareUrl ?? `recipecards://card/${displayRecipe?.id ?? ''}`}
+        shareUrl={`${process.env.EXPO_PUBLIC_SERVER_URL}/card/${displayRecipe?.id ?? ''}`}
+        creatorName={displayRecipe?.creatorName ?? ''}
+        onClose={() => setShowQRModal(false)}
       />
 
       {/* Header row — uses safe area inset */}

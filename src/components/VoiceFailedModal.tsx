@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 26,
     color: C.title,
     letterSpacing: -0.3,

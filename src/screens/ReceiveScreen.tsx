@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.2)',
   },
   errorTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 22,
     color: '#fff',
     marginTop: 4,

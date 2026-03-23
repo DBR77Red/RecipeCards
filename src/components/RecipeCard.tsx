@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 import Svg, { Circle, Path, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -53,9 +52,9 @@ const C = {
 };
 
 const CARD_W      = 320;
-const CARD_H      = 460;
-const CARD_H_PUB  = 760; // published front: photo + stats + QR + label + share btn
-const PHOTO_H     = 445; // golden ratio split — photo dominant at 58% of card height
+const CARD_H      = 518; // golden ratio: 320 × 1.618 = 517.8
+const CARD_H_PUB  = CARD_H; // both states same height — no layout shift on publish
+const PHOTO_H     = 384; // photo dominant at 74% of card height
 const RADIUS      = 16;
 const P           = 1400;
 
@@ -64,7 +63,7 @@ const P           = 1400;
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.statCol}>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
       <Text style={styles.statValue}>{value || '—'}</Text>
     </View>
   );
@@ -130,8 +129,8 @@ function CardFront({
         </View>
       </View>
 
-      {/* Bottom zone — plain View; share/publish buttons absorb their own touches */}
-      <View style={[styles.bottomZone, published && styles.bottomZonePub]}>
+      {/* Bottom zone — plain View; share/publish button absorbs its own touch */}
+      <View style={styles.bottomZone}>
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
@@ -140,41 +139,28 @@ function CardFront({
           <Stat label={t.cardCook}   value={recipe.cookTime ? recipe.cookTime.replace(/\D/g, '') + ' min' : ''} />
         </View>
 
-        <View style={styles.qrDivider} />
+        <View style={styles.ctaDivider} />
 
         {published ? (
-          <View style={styles.qrCenter}>
-            <View style={styles.qrBox}>
-              <QRCode value={shareUrl} size={110} />
-            </View>
-            <Text style={styles.qrLabel}>{t.cardScanHint}</Text>
-            <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
-                <Circle cx="9" cy="7" r="3" stroke={C.amber} strokeWidth="1.8" />
-                <Path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round" />
-                <Circle cx="18" cy="8" r="2.2" stroke={C.amber} strokeWidth="1.8" />
-                <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round" />
-              </Svg>
-              <Text style={styles.shareBtnText}>{t.cardShareBtn}</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.ctaBtnOutline} onPress={onShare} activeOpacity={0.8}>
+            <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" style={{ marginRight: 7 }}>
+              <Path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke={C.panelAmber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M16 6l-4-4-4 4" stroke={C.panelAmber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M12 2v13" stroke={C.panelAmber} strokeWidth="2" strokeLinecap="round" />
+            </Svg>
+            <Text style={styles.ctaBtnOutlineText}>{t.cardShareBtn}</Text>
+          </TouchableOpacity>
         ) : (
-          <View style={styles.qrCenter}>
-            <View style={styles.publishPlaceholder}>
-              <Text style={styles.publishPlaceholderIcon}>✦</Text>
-            </View>
-            <Text style={styles.publishTitle}>{t.cardReadyToShare}</Text>
-            <Text style={styles.qrLabel}>{t.cardPublishHint}</Text>
-            <TouchableOpacity
-              style={[styles.shareBtn, styles.publishBtn, publishing && styles.publishBtnDisabled]}
-              onPress={onPublish}
-              disabled={publishing}
-            >
-              <Text style={styles.publishBtnText}>
-                {publishing ? t.cardPublishing : t.cardPublishBtn}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.ctaBtn, publishing && styles.ctaBtnDisabled]}
+            onPress={onPublish}
+            disabled={publishing}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.ctaBtnText}>
+              {publishing ? t.cardPublishing : t.cardPublishBtn}
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
     </Pressable>
@@ -364,7 +350,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   photoTitle: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontStyle: 'italic',
     fontSize: 21,
     lineHeight: 28,
     color: C.white,
@@ -396,12 +383,12 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     borderTopWidth: 2,
     borderTopColor: C.panelAmber,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 24,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 18,
+    gap: 0,
   },
   statsRow: {
     flexDirection: 'row',
@@ -430,89 +417,51 @@ const styles = StyleSheet.create({
     height: 30,
     backgroundColor: C.panelDiv,
   },
-  frontHint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
-    fontStyle: 'italic',
-    color: C.panelAmber,
-    textAlign: 'center',
-  },
-  bottomZonePub: {
-    gap: 10,
-  },
-  qrDivider: {
+  ctaDivider: {
     width: '100%',
     height: 1,
     backgroundColor: C.panelDiv,
+    marginTop: 12,
+    marginBottom: 12,
   },
-  qrCenter: {
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-  },
-  qrBox: {
-    padding: 10,
-    backgroundColor: C.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  qrLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
-    letterSpacing: 0.3,
-    color: C.panelMuted,
-    textAlign: 'center',
-  },
-  shareBtn: {
+  ctaBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(212,120,10,0.4)',
-    backgroundColor: 'rgba(212,120,10,0.1)',
-    marginBottom: 8,
-  },
-  shareBtnText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: C.panelAmber,
-    letterSpacing: 0.3,
-  },
-  publishPlaceholder: {
-    width: 130,
-    height: 130,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(212,120,10,0.3)',
-    borderStyle: 'dashed',
-    backgroundColor: 'rgba(212,120,10,0.06)',
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  publishPlaceholderIcon: {
-    fontSize: 28,
-    color: C.panelAmber,
-  },
-  publishTitle: {
-    fontFamily: 'Poppins_700Bold',
-    fontSize: 15,
-    color: C.panelText,
-    textAlign: 'center',
-  },
-  publishBtn: {
     backgroundColor: '#E8521A',
-    borderColor: '#E8521A',
+    borderRadius: 100,
+    height: 46,
+    width: '100%',
+    shadowColor: '#E8521A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  publishBtnDisabled: {
+  ctaBtnDisabled: {
     opacity: 0.5,
   },
-  publishBtnText: {
+  ctaBtnText: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
+    fontSize: 14,
     color: C.white,
+    letterSpacing: 0.3,
+  },
+  ctaBtnOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+    height: 46,
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212,120,10,0.5)',
+    backgroundColor: 'rgba(212,120,10,0.08)',
+  },
+  ctaBtnOutlineText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: C.panelAmber,
     letterSpacing: 0.3,
   },
 
@@ -526,7 +475,8 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
   },
   backTitle: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontStyle: 'italic',
     fontSize: 18,
     lineHeight: 25,
     color: C.darkText,
