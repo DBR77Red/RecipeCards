@@ -191,7 +191,7 @@ These were intentionally removed. Do not bring them back without an explicit ins
 
 Planned features to implement in the future:
 
-- **Share count**: Track and display how many times a card has been shared/received
+- **Share count** ⚠️ IN PROGRESS — NOT YET WORKING: The `receive_count` column exists in Supabase and increments via the `increment_receive_count` RPC (called inside `saveReceivedCard` in `storage.ts` when `isNew === true`). `PreviewScreen` subscribes via Supabase Realtime and animates the count on update. However the count is still not incrementing correctly during testing. Next step: verify the RPC is being reached (add a temporary log or check Supabase logs), confirm `isNew` is `true` on first receive, and ensure the Realtime subscription fires on the correct row.
 - **Filter**: Filter cards on home screen (by status, date, etc.)
 - **Auth**: User authentication for syncing across devices
 - **Customization**: Allow users to customize card appearance (colors, fonts, themes)

@@ -2,7 +2,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import LottieView from 'lottie-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   ScrollView,
@@ -40,6 +41,15 @@ export function PreviewScreen({ route, navigation }: Props) {
   const shouldCelebrate = useRef(false);
   const playCelebrate = useSound(require('../../assets/celebrate_sound.mp3'));
   const heartScale = useRef(new Animated.Value(1)).current;
+  const countScale = useRef(new Animated.Value(1)).current;
+
+  const animateCountPop = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Animated.sequence([
+      Animated.timing(countScale, { toValue: 1.45, duration: 140, useNativeDriver: true }),
+      Animated.spring(countScale, { toValue: 1, useNativeDriver: true, damping: 5, stiffness: 200, mass: 0.8 }),
+    ]).start();
+  }, [countScale]);
 
   useEffect(() => {
     if (route.params.celebrate) {
@@ -50,17 +60,39 @@ export function PreviewScreen({ route, navigation }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (recipe.status !== 'published' || !recipe.id) return;
+      supabase
+        .from('recipes')
+        .select('receive_count')
+        .eq('id', recipe.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setReceiveCount((data.receive_count as number) ?? 0);
+        });
+    }, [recipe.id, recipe.status])
+  );
+
+  // Realtime: animate count the moment someone saves the card
   useEffect(() => {
     if (recipe.status !== 'published' || !recipe.id) return;
-    supabase
-      .from('recipes')
-      .select('receive_count')
-      .eq('id', recipe.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setReceiveCount((data.receive_count as number) ?? 0);
-      });
-  }, [recipe.id, recipe.status]);
+    const channel = supabase
+      .channel(`receive-count-${recipe.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'recipes', filter: `id=eq.${recipe.id}` },
+        (payload) => {
+          const newCount = (payload.new as any).receive_count as number;
+          setReceiveCount(prev => {
+            if (prev !== null && newCount > prev) animateCountPop();
+            return newCount;
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [recipe.id, recipe.status, animateCountPop]);
 
   const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
 
@@ -197,9 +229,9 @@ export function PreviewScreen({ route, navigation }: Props) {
         />
 
         {recipe.status === 'published' && receiveCount !== null && (
-          <Text style={styles.receiveCount}>
+          <Animated.Text style={[styles.receiveCount, { transform: [{ scale: countScale }] }]}>
             {receiveCount === 0 ? t.previewReceiveNone : t.previewReceiveCount(receiveCount)}
-          </Text>
+          </Animated.Text>
         )}
       </ScrollView>
 
