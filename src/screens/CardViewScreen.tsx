@@ -30,7 +30,7 @@ import { ShareQRModal } from '../components/ShareQRModal';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
-import { getDrafts, markPublishedLocally, saveDraft, syncToCloud, toggleFavorite } from '../utils/storage';
+import { getDrafts, markPublishedLocally, saveDraft, saveReceivedCard, syncToCloud, toggleFavorite } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
@@ -66,6 +66,11 @@ export function CardViewScreen({ route, navigation }: Props) {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
+
+  // Standalone (deep-link) mode — track whether this is an own card or already received
+  const [isOwnCard, setIsOwnCard] = useState(false);
+  const [alreadySaved, setAlreadySaved] = useState(false);
+  const [savingToCollection, setSavingToCollection] = useState(false);
 
   // ── Current recipe ──
   const recipe: RecipeData | null = isDeckMode
@@ -122,9 +127,22 @@ export function CardViewScreen({ route, navigation }: Props) {
           updatedAt: data.updated_at,
           shareUrl: data.share_url,
         });
+        // Determine if this is the user's own card or already received
+        const drafts = await getDrafts();
+        const own = drafts.some(d => d.id === cardId && !d.isReceived);
+        const received = drafts.some(d => d.isReceived && d.sourceCardId === cardId);
+        setIsOwnCard(own);
+        setAlreadySaved(own || received);
       } else {
         const drafts = await getDrafts();
-        setStandaloneRecipe(drafts.find(d => d.id === cardId) ?? null);
+        const local = drafts.find(d => d.id === cardId) ?? null;
+        setStandaloneRecipe(local);
+        if (local) {
+          setIsOwnCard(!local.isReceived);
+          setAlreadySaved(true);
+        }
+        // If local is null the card is truly not found; leave isOwnCard/alreadySaved false
+        // so the "not found" UI renders correctly and no save button appears.
       }
       setLoading(false);
     }
@@ -184,6 +202,21 @@ export function CardViewScreen({ route, navigation }: Props) {
     if (!recipe) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowQRModal(true);
+  };
+
+  // ── Save to collection (standalone / deep-link mode) ──
+  const handleSaveToCollection = async () => {
+    if (!standaloneRecipe || savingToCollection) return;
+    setSavingToCollection(true);
+    try {
+      await saveReceivedCard(standaloneRecipe);
+      setAlreadySaved(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setErrorModal({ title: t.somethingWentWrong, body: t.somethingWentWrong });
+    } finally {
+      setSavingToCollection(false);
+    }
   };
 
   // ── Swipe navigation (deck mode only) ──
@@ -348,6 +381,22 @@ export function CardViewScreen({ route, navigation }: Props) {
               onShare={handleShare}
               publishing={publishing}
             />
+            {!isOwnCard && (
+              <TouchableOpacity
+                style={[styles.saveCollectionBtn, alreadySaved && styles.saveCollectionBtnDone]}
+                onPress={handleSaveToCollection}
+                disabled={alreadySaved || savingToCollection}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.saveCollectionBtnText}>
+                  {alreadySaved
+                    ? t.receiveAdded
+                    : savingToCollection
+                    ? t.receiveSaving
+                    : t.receiveAddBtn}
+                </Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         )
       ) : (
@@ -430,5 +479,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.18)',
     letterSpacing: 0.3,
     marginTop: 16,
+  },
+  saveCollectionBtn: {
+    marginTop: 20,
+    paddingHorizontal: 36,
+    paddingVertical: 16,
+    borderRadius: 100,
+    backgroundColor: '#E8521A',
+  },
+  saveCollectionBtnDone: {
+    backgroundColor: 'rgba(45,122,79,0.7)',
+  },
+  saveCollectionBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 });

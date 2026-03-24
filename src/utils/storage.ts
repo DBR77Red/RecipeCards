@@ -217,28 +217,62 @@ export async function incrementReceiveCount(id: string): Promise<void> {
 
 /**
  * Saves a card received from another user as a read-only published record.
- * Never editable — always has isReceived: true.
- * Also increments the receive_count on Supabase.
+ * Never editable — always has isReceived: true and sourceCardId pointing to the
+ * original Supabase card ID. Deduplicates: if this card was already saved,
+ * returns the existing record and does NOT increment the count again.
  */
 export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> {
-  await incrementReceiveCount(recipe.id);
+  let isNew = false;
 
-  return withLock(async () => {
+  const saved = await withLock(async () => {
     const now = new Date().toISOString();
     const raw = await AsyncStorage.getItem(DRAFTS_KEY);
     const drafts = safeParseDrafts(raw);
-    const saved: RecipeData = {
+
+    // Deduplication — soft-deleted records are excluded so a user who deleted their
+    // own card can still receive a shared copy, and a user who deleted a received
+    // card can receive it again.
+    //
+    // Three checks in order:
+    // 1. New-format received card (has sourceCardId set)
+    // 2. Own published card (same id, not received)
+    // 3. Old-format received card (pre-sourceCardId migration): match by title +
+    //    creatorName + shareUrl since createdAt was overwritten at receive time.
+    //    This is intentionally conservative (three fields) to avoid false positives.
+    const existing = drafts.find(d => {
+      if (d.deletedAt) return false;
+      if (d.isReceived && d.sourceCardId === recipe.id) return true;
+      if (!d.isReceived && d.id === recipe.id) return true;
+      // Legacy: received card saved before sourceCardId was introduced
+      if (
+        d.isReceived &&
+        !d.sourceCardId &&
+        d.title === recipe.title &&
+        d.creatorName === recipe.creatorName &&
+        d.shareUrl === recipe.shareUrl
+      ) return true;
+      return false;
+    });
+    if (existing) return existing;
+
+    isNew = true;
+    const newRecord: RecipeData = {
       ...recipe,
       id: Crypto.randomUUID(),
+      sourceCardId: recipe.id,
       status: 'published',
       isReceived: true,
       createdAt: now,
       updatedAt: now,
     };
-    drafts.push(saved);
+    drafts.push(newRecord);
     await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
-    return saved;
+    return newRecord;
   });
+
+  if (isNew) await incrementReceiveCount(recipe.id);
+
+  return saved;
 }
 
 /** Toggles isFavorite on a recipe. Returns the new value, or false if not found. */

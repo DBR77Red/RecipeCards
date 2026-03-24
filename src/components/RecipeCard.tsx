@@ -30,6 +30,7 @@ export interface RecipeData {
   shareUrl?: string;
   deletedAt?: string;
   isReceived?: boolean;
+  sourceCardId?: string;  // original Supabase card ID — set on received cards for deduplication
   isFavorite?: boolean;
   receiveCount?: number;
   cloudSyncStatus?: 'synced' | 'pending' | 'failed';

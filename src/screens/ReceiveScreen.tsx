@@ -13,7 +13,7 @@ import { RecipeCard, RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { fetchSharedRecipe } from '../utils/api';
-import { saveReceivedCard } from '../utils/storage';
+import { getDrafts, saveReceivedCard } from '../utils/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Receive'>;
 
@@ -28,10 +28,25 @@ export function ReceiveScreen({ route, navigation }: Props) {
   const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
-    fetchSharedRecipe(route.params.cardId)
-      .then(setRecipe)
-      .catch(() => setHasError(true))
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        const fetched = await fetchSharedRecipe(route.params.cardId);
+        setRecipe(fetched);
+        // Pre-check: if this card is already in the local collection, show saved state
+        const drafts = await getDrafts();
+        const alreadyHave = drafts.some(
+          d =>
+            (d.isReceived && d.sourceCardId === fetched.id) ||
+            (!d.isReceived && d.id === fetched.id),
+        );
+        if (alreadyHave) setSaved(true);
+      } catch {
+        setHasError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [route.params.cardId]);
 
   const handleAdd = async () => {
