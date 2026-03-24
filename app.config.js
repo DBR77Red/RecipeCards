@@ -39,6 +39,18 @@ module.exports = {
       favicon: "./assets/favicon.png",
     },
     plugins: [
+      [
+        "expo-build-properties",
+        {
+          android: {
+            // Only build for real-device ABIs; x86/x86_64 are emulator-only and inflate APK size
+            architectures: ["arm64-v8a", "armeabi-v7a"],
+            // R8 code shrinking and unused-resource stripping for release builds
+            enableMinifyInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+          },
+        },
+      ],
       "expo-font",
       [
         "expo-camera",
