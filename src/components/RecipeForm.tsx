@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import LottieView from 'lottie-react-native';
@@ -134,22 +135,24 @@ function ServesField({ label, value, onChange }: {
   );
 }
 
-function IngredientRow({
-  value, onChange, onRemove, index, canRemove, labelPrefix,
-}: {
+const IngredientRow = React.forwardRef<TextInput, {
   value: string; onChange: (v: string) => void; onRemove: () => void;
   index: number; canRemove: boolean; labelPrefix: string;
-}) {
+  onSubmitEditing?: () => void;
+}>(({ value, onChange, onRemove, index, canRemove, labelPrefix, onSubmitEditing }, ref) => {
   return (
     <View style={styles.listRow}>
       <View style={styles.ingredientBullet} />
       <TextInput
+        ref={ref}
         style={styles.listInput}
         value={value}
         onChangeText={onChange}
         placeholder={`${labelPrefix} ${index + 1}`}
         placeholderTextColor={C.placeholder}
         returnKeyType="next"
+        blurOnSubmit={false}
+        onSubmitEditing={onSubmitEditing}
       />
       {canRemove && (
         <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -158,27 +161,34 @@ function IngredientRow({
       )}
     </View>
   );
-}
+});
 
-function DirectionRow({
-  value, onChange, onRemove, index, canRemove, labelPrefix,
-}: {
+const DirectionRow = React.forwardRef<TextInput, {
   value: string; onChange: (v: string) => void; onRemove: () => void;
   index: number; canRemove: boolean; labelPrefix: string;
-}) {
+  onSubmitEditing?: () => void;
+}>(({ value, onChange, onRemove, index, canRemove, labelPrefix, onSubmitEditing }, ref) => {
   return (
     <View style={styles.listRow}>
       <View style={styles.stepCircle}>
         <Text style={styles.stepCircleNum}>{index + 1}</Text>
       </View>
       <TextInput
+        ref={ref}
         style={[styles.listInput, styles.listInputMultiline]}
         value={value}
-        onChangeText={onChange}
+        onChangeText={v => {
+          if (v.endsWith('\n')) {
+            onSubmitEditing?.();
+          } else {
+            onChange(v);
+          }
+        }}
         placeholder={`${labelPrefix} ${index + 1}`}
         placeholderTextColor={C.placeholder}
         multiline
         returnKeyType="next"
+        blurOnSubmit={false}
       />
       {canRemove && (
         <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -187,7 +197,7 @@ function DirectionRow({
       )}
     </View>
   );
-}
+});
 
 function AddRowButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -318,7 +328,56 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
   const removeDirection = (i: number) =>
     update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
+  // ── Enter-key focus management ─────────────────────────────────────────────
+  const ingredientRefs = useRef<(TextInput | null)[]>([]);
+  const directionRefs  = useRef<(TextInput | null)[]>([]);
+  const pendingIngFocus = useRef<number | null>(null);
+  const pendingDirFocus = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (pendingIngFocus.current !== null) {
+      const idx = pendingIngFocus.current;
+      pendingIngFocus.current = null;
+      ingredientRefs.current[idx]?.focus();
+    }
+  }, [recipe.ingredients.length]);
+
+  useEffect(() => {
+    if (pendingDirFocus.current !== null) {
+      const idx = pendingDirFocus.current;
+      pendingDirFocus.current = null;
+      directionRefs.current[idx]?.focus();
+    }
+  }, [recipe.directions.length]);
+
+  const handleIngredientSubmit = (i: number) => {
+    if (i < recipe.ingredients.length - 1) {
+      setTimeout(() => ingredientRefs.current[i + 1]?.focus(), 50);
+    } else {
+      addIngredient();
+      pendingIngFocus.current = i + 1;
+    }
+  };
+
+  const handleDirectionSubmit = (i: number) => {
+    if (i < recipe.directions.length - 1) {
+      setTimeout(() => directionRefs.current[i + 1]?.focus(), 50);
+    } else {
+      addDirection();
+      pendingDirFocus.current = i + 1;
+    }
+  };
+
   const pickPhoto = () => setShowPhotoPicker(true);
+
+  // Copies a picked photo URI into the app's permanent documents directory so
+  // the path survives app restarts (ImagePicker returns a temporary cache URI).
+  const persistPhoto = async (tempUri: string): Promise<string> => {
+    if (Platform.OS === 'web') return tempUri;
+    const dest = `${FileSystem.documentDirectory}photo_${Date.now()}.jpg`;
+    await FileSystem.copyAsync({ from: tempUri, to: dest });
+    return dest;
+  };
 
   const handleTakePhoto = async () => {
     setShowPhotoPicker(false);
@@ -333,7 +392,10 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
       quality: 0.85,
       cameraType: ImagePicker.CameraType.back,
     });
-    if (!result.canceled) update('photo', result.assets[0].uri);
+    if (!result.canceled) {
+      const stable = await persistPhoto(result.assets[0].uri);
+      update('photo', stable);
+    }
   };
 
   const handleChooseLibrary = async () => {
@@ -348,7 +410,10 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
       aspect: [320, 445],
       quality: 0.85,
     });
-    if (!result.canceled) update('photo', result.assets[0].uri);
+    if (!result.canceled) {
+      const stable = await persistPhoto(result.assets[0].uri);
+      update('photo', stable);
+    }
   };
 
   // ── Voice recorder ─────────────────────────────────────────────────────────
@@ -432,7 +497,7 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -511,11 +576,12 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
         {/* Ingredients */}
         <FormSectionHeader label={t.formIngredients} accent={C.terracotta} />
         {recipe.ingredients.map((ing, i) => (
-          <IngredientRow key={i} index={i} value={ing}
+          <IngredientRow key={i} ref={el => { ingredientRefs.current[i] = el; }} index={i} value={ing}
             onChange={v => updateIngredient(i, v)}
             onRemove={() => removeIngredient(i)}
             canRemove={recipe.ingredients.length > 1}
-            labelPrefix={t.formIngredientPrefix} />
+            labelPrefix={t.formIngredientPrefix}
+            onSubmitEditing={() => handleIngredientSubmit(i)} />
         ))}
         <AddRowButton label={t.formAddIngredient} onPress={addIngredient} />
 
@@ -524,11 +590,12 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
         {/* Directions */}
         <FormSectionHeader label={t.formDirections} accent={C.sage} />
         {recipe.directions.map((step, i) => (
-          <DirectionRow key={i} index={i} value={step}
+          <DirectionRow key={i} ref={el => { directionRefs.current[i] = el; }} index={i} value={step}
             onChange={v => updateDirection(i, v)}
             onRemove={() => removeDirection(i)}
             canRemove={recipe.directions.length > 1}
-            labelPrefix={t.formStepPrefix} />
+            labelPrefix={t.formStepPrefix}
+            onSubmitEditing={() => handleDirectionSubmit(i)} />
         ))}
         <AddRowButton label={t.formAddStep} onPress={addDirection} />
 
