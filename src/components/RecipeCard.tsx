@@ -49,7 +49,7 @@ const C = {
   panelAmber: '#D4780A',   // amber on dark
   panelText:  '#F5EDD9',   // parchment on dark
   panelMuted: '#C4A882',   // muted on dark
-  panelDiv:   'rgba(255,255,255,0.08)', // divider on dark
+  panelDiv:   'rgba(255,255,255,0.15)', // divider on dark
 };
 
 const CARD_W      = 320;
@@ -64,7 +64,7 @@ const P           = 1400;
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.statCol}>
-      <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+      <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
       <Text style={styles.statValue}>{value || '—'}</Text>
     </View>
   );
@@ -135,9 +135,9 @@ function CardFront({
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
-          <Stat label={t.cardPrep}   value={recipe.prepTime ? recipe.prepTime.replace(/\D/g, '') + ' min' : ''} />
+          <Stat label={t.cardPrep}   value={recipe.prepTime ? recipe.prepTime.replace(/\D/g, '') + ' ' + t.cardMinSuffix : ''} />
           <View style={styles.statDivider} />
-          <Stat label={t.cardCook}   value={recipe.cookTime ? recipe.cookTime.replace(/\D/g, '') + ' min' : ''} />
+          <Stat label={t.cardCook}   value={recipe.cookTime ? recipe.cookTime.replace(/\D/g, '') + ' ' + t.cardMinSuffix : ''} />
         </View>
 
         <View style={styles.ctaDivider} />
@@ -240,8 +240,8 @@ export const RecipeCard = React.forwardRef<RecipeCardRef, {
 
     Animated.spring(flipAnim, {
       toValue:         toBack ? 1 : 0,
-      friction:        7,
-      tension:         9,
+      friction:        8,
+      tension:         50,
       useNativeDriver: true,
     }).start();
   };
@@ -324,6 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS,
     borderWidth: 1.5,
     borderColor: C.border,
+    overflow: 'hidden',
   },
   face: {
     flex: 1,
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingBottom: 18,
     zIndex: 1,
   },
   photoTitle: {
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#E8521A',
     borderRadius: 100,
-    height: 46,
+    height: 54,
     width: '100%',
     shadowColor: '#E8521A',
     shadowOffset: { width: 0, height: 4 },
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 100,
-    height: 46,
+    height: 54,
     width: '100%',
     borderWidth: 1.5,
     borderColor: 'rgba(212,120,10,0.5)',
@@ -488,7 +489,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 10,
     fontStyle: 'italic',
-    color: C.amber,
+    color: C.bodyText,
   },
 
   // ── Back: content ──

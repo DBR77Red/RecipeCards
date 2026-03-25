@@ -155,6 +155,7 @@ export interface Translations {
   cardServes: string;
   cardPrep: string;
   cardCook: string;
+  cardMinSuffix: string;
   cardScanHint: string;
   cardShareBtn: string;
   shareModalSubtitle: string;
@@ -330,6 +331,7 @@ const en: Translations = {
   cardServes: 'Serves',
   cardPrep: 'Prep',
   cardCook: 'Cook',
+  cardMinSuffix: 'min',
   cardScanHint: 'Scan to receive this recipe',
   cardShareBtn: 'Share Recipe',
   shareModalSubtitle: 'Share this recipe with friends & family',
@@ -501,6 +503,7 @@ const pt: Translations = {
   cardServes: 'Porções',
   cardPrep: 'Prep',
   cardCook: 'Cozimento',
+  cardMinSuffix: 'min',
   cardScanHint: 'Escaneie para receber esta receita',
   cardShareBtn: 'Compartilhar Receita',
   shareModalSubtitle: 'Compartilhe esta receita com amigos e família',
@@ -672,6 +675,7 @@ const de: Translations = {
   cardServes: 'Portionen',
   cardPrep: 'Vorbereitung',
   cardCook: 'Kochen',
+  cardMinSuffix: 'Min.',
   cardScanHint: 'Scannen zum Empfangen dieses Rezepts',
   cardShareBtn: 'Rezept teilen',
   shareModalSubtitle: 'Dieses Rezept mit Freunden und Familie teilen',
@@ -843,6 +847,7 @@ const es: Translations = {
   cardServes: 'Raciones',
   cardPrep: 'Prep',
   cardCook: 'Cocción',
+  cardMinSuffix: 'min',
   cardScanHint: 'Escanea para recibir esta receta',
   cardShareBtn: 'Compartir Receta',
   shareModalSubtitle: 'Comparte esta receta con amigos y familia',

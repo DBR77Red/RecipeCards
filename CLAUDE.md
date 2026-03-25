@@ -101,9 +101,9 @@ The app has two palettes. Do not mix them across contexts.
 ## RecipeCard Rules
 
 - Card width: always `CARD_W = 320`
-- Front height: always `CARD_H_PUB = 760` regardless of draft/published status
+- Front height: always `CARD_H = 518` (golden ratio: 320 × 1.618 = 517.8) — same for draft and published, no layout shift
 - Back height: content-driven — measured via `onLayout`, stored in a `ref` (not state) so `handleFlip` always reads the latest value without stale-closure issues. Minimum clamped to `frontH`.
-- **Flip trigger placement**: the flip `Pressable` must only cover the photo zone on the front face, and the entire back face. Never wrap the whole card in a single `Pressable` — it blocks inner button touches (share, publish).
+- **Flip trigger**: the entire front face is a single `Pressable` — tapping anywhere on the front (photo zone or bottom panel) flips the card. The inner `TouchableOpacity` buttons (Share, Publish) absorb their own touch events so they still fire correctly. The entire back face is also a `Pressable` for flip-back.
 - Both face shells use `pointerEvents="none"` when hidden (opacity 0) to prevent invisible views from intercepting touches.
 - Never re-introduce a JS-driver spring on card height — this was the root cause of lag and Android back-face rendering failures.
 
