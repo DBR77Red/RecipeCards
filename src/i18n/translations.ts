@@ -11,6 +11,10 @@ export interface Translations {
   save: string;
   untitledRecipe: string;
 
+  // Home screen header
+  homeTitle: string;
+  homeTitleAccent: string;
+
   // Tab bar
   tabHome: string;
   tabFavorites: string;
@@ -202,6 +206,9 @@ const en: Translations = {
   onboardingBody: 'Welcome to Recipe Cards.\n\nThis app is made for friends and family at the moment, and is still under development. If you have suggestions or find bugs, please contact the developer.\n\nThanks for taking the time to test it out.',
   onboardingBtn: 'Start using the app',
 
+  homeTitle: 'Your',
+  homeTitleAccent: 'recipes.',
+
   cancel: 'Cancel',
   ok: 'OK',
   save: 'Save',
@@ -373,6 +380,9 @@ const en: Translations = {
 const pt: Translations = {
   onboardingBody: 'Bem-vindo ao Recipe Cards.\n\nEste aplicativo foi criado para amigos e família por enquanto, e ainda está em desenvolvimento. Se tiver sugestões ou encontrar bugs, por favor entre em contato com o desenvolvedor.\n\nObrigado por dedicar seu tempo para testá-lo.',
   onboardingBtn: 'Começar a usar o app',
+
+  homeTitle: 'Suas',
+  homeTitleAccent: 'receitas.',
 
   cancel: 'Cancelar',
   ok: 'OK',
@@ -546,6 +556,9 @@ const de: Translations = {
   onboardingBody: 'Willkommen bei Recipe Cards.\n\nDiese App ist momentan für Freunde und Familie gedacht und befindet sich noch in der Entwicklung. Wenn du Vorschläge hast oder Fehler findest, wende dich bitte an den Entwickler.\n\nVielen Dank, dass du dir die Zeit nimmst, sie zu testen.',
   onboardingBtn: 'App starten',
 
+  homeTitle: 'Deine',
+  homeTitleAccent: 'Rezepte.',
+
   cancel: 'Abbrechen',
   ok: 'OK',
   save: 'Speichern',
@@ -717,6 +730,9 @@ const de: Translations = {
 const es: Translations = {
   onboardingBody: 'Bienvenido a Recipe Cards.\n\nEsta app está hecha para amigos y familia por el momento, y todavía está en desarrollo. Si tienes sugerencias o encuentras errores, por favor contacta al desarrollador.\n\nGracias por tomarte el tiempo de probarla.',
   onboardingBtn: 'Empezar a usar la app',
+
+  homeTitle: 'Tus',
+  homeTitleAccent: 'recetas.',
 
   cancel: 'Cancelar',
   ok: 'OK',

@@ -610,7 +610,7 @@ export function HomeScreen({ navigation }: Props) {
       {/* Dark espresso header */}
       <View style={styles.darkHeader}>
         <View style={styles.darkHeaderTop}>
-          <Text style={styles.darkHeaderTitle}>Your <Text style={styles.darkHeaderAccent}>recipes.</Text></Text>
+          <Text style={styles.darkHeaderTitle}>{t.homeTitle} <Text style={styles.darkHeaderAccent}>{t.homeTitleAccent}</Text></Text>
           <View style={styles.darkHeaderActions}>
             {!selectionMode && (
               <TouchableOpacity
