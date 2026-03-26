@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BottomTabBar } from '../components/BottomTabBar';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { getUserName, setUserName } from '../utils/storage';
@@ -67,11 +68,7 @@ export function ProfileScreen({ navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>{t.profileTitle}</Text>
-          <View style={styles.headerSpacer} />
         </View>
 
         <View style={styles.content}>
@@ -115,6 +112,7 @@ export function ProfileScreen({ navigation }: Props) {
           </Animated.View>
         </Animated.View>
       </Modal>
+      <BottomTabBar activeTab="Profile" />
     </SafeAreaView>
   );
 }
@@ -124,27 +122,16 @@ const styles = StyleSheet.create({
   flex:   { flex: 1 },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 18,
     paddingBottom: 16,
   },
-  backText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 20,
-    color: C.muted,
-    minWidth: 32,
-  },
   headerTitle: {
-    flex: 1,
     fontFamily: 'Poppins_700Bold',
-    fontSize: 22,
+    fontSize: 36,
     color: C.title,
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
-  headerSpacer: { minWidth: 32 },
 
   content: {
     paddingHorizontal: 20,

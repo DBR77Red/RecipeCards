@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-export type ActiveTab = 'Home' | 'Favorites' | 'Settings';
+export type ActiveTab = 'Home' | 'Favorites' | 'Settings' | 'Profile';
 
 interface Props {
   activeTab: ActiveTab;
@@ -138,10 +138,10 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
         activeOpacity={0.7}
         onPress={() => go('Settings')}
       >
-        <View style={[styles.iconWrap, activeTab === 'Settings' && styles.iconWrapActive]}>
-          <ProfileIcon color={activeTab === 'Settings' ? ACTIVE : INACTIVE} />
+        <View style={[styles.iconWrap, (activeTab === 'Settings' || activeTab === 'Profile') && styles.iconWrapActive]}>
+          <ProfileIcon color={(activeTab === 'Settings' || activeTab === 'Profile') ? ACTIVE : INACTIVE} />
         </View>
-        <Text style={[styles.tabLabel, activeTab === 'Settings' && styles.tabLabelActive]}>
+        <Text style={[styles.tabLabel, (activeTab === 'Settings' || activeTab === 'Profile') && styles.tabLabelActive]}>
           {t.tabSettings}
         </Text>
       </TouchableOpacity>
