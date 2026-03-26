@@ -317,55 +317,38 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
   const updateIngredient = (i: number, v: string) => {
     const next = [...recipe.ingredients]; next[i] = v; update('ingredients', next);
   };
-  const addIngredient    = () => update('ingredients', [...recipe.ingredients, '']);
   const removeIngredient = (i: number) =>
     update('ingredients', recipe.ingredients.filter((_, idx) => idx !== i));
 
   const updateDirection = (i: number, v: string) => {
     const next = [...recipe.directions]; next[i] = v; update('directions', next);
   };
-  const addDirection    = () => update('directions', [...recipe.directions, '']);
   const removeDirection = (i: number) =>
     update('directions', recipe.directions.filter((_, idx) => idx !== i));
 
-  // ── Enter-key focus management ─────────────────────────────────────────────
+  // ── Sentinel-row focus management ─────────────────────────────────────────
+  //
+  // Each list always renders one extra empty row (the "sentinel") at the end.
+  // Pressing Enter on the last real row just moves focus to the already-mounted
+  // sentinel — no new view is created, so the ScrollView content is stable and
+  // there is no flash-to-top.
+  //
+  // When the user types in the sentinel, it is "promoted" to a real row and a
+  // fresh sentinel appears below.  Because the content growth happens while
+  // focus is already on the correct row (no focus change), the scroll position
+  // stays stable.
+  const scrollViewRef  = useRef<ScrollView>(null);
   const ingredientRefs = useRef<(TextInput | null)[]>([]);
   const directionRefs  = useRef<(TextInput | null)[]>([]);
-  const pendingIngFocus = useRef<number | null>(null);
-  const pendingDirFocus = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (pendingIngFocus.current !== null) {
-      const idx = pendingIngFocus.current;
-      pendingIngFocus.current = null;
-      ingredientRefs.current[idx]?.focus();
-    }
-  }, [recipe.ingredients.length]);
-
-  useEffect(() => {
-    if (pendingDirFocus.current !== null) {
-      const idx = pendingDirFocus.current;
-      pendingDirFocus.current = null;
-      directionRefs.current[idx]?.focus();
-    }
-  }, [recipe.directions.length]);
 
   const handleIngredientSubmit = (i: number) => {
-    if (i < recipe.ingredients.length - 1) {
-      setTimeout(() => ingredientRefs.current[i + 1]?.focus(), 50);
-    } else {
-      addIngredient();
-      pendingIngFocus.current = i + 1;
-    }
+    // The sentinel is always at recipe.ingredients.length — it always exists,
+    // so we can unconditionally focus the next row without creating one.
+    ingredientRefs.current[i + 1]?.focus();
   };
 
   const handleDirectionSubmit = (i: number) => {
-    if (i < recipe.directions.length - 1) {
-      setTimeout(() => directionRefs.current[i + 1]?.focus(), 50);
-    } else {
-      addDirection();
-      pendingDirFocus.current = i + 1;
-    }
+    directionRefs.current[i + 1]?.focus();
   };
 
   const pickPhoto = () => setShowPhotoPicker(true);
@@ -500,6 +483,7 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
       behavior="padding"
     >
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -573,31 +557,54 @@ export function RecipeForm({ recipe, onChange, onPublish, onPreview, onBack, sav
 
         <View style={styles.sectionDivider} />
 
-        {/* Ingredients */}
+        {/* Ingredients — always renders one extra sentinel row at the end */}
         <FormSectionHeader label={t.formIngredients} accent={C.terracotta} />
-        {recipe.ingredients.map((ing, i) => (
-          <IngredientRow key={i} ref={el => { ingredientRefs.current[i] = el; }} index={i} value={ing}
-            onChange={v => updateIngredient(i, v)}
-            onRemove={() => removeIngredient(i)}
-            canRemove={recipe.ingredients.length > 1}
-            labelPrefix={t.formIngredientPrefix}
-            onSubmitEditing={() => handleIngredientSubmit(i)} />
-        ))}
-        <AddRowButton label={t.formAddIngredient} onPress={addIngredient} />
+        {[...recipe.ingredients, ''].map((ing, i) => {
+          const isSentinel = i === recipe.ingredients.length;
+          return (
+            <IngredientRow key={i} ref={el => { ingredientRefs.current[i] = el; }} index={i} value={ing}
+              onChange={v => {
+                if (isSentinel) {
+                  // First keystroke in sentinel → promote it to a real row
+                  update('ingredients', [...recipe.ingredients, v]);
+                } else {
+                  updateIngredient(i, v);
+                }
+              }}
+              onRemove={() => { if (!isSentinel) removeIngredient(i); }}
+              canRemove={!isSentinel && recipe.ingredients.length > 1}
+              labelPrefix={t.formIngredientPrefix}
+              onSubmitEditing={() => handleIngredientSubmit(i)} />
+          );
+        })}
+        <AddRowButton label={t.formAddIngredient} onPress={() => {
+          ingredientRefs.current[recipe.ingredients.length]?.focus();
+        }} />
 
         <View style={styles.sectionGap} />
 
-        {/* Directions */}
+        {/* Directions — same sentinel pattern */}
         <FormSectionHeader label={t.formDirections} accent={C.sage} />
-        {recipe.directions.map((step, i) => (
-          <DirectionRow key={i} ref={el => { directionRefs.current[i] = el; }} index={i} value={step}
-            onChange={v => updateDirection(i, v)}
-            onRemove={() => removeDirection(i)}
-            canRemove={recipe.directions.length > 1}
-            labelPrefix={t.formStepPrefix}
-            onSubmitEditing={() => handleDirectionSubmit(i)} />
-        ))}
-        <AddRowButton label={t.formAddStep} onPress={addDirection} />
+        {[...recipe.directions, ''].map((step, i) => {
+          const isSentinel = i === recipe.directions.length;
+          return (
+            <DirectionRow key={i} ref={el => { directionRefs.current[i] = el; }} index={i} value={step}
+              onChange={v => {
+                if (isSentinel) {
+                  update('directions', [...recipe.directions, v]);
+                } else {
+                  updateDirection(i, v);
+                }
+              }}
+              onRemove={() => { if (!isSentinel) removeDirection(i); }}
+              canRemove={!isSentinel && recipe.directions.length > 1}
+              labelPrefix={t.formStepPrefix}
+              onSubmitEditing={() => handleDirectionSubmit(i)} />
+          );
+        })}
+        <AddRowButton label={t.formAddStep} onPress={() => {
+          directionRefs.current[recipe.directions.length]?.focus();
+        }} />
 
         {/* Actions */}
         <TouchableOpacity
