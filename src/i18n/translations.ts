@@ -4,6 +4,12 @@ export interface Translations {
   // Onboarding
   onboardingBody: string;
   onboardingBtn: string;
+  onboardingStep1Title: string;
+  onboardingStep2Title: string;
+  onboardingStep2Sub: string;
+  onboardingStep2Placeholder: string;
+  onboardingNext: string;
+  onboardingFinish: string;
 
   // Common
   cancel: string;
@@ -205,6 +211,12 @@ export interface Translations {
 const en: Translations = {
   onboardingBody: 'Welcome to Recipe Cards.\n\nThis app is made for friends and family at the moment, and is still under development. If you have suggestions or find bugs, please contact the developer.\n\nThanks for taking the time to test it out.',
   onboardingBtn: 'Start using the app',
+  onboardingStep1Title: 'Choose your language',
+  onboardingStep2Title: "What's your name?",
+  onboardingStep2Sub: 'Your name will appear on your recipe cards.',
+  onboardingStep2Placeholder: 'Your name',
+  onboardingNext: 'Next',
+  onboardingFinish: "Let's cook!",
 
   homeTitle: 'Your',
   homeTitleAccent: 'recipes.',
@@ -380,6 +392,12 @@ const en: Translations = {
 const pt: Translations = {
   onboardingBody: 'Bem-vindo ao Recipe Cards.\n\nEste aplicativo foi criado para amigos e família por enquanto, e ainda está em desenvolvimento. Se tiver sugestões ou encontrar bugs, por favor entre em contato com o desenvolvedor.\n\nObrigado por dedicar seu tempo para testá-lo.',
   onboardingBtn: 'Começar a usar o app',
+  onboardingStep1Title: 'Escolha seu idioma',
+  onboardingStep2Title: 'Qual é o seu nome?',
+  onboardingStep2Sub: 'Seu nome aparecerá nos seus cartões de receita.',
+  onboardingStep2Placeholder: 'Seu nome',
+  onboardingNext: 'Próximo',
+  onboardingFinish: 'Vamos cozinhar!',
 
   homeTitle: 'Suas',
   homeTitleAccent: 'receitas.',
@@ -555,6 +573,12 @@ const pt: Translations = {
 const de: Translations = {
   onboardingBody: 'Willkommen bei Recipe Cards.\n\nDiese App ist momentan für Freunde und Familie gedacht und befindet sich noch in der Entwicklung. Wenn du Vorschläge hast oder Fehler findest, wende dich bitte an den Entwickler.\n\nVielen Dank, dass du dir die Zeit nimmst, sie zu testen.',
   onboardingBtn: 'App starten',
+  onboardingStep1Title: 'Wähle deine Sprache',
+  onboardingStep2Title: 'Wie heißt du?',
+  onboardingStep2Sub: 'Dein Name wird auf deinen Rezeptkarten angezeigt.',
+  onboardingStep2Placeholder: 'Dein Name',
+  onboardingNext: 'Weiter',
+  onboardingFinish: 'Los geht\'s!',
 
   homeTitle: 'Deine',
   homeTitleAccent: 'Rezepte.',
@@ -730,6 +754,12 @@ const de: Translations = {
 const es: Translations = {
   onboardingBody: 'Bienvenido a Recipe Cards.\n\nEsta app está hecha para amigos y familia por el momento, y todavía está en desarrollo. Si tienes sugerencias o encuentras errores, por favor contacta al desarrollador.\n\nGracias por tomarte el tiempo de probarla.',
   onboardingBtn: 'Empezar a usar la app',
+  onboardingStep1Title: 'Elige tu idioma',
+  onboardingStep2Title: '¿Cómo te llamas?',
+  onboardingStep2Sub: 'Tu nombre aparecerá en tus tarjetas de recetas.',
+  onboardingStep2Placeholder: 'Tu nombre',
+  onboardingNext: 'Siguiente',
+  onboardingFinish: '¡A cocinar!',
 
   homeTitle: 'Tus',
   homeTitleAccent: 'recetas.',
