@@ -82,17 +82,17 @@ export default function App() {
     <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
-        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FAF5EE' } }}>
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false }} />
-          <Stack.Screen name="Home"      component={HomeScreen}      />
-          <Stack.Screen name="Favorites" component={FavoritesScreen} />
-          <Stack.Screen name="Profile"   component={ProfileScreen}   />
-          <Stack.Screen name="Settings"  component={SettingsScreen}  />
-          <Stack.Screen name="Form"      component={FormScreen}      />
-          <Stack.Screen name="Preview"   component={PreviewScreen}   />
-          <Stack.Screen name="CardView"  component={CardViewScreen}  />
-          <Stack.Screen name="Deck"      component={DeckScreen}      />
-          <Stack.Screen name="Receive"   component={ReceiveScreen}   />
+        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: '#FAF5EE' } }}>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false, contentStyle: { backgroundColor: '#1C0F06' } }} />
+          <Stack.Screen name="Home"      component={HomeScreen}       options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
+          <Stack.Screen name="Favorites" component={FavoritesScreen}  />
+          <Stack.Screen name="Profile"   component={ProfileScreen}    />
+          <Stack.Screen name="Settings"  component={SettingsScreen}   />
+          <Stack.Screen name="Form"      component={FormScreen}       />
+          <Stack.Screen name="Preview"   component={PreviewScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
+          <Stack.Screen name="CardView"  component={CardViewScreen}   options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
+          <Stack.Screen name="Deck"      component={DeckScreen}       options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
+          <Stack.Screen name="Receive"   component={ReceiveScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

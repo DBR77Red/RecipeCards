@@ -1,6 +1,7 @@
 import React, { useImperativeHandle, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   Platform,
   Pressable,
@@ -178,7 +179,7 @@ function CardBack({ recipe, onFlip, onMeasured }: {
   const { t } = useLanguage();
 
   return (
-    <Pressable onPress={onFlip} onLayout={e => onMeasured(e.nativeEvent.layout.height)}>
+    <Pressable onPress={onFlip} onLayout={e => onMeasured(e.nativeEvent.layout.height)} style={{ minHeight: CARD_H }}>
       {/* Header */}
       <View style={styles.backHeader}>
         <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
@@ -202,6 +203,8 @@ function CardBack({ recipe, onFlip, onMeasured }: {
             <Text style={styles.stepText}>{step}</Text>
           </View>
         ))}
+
+        <Text style={[styles.backHint, { textAlign: 'center', marginTop: 16 }]}>{t.cardTapToFlip}</Text>
       </View>
     </Pressable>
   );
@@ -224,26 +227,33 @@ export const RecipeCard = React.forwardRef<RecipeCardRef, {
   const [flipped,    setFlipped]    = useState(false);
   const [cardHeight, setCardHeight] = useState(frontH);
   const flipAnim                    = useRef(new Animated.Value(0)).current;
+  const isAnimating                 = useRef(false);
   // Ref so handleFlip always reads the latest measured value,
   // even if the React state update hasn't flushed yet.
   const backHRef                    = useRef(CARD_H);
+  // State drives faceShellBack height so it re-renders after first onLayout.
+  const [backHState, setBackHState] = useState(CARD_H);
 
   const handleMeasured = (h: number) => {
-    backHRef.current = Math.max(h, frontH);
-    if (flipped) setCardHeight(backHRef.current);
+    const newH = Math.max(h, frontH);
+    backHRef.current = newH;
+    setBackHState(newH);
+    if (flipped) setCardHeight(newH);
   };
 
   const handleFlip = () => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
     const toBack = !flipped;
     setCardHeight(toBack ? backHRef.current : frontH);
     setFlipped(toBack);
 
-    Animated.spring(flipAnim, {
+    Animated.timing(flipAnim, {
       toValue:         toBack ? 1 : 0,
-      friction:        8,
-      tension:         50,
+      duration:        380,
+      easing:          Easing.bezier(0.42, 0, 0.58, 1),
       useNativeDriver: true,
-    }).start();
+    }).start(() => { isAnimating.current = false; });
   };
 
   useImperativeHandle(ref, () => ({ flip: handleFlip }));
@@ -272,7 +282,7 @@ export const RecipeCard = React.forwardRef<RecipeCardRef, {
       <Animated.View
         pointerEvents={flipped ? 'auto' : 'none'}
         style={[styles.faceShellBack, {
-          height: backHRef.current,
+          height: backHState,
           backfaceVisibility: 'hidden',
           opacity:   backOpacity,
           transform: [{ perspective: P }, { rotateY: backSpin }],

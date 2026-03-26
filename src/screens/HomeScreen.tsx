@@ -1288,8 +1288,9 @@ const qrStyles = StyleSheet.create({
   },
   overlayTitle: {
     fontFamily: 'Poppins_700Bold',
-    fontSize: 20,
+    fontSize: 36,
     color: '#fff',
+    letterSpacing: -1,
     marginBottom: 32,
   },
   viewfinder: {
