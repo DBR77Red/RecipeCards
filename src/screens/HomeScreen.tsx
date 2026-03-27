@@ -622,20 +622,6 @@ export function HomeScreen({ navigation, route }: Props) {
         <View style={styles.darkHeaderTop}>
           <Text style={styles.darkHeaderTitle}>{t.homeTitle} <Text style={styles.darkHeaderAccent}>{t.homeTitleAccent}</Text></Text>
           <View style={styles.darkHeaderActions}>
-            {!selectionMode && (
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setIsReorderMode(v => !v);
-                }}
-                activeOpacity={0.7}
-                style={styles.reorderBtn}
-              >
-                <Text style={[styles.reorderBtnText, isReorderMode && styles.reorderBtnTextActive]}>
-                  {isReorderMode ? 'Done' : 'Reorder'}
-                </Text>
-              </TouchableOpacity>
-            )}
             {!isReorderMode && (
               <TouchableOpacity
                 style={styles.darkHeaderAvatar}
@@ -670,6 +656,26 @@ export function HomeScreen({ navigation, route }: Props) {
               </Text>
             </TouchableOpacity>
           ))}
+
+          {!selectionMode && (
+            <TouchableOpacity
+              style={[styles.filterPill, styles.reorderPill, isReorderMode && styles.reorderPillActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsReorderMode(v => !v);
+              }}
+              activeOpacity={0.75}
+            >
+              <Svg width={12} height={10} viewBox="0 0 12 10" style={styles.reorderPillIcon}>
+                <Rect x="0" y="0" width="12" height="1.5" rx="0.75" fill={isReorderMode ? '#FFFFFF' : 'rgba(245,237,217,0.5)'} />
+                <Rect x="0" y="4.25" width="12" height="1.5" rx="0.75" fill={isReorderMode ? '#FFFFFF' : 'rgba(245,237,217,0.5)'} />
+                <Rect x="0" y="8.5" width="12" height="1.5" rx="0.75" fill={isReorderMode ? '#FFFFFF' : 'rgba(245,237,217,0.5)'} />
+              </Svg>
+              <Text style={[styles.filterPillText, isReorderMode && styles.filterPillTextActive]}>
+                {isReorderMode ? 'Done' : 'Reorder'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </View>
 
@@ -912,19 +918,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  reorderBtn: {
+  reorderPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  reorderBtnText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: C.panelMuted,
+  reorderPillActive: {
+    backgroundColor: '#E8521A',
+    borderColor: '#E8521A',
   },
-  reorderBtnTextActive: {
-    color: C.terracotta,
+  reorderPillIcon: {
+    marginTop: 1,
   },
   flex: {
     flex: 1,
