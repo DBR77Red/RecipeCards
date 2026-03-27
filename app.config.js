@@ -2,7 +2,7 @@ const isProd = process.env.APP_ENV === 'production';
 
 module.exports = {
   expo: {
-    name: "RecipeCards",
+    name: "Recipe Cards",
     slug: "RecipeCards",
     version: "1.0.0",
     orientation: "portrait",
