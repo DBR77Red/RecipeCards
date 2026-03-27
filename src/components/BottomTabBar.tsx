@@ -125,7 +125,7 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => onExchange ? onExchange() : go('Home')}
+        onPress={() => onExchange ? onExchange() : navigation.navigate('Home', { openExchange: true })}
       >
         <View style={styles.iconWrap}>
           <ExchangeIcon color={INACTIVE} />

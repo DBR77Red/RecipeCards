@@ -464,7 +464,7 @@ function SyncToast({ message }: { message: string | null }) {
 
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
-export function HomeScreen({ navigation }: Props) {
+export function HomeScreen({ navigation, route }: Props) {
   const { t } = useLanguage();
   const [drafts, setDrafts] = useState<RecipeData[]>([]);
   const [published, setPublished] = useState<RecipeData[]>([]);
@@ -483,6 +483,14 @@ export function HomeScreen({ navigation }: Props) {
   const [isReorderMode, setIsReorderMode] = useState(false);
   const selectionBarAnim = useRef(new Animated.Value(0)).current;
   const listScrollRef = useRef<ScrollView>(null);
+
+  // Open QR scanner when navigated here with openExchange=true (e.g. from Profile/Settings footer)
+  useEffect(() => {
+    if (route.params?.openExchange) {
+      setShowQRScanner(true);
+      navigation.setParams({ openExchange: undefined });
+    }
+  }, [route.params?.openExchange]);
 
   // Listen for successful background syncs and refresh the list
   useEffect(() => {

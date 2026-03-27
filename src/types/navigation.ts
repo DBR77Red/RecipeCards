@@ -2,7 +2,7 @@ import { RecipeData } from '../components/RecipeCard';
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  Home: undefined;
+  Home: { openExchange?: boolean } | undefined;
   Favorites: undefined;
   Profile: undefined;
   Settings: undefined;
