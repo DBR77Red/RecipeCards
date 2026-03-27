@@ -84,14 +84,16 @@ export function CardViewScreen({ route, navigation }: Props) {
   useEffect(() => {
     setReceiveCount(null);
     if (!recipe || recipe.status !== 'published' || !supabaseId) return;
+    let active = true;
     supabase
       .from('recipes')
       .select('receive_count')
       .eq('id', supabaseId)
       .single()
       .then(({ data }) => {
-        if (data) setReceiveCount((data.receive_count as number) || 1);
+        if (active && data) setReceiveCount((data.receive_count as number) || 1);
       });
+    return () => { active = false; };
   }, [supabaseId, recipe?.status]);
 
   useEffect(() => {
@@ -111,7 +113,7 @@ export function CardViewScreen({ route, navigation }: Props) {
   }, [supabaseId, recipe?.status]);
 
   const displayRecipe: RecipeData | null = recipe
-    ? { ...recipe, isFavorite: localFavoriteOverrides[recipe.id] ?? recipe.isFavorite, receiveCount: receiveCount ?? undefined }
+    ? { ...recipe, isFavorite: localFavoriteOverrides[recipe.id] ?? recipe.isFavorite, receiveCount: receiveCount ?? recipe.receiveCount }
     : null;
 
   const canFavorite = displayRecipe?.status === 'published' || displayRecipe?.isReceived;

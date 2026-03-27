@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useRef, useState } from 'react';
+import React, { useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -85,13 +85,17 @@ function CardFront({
   const { t } = useLanguage();
   const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
   const published = recipe.status === 'published';
+  const photoSource = useMemo(
+    () => recipe.photo ? { uri: recipe.photo } : null,
+    [recipe.photo]
+  );
 
   return (
     <Pressable onPress={onFlip} style={styles.face}>
       {/* Photo zone — plain View; parent Pressable handles flip */}
       <View style={styles.photoZone}>
-        {recipe.photo ? (
-          <Image source={{ uri: recipe.photo }} style={styles.photo} resizeMode="cover" />
+        {photoSource ? (
+          <Image source={photoSource} style={styles.photo} resizeMode="cover" />
         ) : (
           <Image
             source={require('../../assets/placeholder.jpg')}
@@ -118,6 +122,7 @@ function CardFront({
           <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
           <View style={styles.photoMetaRow}>
             <Text style={styles.photoMeta}>{t.cardBy} {recipe.creatorName}</Text>
+            {recipe.receiveCount !== undefined && (
             <View style={styles.photoMetaCount}>
               <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ marginRight: 4 }}>
                 <Circle cx="9" cy="7" r="3" stroke="#ffffff" strokeWidth="2" />
@@ -125,8 +130,9 @@ function CardFront({
                 <Circle cx="18" cy="8" r="2.2" stroke="#ffffff" strokeWidth="2" />
                 <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
               </Svg>
-              <Text style={styles.photoMetaCountText}>{recipe.receiveCount ?? 0}</Text>
+              <Text style={styles.photoMetaCountText}>{recipe.receiveCount}</Text>
             </View>
+          )}
           </View>
         </View>
       </View>
@@ -258,10 +264,10 @@ export const RecipeCard = React.forwardRef<RecipeCardRef, {
 
   useImperativeHandle(ref, () => ({ flip: handleFlip }));
 
-  const frontSpin    = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] });
-  const backSpin     = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   });
-  const frontOpacity = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' });
-  const backOpacity  = flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' });
+  const frontSpin    = useMemo(() => flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] }), [flipAnim]);
+  const backSpin     = useMemo(() => flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   }), [flipAnim]);
+  const frontOpacity = useMemo(() => flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' }), [flipAnim]);
+  const backOpacity  = useMemo(() => flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' }), [flipAnim]);
 
   return (
     <View style={[styles.wrapper, { height: cardHeight }]}>

@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -147,7 +147,7 @@ interface DraftListItemProps {
   drag?: () => void;
 }
 
-function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected, onToggleFavorite, drag }: DraftListItemProps) {
+const DraftListItem = memo(function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected, onToggleFavorite, drag }: DraftListItemProps) {
   const canFavorite = (recipe.status === 'published' || recipe.isReceived) && !!onToggleFavorite;
   const { t } = useLanguage();
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -176,7 +176,14 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
   };
   const displayTitle    = recipe.title.trim() || t.untitledRecipe;
   const isTitleEmpty    = !recipe.title.trim();
-  const ingredientCount = recipe.ingredients.filter(i => i.trim()).length;
+  const ingredientCount = useMemo(
+    () => recipe.ingredients.filter(i => i.trim()).length,
+    [recipe.ingredients]
+  );
+  const photoSource = useMemo(
+    () => recipe.photo ? { uri: recipe.photo } : null,
+    [recipe.photo]
+  );
   const ingredientLabel = ingredientCount === 1
     ? `1 ${t.ingredient}`
     : `${ingredientCount} ${t.ingredients}`;
@@ -192,8 +199,8 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
     >
       {/* Thumbnail */}
       <View style={styles.thumbnail}>
-        {recipe.photo ? (
-          <Image source={{ uri: recipe.photo }} style={styles.thumbnailImg} resizeMode="cover" />
+        {photoSource ? (
+          <Image source={photoSource} style={styles.thumbnailImg} resizeMode="cover" />
         ) : (
           <Image
             source={require('../../assets/placeholder.jpg')}
@@ -287,17 +294,27 @@ function DraftListItem({ recipe, onPress, onLongPress, selectionMode, isSelected
     </TouchableOpacity>
     </View>
   );
-}
+}, (prev, next) =>
+  prev.recipe === next.recipe &&
+  prev.selectionMode === next.selectionMode &&
+  prev.isSelected === next.isSelected &&
+  prev.drag === next.drag
+);
 
 // ─── Drag handle wrapper ───────────────────────────────────────────────────────
 
-function ReorderableItemWrapper({
+const ReorderableItemWrapper = memo(function ReorderableItemWrapper({
   isReorderMode,
   ...props
 }: DraftListItemProps & { isReorderMode: boolean }) {
   const drag = useReorderableDrag();
   return <DraftListItem {...props} drag={isReorderMode ? drag : undefined} />;
-}
+}, (prev, next) =>
+  prev.recipe === next.recipe &&
+  prev.selectionMode === next.selectionMode &&
+  prev.isSelected === next.isSelected &&
+  prev.isReorderMode === next.isReorderMode
+);
 
 // ─── Selection bar ────────────────────────────────────────────────────────────
 
@@ -477,8 +494,6 @@ export function HomeScreen({ navigation }: Props) {
     return unsub;
   }, []);
 
-  const [key, setKey] = useState(0);
-
   const loadData = useCallback(async (isActive?: () => boolean) => {
     const [all, order] = await Promise.all([getDrafts(), loadOrder()]);
     if (isActive && !isActive()) return;
@@ -488,7 +503,6 @@ export function HomeScreen({ navigation }: Props) {
     setDrafts(draftsList);
     setPublished(publishedList);
     setReceived(receivedList);
-    setKey(k => k + 1);
   }, []);
 
   // Reload list every time this screen comes into focus
@@ -500,27 +514,27 @@ export function HomeScreen({ navigation }: Props) {
     }, [loadData])
   );
 
-  const enterSelectionMode = (firstId: string) => {
+  const enterSelectionMode = useCallback((firstId: string) => {
     setIsReorderMode(false);
     setSelectionMode(true);
     setSelectedIds(new Set([firstId]));
     Animated.spring(selectionBarAnim, { toValue: 1, useNativeDriver: true, bounciness: 4 }).start();
-  };
+  }, [selectionBarAnim]);
 
-  const exitSelectionMode = () => {
+  const exitSelectionMode = useCallback(() => {
     setSelectionMode(false);
     setSelectedIds(new Set());
     Animated.timing(selectionBarAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
-  };
+  }, [selectionBarAnim]);
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
-  };
+  }, []);
 
   const handleBatchDeleteConfirm = async () => {
     const ids = Array.from(selectedIds);
@@ -548,7 +562,7 @@ export function HomeScreen({ navigation }: Props) {
     }
   };
 
-  const handleLongPress = (recipe: RecipeData) => {
+  const handleLongPress = useCallback((recipe: RecipeData) => {
     if (selectionMode) {
       toggleSelect(recipe.id);
       return;
@@ -556,7 +570,7 @@ export function HomeScreen({ navigation }: Props) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 0);
     enterSelectionMode(recipe.id);
-  };
+  }, [selectionMode, toggleSelect, enterSelectionMode]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -575,35 +589,22 @@ export function HomeScreen({ navigation }: Props) {
 
   const handleDeleteCancel = () => setDeleteTarget(null);
 
-  const handleToggleFavorite = async (item: RecipeData) => {
+  const handleToggleFavorite = useCallback(async (item: RecipeData) => {
     await toggleFavorite(item.id);
     loadData();
-  };
-
-  const makeItemProps = (item: RecipeData, sectionData: RecipeData[]) => ({
-    recipe: item,
-    selectionMode,
-    isSelected: selectedIds.has(item.id),
-    onPress: () => {
-      if (selectionMode) { toggleSelect(item.id); return; }
-      if (item.status === 'draft') {
-        navigation.navigate('Form', { recipe: item });
-      } else {
-        const nonDraft = sectionData.filter(r => r.status !== 'draft');
-        navigation.navigate('CardView', { cardId: item.id, recipes: nonDraft });
-      }
-    },
-    onLongPress: () => handleLongPress(item),
-    onToggleFavorite: () => handleToggleFavorite(item),
-    isReorderMode,
-  });
+  }, [loadData]);
 
   const showDrafts    = filter === 'all' || filter === 'draft';
   const showPublished = filter === 'all' || filter === 'published';
   const showReceived  = filter === 'all' || filter === 'received';
 
-  const allNonDraft = [...published, ...received];
+  const allNonDraft = useMemo(() => [...published, ...received], [published, received]);
   const isEmpty = drafts.length === 0 && published.length === 0 && received.length === 0;
+
+  const listExtraData = useMemo(
+    () => [selectionMode, selectedIds, isReorderMode],
+    [selectionMode, selectedIds, isReorderMode]
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -688,11 +689,25 @@ export function HomeScreen({ navigation }: Props) {
                     saveOrder('drafts', next.map(r => r.id));
                   }}
                   renderItem={({ item }) => (
-                    <ReorderableItemWrapper {...makeItemProps(item, drafts)} />
+                    <ReorderableItemWrapper
+                      recipe={item}
+                      selectionMode={selectionMode}
+                      isSelected={selectedIds.has(item.id)}
+                      onPress={() => {
+                        if (selectionMode) { toggleSelect(item.id); return; }
+                        navigation.navigate('Form', { recipe: item });
+                      }}
+                      onLongPress={() => handleLongPress(item)}
+                      onToggleFavorite={() => handleToggleFavorite(item)}
+                      isReorderMode={isReorderMode}
+                    />
                   )}
                   scrollEnabled={false}
                   style={styles.nestedList}
-                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                  initialNumToRender={10}
+                  maxToRenderPerBatch={5}
+                  updateCellsBatchingPeriod={50}
+                  extraData={listExtraData}
                 />
               </>
             )}
@@ -711,11 +726,25 @@ export function HomeScreen({ navigation }: Props) {
                     saveOrder('published', next.map(r => r.id));
                   }}
                   renderItem={({ item }) => (
-                    <ReorderableItemWrapper {...makeItemProps(item, allNonDraft)} />
+                    <ReorderableItemWrapper
+                      recipe={item}
+                      selectionMode={selectionMode}
+                      isSelected={selectedIds.has(item.id)}
+                      onPress={() => {
+                        if (selectionMode) { toggleSelect(item.id); return; }
+                        navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                      }}
+                      onLongPress={() => handleLongPress(item)}
+                      onToggleFavorite={() => handleToggleFavorite(item)}
+                      isReorderMode={isReorderMode}
+                    />
                   )}
                   scrollEnabled={false}
                   style={styles.nestedList}
-                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                  initialNumToRender={10}
+                  maxToRenderPerBatch={5}
+                  updateCellsBatchingPeriod={50}
+                  extraData={listExtraData}
                 />
               </>
             )}
@@ -734,11 +763,22 @@ export function HomeScreen({ navigation }: Props) {
                     saveOrder('received', next.map(r => r.id));
                   }}
                   renderItem={({ item }) => (
-                    <ReorderableItemWrapper {...makeItemProps(item, allNonDraft)} />
+                    <ReorderableItemWrapper
+                      recipe={item}
+                      selectionMode={selectionMode}
+                      isSelected={selectedIds.has(item.id)}
+                      onPress={() => {
+                        if (selectionMode) { toggleSelect(item.id); return; }
+                        navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                      }}
+                      onLongPress={() => handleLongPress(item)}
+                      onToggleFavorite={() => handleToggleFavorite(item)}
+                      isReorderMode={isReorderMode}
+                    />
                   )}
                   style={styles.nestedList}
                   scrollEnabled={false}
-                  extraData={[key, selectionMode, selectedIds, isReorderMode]}
+                  extraData={listExtraData}
                 />
               </>
             )}
