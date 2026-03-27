@@ -664,32 +664,144 @@ export function HomeScreen({ navigation }: Props) {
         </ScrollView>
       </View>
 
-      {/* Recipe list */}
-      <ScrollViewContainer
-        ref={listScrollRef}
-        contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
-        showsVerticalScrollIndicator={false}
-        style={styles.flex}
-      >
-        {isEmpty ? (
-          <EmptyState />
-        ) : (
-          <>
-            {/* Drafts section */}
-            {showDrafts && drafts.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
-                <NestedReorderableList
-                  data={drafts}
-                  keyExtractor={item => item.id}
-                  dragEnabled={isReorderMode}
-                  onReorder={({ from, to }) => {
-                    const next = reorderItems(drafts, from, to);
-                    setDrafts(next);
-                    saveOrder('drafts', next.map(r => r.id));
-                  }}
-                  renderItem={({ item }) => (
-                    <ReorderableItemWrapper
+      {/* Recipe list — plain ScrollView in normal mode; ScrollViewContainer only when reordering */}
+      {isReorderMode ? (
+        <ScrollViewContainer
+          key="reorder"
+          ref={listScrollRef}
+          contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
+          showsVerticalScrollIndicator={false}
+          style={styles.flex}
+        >
+          {isEmpty ? (
+            <EmptyState />
+          ) : (
+            <>
+              {showDrafts && drafts.length > 0 && (
+                <>
+                  <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
+                  <NestedReorderableList
+                    data={drafts}
+                    keyExtractor={item => item.id}
+                    dragEnabled
+                    onReorder={({ from, to }) => {
+                      const next = reorderItems(drafts, from, to);
+                      setDrafts(next);
+                      saveOrder('drafts', next.map(r => r.id));
+                    }}
+                    renderItem={({ item }) => (
+                      <ReorderableItemWrapper
+                        recipe={item}
+                        selectionMode={selectionMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onPress={() => {
+                          if (selectionMode) { toggleSelect(item.id); return; }
+                          navigation.navigate('Form', { recipe: item });
+                        }}
+                        onLongPress={() => handleLongPress(item)}
+                        onToggleFavorite={() => handleToggleFavorite(item)}
+                        isReorderMode
+                      />
+                    )}
+                    scrollEnabled={false}
+                    style={styles.nestedList}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={5}
+                    updateCellsBatchingPeriod={50}
+                    extraData={listExtraData}
+                  />
+                </>
+              )}
+
+              {showPublished && published.length > 0 && (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
+                  <NestedReorderableList
+                    data={published}
+                    keyExtractor={item => item.id}
+                    dragEnabled
+                    onReorder={({ from, to }) => {
+                      const next = reorderItems(published, from, to);
+                      setPublished(next);
+                      saveOrder('published', next.map(r => r.id));
+                    }}
+                    renderItem={({ item }) => (
+                      <ReorderableItemWrapper
+                        recipe={item}
+                        selectionMode={selectionMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onPress={() => {
+                          if (selectionMode) { toggleSelect(item.id); return; }
+                          navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                        }}
+                        onLongPress={() => handleLongPress(item)}
+                        onToggleFavorite={() => handleToggleFavorite(item)}
+                        isReorderMode
+                      />
+                    )}
+                    scrollEnabled={false}
+                    style={styles.nestedList}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={5}
+                    updateCellsBatchingPeriod={50}
+                    extraData={listExtraData}
+                  />
+                </>
+              )}
+
+              {showReceived && received.length > 0 && (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
+                  <NestedReorderableList
+                    data={received}
+                    keyExtractor={item => item.id}
+                    dragEnabled
+                    onReorder={({ from, to }) => {
+                      const next = reorderItems(received, from, to);
+                      setReceived(next);
+                      saveOrder('received', next.map(r => r.id));
+                    }}
+                    renderItem={({ item }) => (
+                      <ReorderableItemWrapper
+                        recipe={item}
+                        selectionMode={selectionMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onPress={() => {
+                          if (selectionMode) { toggleSelect(item.id); return; }
+                          navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                        }}
+                        onLongPress={() => handleLongPress(item)}
+                        onToggleFavorite={() => handleToggleFavorite(item)}
+                        isReorderMode
+                      />
+                    )}
+                    scrollEnabled={false}
+                    style={styles.nestedList}
+                    extraData={listExtraData}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </ScrollViewContainer>
+      ) : (
+        <ScrollView
+          key="normal"
+          ref={listScrollRef}
+          contentContainerStyle={[styles.listContent, selectionMode && styles.listContentSelection]}
+          showsVerticalScrollIndicator={false}
+          style={styles.flex}
+        >
+          {isEmpty ? (
+            <EmptyState />
+          ) : (
+            <>
+              {showDrafts && drafts.length > 0 && (
+                <>
+                  <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
+                  {drafts.map(item => (
+                    <DraftListItem
+                      key={item.id}
                       recipe={item}
                       selectionMode={selectionMode}
                       isSelected={selectedIds.has(item.id)}
@@ -699,34 +811,17 @@ export function HomeScreen({ navigation }: Props) {
                       }}
                       onLongPress={() => handleLongPress(item)}
                       onToggleFavorite={() => handleToggleFavorite(item)}
-                      isReorderMode={isReorderMode}
                     />
-                  )}
-                  scrollEnabled={false}
-                  style={styles.nestedList}
-                  initialNumToRender={10}
-                  maxToRenderPerBatch={5}
-                  updateCellsBatchingPeriod={50}
-                  extraData={listExtraData}
-                />
-              </>
-            )}
+                  ))}
+                </>
+              )}
 
-            {/* Published section */}
-            {showPublished && published.length > 0 && (
-              <>
-                <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
-                <NestedReorderableList
-                  data={published}
-                  keyExtractor={item => item.id}
-                  dragEnabled={isReorderMode}
-                  onReorder={({ from, to }) => {
-                    const next = reorderItems(published, from, to);
-                    setPublished(next);
-                    saveOrder('published', next.map(r => r.id));
-                  }}
-                  renderItem={({ item }) => (
-                    <ReorderableItemWrapper
+              {showPublished && published.length > 0 && (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
+                  {published.map(item => (
+                    <DraftListItem
+                      key={item.id}
                       recipe={item}
                       selectionMode={selectionMode}
                       isSelected={selectedIds.has(item.id)}
@@ -736,34 +831,17 @@ export function HomeScreen({ navigation }: Props) {
                       }}
                       onLongPress={() => handleLongPress(item)}
                       onToggleFavorite={() => handleToggleFavorite(item)}
-                      isReorderMode={isReorderMode}
                     />
-                  )}
-                  scrollEnabled={false}
-                  style={styles.nestedList}
-                  initialNumToRender={10}
-                  maxToRenderPerBatch={5}
-                  updateCellsBatchingPeriod={50}
-                  extraData={listExtraData}
-                />
-              </>
-            )}
+                  ))}
+                </>
+              )}
 
-            {/* Received section */}
-            {showReceived && received.length > 0 && (
-              <>
-                <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
-                <NestedReorderableList
-                  data={received}
-                  keyExtractor={item => item.id}
-                  dragEnabled={isReorderMode}
-                  onReorder={({ from, to }) => {
-                    const next = reorderItems(received, from, to);
-                    setReceived(next);
-                    saveOrder('received', next.map(r => r.id));
-                  }}
-                  renderItem={({ item }) => (
-                    <ReorderableItemWrapper
+              {showReceived && received.length > 0 && (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
+                  {received.map(item => (
+                    <DraftListItem
+                      key={item.id}
                       recipe={item}
                       selectionMode={selectionMode}
                       isSelected={selectedIds.has(item.id)}
@@ -773,23 +851,19 @@ export function HomeScreen({ navigation }: Props) {
                       }}
                       onLongPress={() => handleLongPress(item)}
                       onToggleFavorite={() => handleToggleFavorite(item)}
-                      isReorderMode={isReorderMode}
                     />
-                  )}
-                  style={styles.nestedList}
-                  scrollEnabled={false}
-                  extraData={listExtraData}
-                />
-              </>
-            )}
+                  ))}
+                </>
+              )}
 
-            {/* Filter-specific empty states */}
-            {!isEmpty && filter === 'draft'     && drafts.length === 0    && <FilterEmptyState title={t.filterEmptyDraftsTitle}    sub={t.filterEmptyDraftsSub} />}
-            {!isEmpty && filter === 'published' && published.length === 0 && <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />}
-            {!isEmpty && filter === 'received'  && received.length === 0  && <FilterEmptyState title={t.filterEmptyReceivedTitle}  sub={t.filterEmptyReceivedSub} />}
-          </>
-        )}
-      </ScrollViewContainer>
+              {/* Filter-specific empty states */}
+              {!isEmpty && filter === 'draft'     && drafts.length === 0    && <FilterEmptyState title={t.filterEmptyDraftsTitle}    sub={t.filterEmptyDraftsSub} />}
+              {!isEmpty && filter === 'published' && published.length === 0 && <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />}
+              {!isEmpty && filter === 'received'  && received.length === 0  && <FilterEmptyState title={t.filterEmptyReceivedTitle}  sub={t.filterEmptyReceivedSub} />}
+            </>
+          )}
+        </ScrollView>
+      )}
 
       <BottomTabBar
         activeTab="Home"
