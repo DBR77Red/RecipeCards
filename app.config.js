@@ -11,7 +11,7 @@ module.exports = {
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#1C0F06",
     },
     ios: {
       supportsTablet: true,
@@ -19,7 +19,7 @@ module.exports = {
     android: {
       package: "com.camelo.recipecards",
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
+        backgroundColor: "#1C0F06",
         foregroundImage: isProd
           ? "./assets/android-icon-foreground-prod.png"
           : "./assets/android-icon-foreground.png",

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Android monochrome adaptive icon: white silhouettes on black -->
+  <rect width="1024" height="1024" fill="black"/>
+  <g transform="translate(512, 512) rotate(-7)" fill="white">
+
+    <!-- Card outline -->
+    <rect x="-200" y="-255" width="400" height="510" rx="16" fill="none" stroke="white" stroke-width="8"/>
+
+    <!-- Hole punch -->
+    <circle cx="0" cy="-228" r="22" fill="none" stroke="white" stroke-width="6"/>
+
+    <!-- Fork -->
+    <g transform="translate(-58, 14)">
+      <rect x="-24" y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="-6"  y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="12"  y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="-24" y="-68"  width="47" height="13" rx="4.5"/>
+      <rect x="-6"  y="-55"  width="13" height="196" rx="6.5"/>
+    </g>
+
+    <!-- Spoon -->
+    <g transform="translate(58, 14)">
+      <ellipse cx="0" cy="-118" rx="35" ry="47"/>
+      <rect x="-6.5" y="-79" width="13" height="220" rx="6.5"/>
+    </g>
+
+  </g>
+</svg>

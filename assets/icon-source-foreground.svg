@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Android adaptive icon foreground: card + utensils, no background -->
+  <g transform="translate(512, 512) rotate(-7)">
+
+    <!-- Card -->
+    <rect x="-200" y="-255" width="400" height="510" rx="16" fill="#F5EDD9"/>
+
+    <!-- Red margin line -->
+    <line x1="-132" y1="-255" x2="-132" y2="255" stroke="#CC4444" stroke-width="2.5" opacity="0.6"/>
+
+    <!-- Blue ruled lines -->
+    <line x1="-200" y1="-185" x2="200" y2="-185" stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="-140" x2="200" y2="-140" stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="-95"  x2="200" y2="-95"  stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="-50"  x2="200" y2="-50"  stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="-5"   x2="200" y2="-5"   stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="40"   x2="200" y2="40"   stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="85"   x2="200" y2="85"   stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="130"  x2="200" y2="130"  stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="175"  x2="200" y2="175"  stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+    <line x1="-200" y1="220"  x2="200" y2="220"  stroke="#7BA8CC" stroke-width="2" opacity="0.5"/>
+
+    <!-- Hole punch -->
+    <circle cx="0" cy="-228" r="25" fill="#DCC898" opacity="0.8"/>
+    <circle cx="0" cy="-228" r="16" fill="#1C0F06" opacity="0.12"/>
+
+    <!-- Fork -->
+    <g transform="translate(-58, 14)" fill="#E8521A">
+      <rect x="-24" y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="-6"  y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="12"  y="-138" width="11" height="76" rx="5.5"/>
+      <rect x="-24" y="-68"  width="47" height="13" rx="4.5"/>
+      <rect x="-6"  y="-55"  width="13" height="196" rx="6.5"/>
+    </g>
+
+    <!-- Spoon -->
+    <g transform="translate(58, 14)" fill="#E8521A">
+      <ellipse cx="0" cy="-118" rx="35" ry="47"/>
+      <rect x="-6.5" y="-79" width="13" height="220" rx="6.5"/>
+    </g>
+
+  </g>
+</svg>

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 768" width="640" height="768">
+
+  <!-- Parchment background -->
+  <rect width="640" height="768" fill="#F5EDD9"/>
+
+  <!-- Subtle paper texture: faint diagonal grain -->
+  <filter id="grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feBlend in="SourceGraphic" mode="multiply"/>
+  </filter>
+  <rect width="640" height="768" fill="#E8D5B0" opacity="0.12" filter="url(#grain)"/>
+
+  <!-- Blue ruled lines every 48 px -->
+  <g stroke="#7BA8CC" stroke-width="1.5" opacity="0.35">
+    <line x1="0" y1="48"  x2="640" y2="48"/>
+    <line x1="0" y1="96"  x2="640" y2="96"/>
+    <line x1="0" y1="144" x2="640" y2="144"/>
+    <line x1="0" y1="192" x2="640" y2="192"/>
+    <line x1="0" y1="240" x2="640" y2="240"/>
+    <line x1="0" y1="288" x2="640" y2="288"/>
+    <line x1="0" y1="336" x2="640" y2="336"/>
+    <line x1="0" y1="384" x2="640" y2="384"/>
+    <line x1="0" y1="432" x2="640" y2="432"/>
+    <line x1="0" y1="480" x2="640" y2="480"/>
+    <line x1="0" y1="528" x2="640" y2="528"/>
+    <line x1="0" y1="576" x2="640" y2="576"/>
+    <line x1="0" y1="624" x2="640" y2="624"/>
+    <line x1="0" y1="672" x2="640" y2="672"/>
+    <line x1="0" y1="720" x2="640" y2="720"/>
+  </g>
+
+  <!-- Red margin line -->
+  <line x1="92" y1="0" x2="92" y2="768" stroke="#CC4444" stroke-width="2" opacity="0.5"/>
+
+  <!-- Dashed drop-zone border -->
+  <rect x="36" y="36" width="568" height="696" rx="14"
+        fill="none" stroke="#D4780A" stroke-width="2"
+        stroke-dasharray="10 6" opacity="0.55"/>
+
+  <!-- ══════════════════════════════════════════
+       Illustration — centred at (320, 390)
+       ══════════════════════════════════════════ -->
+
+  <!-- Steam: three gentle organic S-curves rising above the bowl -->
+  <g fill="none" stroke="#E8521A" stroke-width="3.2" stroke-linecap="round" opacity="0.75">
+    <!-- left wisp -->
+    <path d="M 279,360 C 258,336 300,310 280,284 C 260,258 284,240 274,218"/>
+    <!-- centre wisp (tallest) -->
+    <path d="M 321,352 C 298,326 344,298 323,270 C 302,242 330,220 317,196"/>
+    <!-- right wisp -->
+    <path d="M 363,360 C 386,336 344,310 364,284 C 384,258 360,240 371,218"/>
+  </g>
+
+  <!-- Bowl body (terracotta, organic curve) -->
+  <path d="M 232,366
+           C 222,412 309,472 320,474
+           C 331,472 418,412 408,366 Z"
+        fill="#E8521A" opacity="0.93"/>
+
+  <!-- Inner bowl highlight for depth -->
+  <path d="M 252,366
+           C 244,404 313,452 320,454
+           C 327,452 396,404 388,366 Z"
+        fill="#F28055" opacity="0.32"/>
+
+  <!-- Bowl rim ellipse -->
+  <ellipse cx="320" cy="366" rx="88" ry="17" fill="#E8521A"/>
+
+  <!-- Rim inner highlight -->
+  <ellipse cx="320" cy="362" rx="74" ry="11" fill="#F5A080" opacity="0.45"/>
+
+  <!-- ── Fork (left, x≈192) ── -->
+  <g fill="#D4780A">
+    <!-- tine 1 -->
+    <rect x="170" y="268" width="10" height="68" rx="5"/>
+    <!-- tine 2 -->
+    <rect x="188" y="268" width="10" height="68" rx="5"/>
+    <!-- tine 3 -->
+    <rect x="206" y="268" width="10" height="68" rx="5"/>
+    <!-- shoulder connecting tines to handle -->
+    <rect x="170" y="332" width="46" height="12" rx="5"/>
+    <!-- handle -->
+    <rect x="188" y="344" width="10" height="158" rx="5"/>
+  </g>
+
+  <!-- ── Spoon (right, x≈448) ── -->
+  <g fill="#D4780A">
+    <!-- bowl of spoon -->
+    <ellipse cx="448" cy="305" rx="30" ry="43"/>
+    <!-- neck + handle (overlaps bottom of bowl for clean join) -->
+    <rect x="441" y="344" width="14" height="158" rx="7"/>
+  </g>
+
+  <!-- Corner flourishes: tiny hand-drawn dots at dashed rect corners -->
+  <g fill="#D4780A" opacity="0.5">
+    <circle cx="50"  cy="50"  r="4"/>
+    <circle cx="590" cy="50"  r="4"/>
+    <circle cx="50"  cy="718" r="4"/>
+    <circle cx="590" cy="718" r="4"/>
+  </g>
+
+</svg>
