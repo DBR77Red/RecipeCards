@@ -191,6 +191,15 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
   });
   if (dbError) throw new Error(`Database sync failed: ${dbError.message}`);
 
+  // Initialise receive_count to 1 (the creator) on first publish only.
+  // Atomic: only sets to 1 if currently 0 — never overwrites a higher value.
+  const { error: countError } = await supabase
+    .from('recipes')
+    .update({ receive_count: 1 })
+    .eq('id', recipe.id)
+    .eq('receive_count', 0);
+  if (countError) console.warn('[syncToCloud] receive_count init failed:', countError.message);
+
   // Update local storage with the public cloud photo URL and mark as synced
   const synced: RecipeData = { ...recipe, photo: photoUrl, updatedAt: now, cloudSyncStatus: 'synced' };
   await withLock(async () => {
@@ -211,8 +220,11 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
  */
 export async function incrementReceiveCount(id: string): Promise<void> {
   try {
-    await supabase.rpc('increment_receive_count', { recipe_id: id });
-  } catch { /* non-critical */ }
+    const { error } = await supabase.rpc('increment_receive_count', { recipe_id: id });
+    if (error) console.error('[incrementReceiveCount] RPC failed:', error.message, error.details);
+  } catch (e) {
+    console.error('[incrementReceiveCount] network error:', e);
+  }
 }
 
 /**

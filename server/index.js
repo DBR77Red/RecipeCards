@@ -194,22 +194,6 @@ app.get('/card/:id', async (req, res) => {
     return res.status(404).send(cardPage({ notFound: true }));
   }
 
-  // Increment receive count (best-effort, non-blocking)
-  const newCount = ((recipe.receive_count) ?? 0) + 1;
-  fetch(
-    `${supabaseUrl}/rest/v1/recipes?id=eq.${encodeURIComponent(id)}`,
-    {
-      method: 'PATCH',
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify({ receive_count: newCount }),
-    }
-  ).catch(() => {});
-
   res.send(cardPage({ recipe }));
 });
 

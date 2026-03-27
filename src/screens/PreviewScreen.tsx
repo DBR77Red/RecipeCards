@@ -36,7 +36,9 @@ export function PreviewScreen({ route, navigation }: Props) {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [receiveCount, setReceiveCount] = useState<number | null>(null);
+  const [receiveCount, setReceiveCount] = useState<number | null>(
+    route.params.recipe.status === 'published' ? 1 : null
+  );
   const [errorModal, setErrorModal] = useState<{ title: string; body: string } | null>(null);
   const shouldCelebrate = useRef(false);
   const playCelebrate = useSound(require('../../assets/celebrate_sound.mp3'));
@@ -69,7 +71,12 @@ export function PreviewScreen({ route, navigation }: Props) {
         .eq('id', recipe.id)
         .single()
         .then(({ data }) => {
-          if (data) setReceiveCount((data.receive_count as number) ?? 0);
+          if (data) {
+            const dbCount = (data.receive_count as number) || 1; // Treat 0 as uninitialised
+            setReceiveCount(prev =>
+              prev !== null ? Math.max(prev, dbCount) : dbCount  // Never decrease
+            );
+          }
         });
     }, [recipe.id, recipe.status])
   );
@@ -137,6 +144,7 @@ export function PreviewScreen({ route, navigation }: Props) {
       shouldCelebrate.current = true;
       const local = await markPublishedLocally(base.id);
       setRecipe(local); // triggers useEffect → haptic + celebration
+      setReceiveCount(1); // Optimistic — the creator is always holder #1
 
       // Step 2: sync photo + recipe to Supabase (best-effort — retried on next foreground if it fails)
       try {

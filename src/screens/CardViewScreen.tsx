@@ -77,8 +77,41 @@ export function CardViewScreen({ route, navigation }: Props) {
     ? (deckRecipes![currentIndex] ?? null)
     : standaloneRecipe;
 
+  // ── Receive count from Supabase ──
+  const supabaseId = recipe?.sourceCardId || recipe?.id;
+  const [receiveCount, setReceiveCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    setReceiveCount(null);
+    if (!recipe || recipe.status !== 'published' || !supabaseId) return;
+    supabase
+      .from('recipes')
+      .select('receive_count')
+      .eq('id', supabaseId)
+      .single()
+      .then(({ data }) => {
+        if (data) setReceiveCount((data.receive_count as number) || 1);
+      });
+  }, [supabaseId, recipe?.status]);
+
+  useEffect(() => {
+    if (!recipe || recipe.status !== 'published' || !supabaseId) return;
+    const channel = supabase
+      .channel(`cv-count-${supabaseId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'recipes', filter: `id=eq.${supabaseId}` },
+        (payload) => {
+          const n = (payload.new as any).receive_count as number;
+          setReceiveCount(prev => prev !== null ? Math.max(prev, n) : n);
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [supabaseId, recipe?.status]);
+
   const displayRecipe: RecipeData | null = recipe
-    ? { ...recipe, isFavorite: localFavoriteOverrides[recipe.id] ?? recipe.isFavorite }
+    ? { ...recipe, isFavorite: localFavoriteOverrides[recipe.id] ?? recipe.isFavorite, receiveCount: receiveCount ?? undefined }
     : null;
 
   const canFavorite = displayRecipe?.status === 'published' || displayRecipe?.isReceived;
