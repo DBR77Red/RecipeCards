@@ -1414,6 +1414,8 @@ const qrStyles = StyleSheet.create({
     color: '#fff',
     letterSpacing: -1,
     marginBottom: 32,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
   viewfinder: {
     width: 220,
