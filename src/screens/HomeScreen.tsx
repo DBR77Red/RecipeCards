@@ -466,9 +466,7 @@ function SyncToast({ message }: { message: string | null }) {
 
 export function HomeScreen({ navigation, route }: Props) {
   const { t } = useLanguage();
-  const [drafts, setDrafts] = useState<RecipeData[]>([]);
-  const [published, setPublished] = useState<RecipeData[]>([]);
-  const [received, setReceived] = useState<RecipeData[]>([]);
+  const [recipes, setRecipes] = useState<RecipeData[]>([]);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cardCode, setCardCode] = useState('');
@@ -505,12 +503,12 @@ export function HomeScreen({ navigation, route }: Props) {
   const loadData = useCallback(async (isActive?: () => boolean) => {
     const [all, order] = await Promise.all([getDrafts(), loadOrder()]);
     if (isActive && !isActive()) return;
-    const draftsList    = applyOrder(all.filter(r => r.status === 'draft'), order.drafts);
+    // Apply per-section legacy orders first, then unify with the all-order
+    const draftsList    = applyOrder(all.filter(r => r.status === 'draft' && !r.isReceived), order.drafts);
     const publishedList = applyOrder(all.filter(r => r.status === 'published' && !r.isReceived), order.published);
     const receivedList  = applyOrder(all.filter(r => r.isReceived), order.received);
-    setDrafts(draftsList);
-    setPublished(publishedList);
-    setReceived(receivedList);
+    const merged = [...draftsList, ...publishedList, ...receivedList];
+    setRecipes(applyOrder(merged, order.all));
   }, []);
 
   // Reload list every time this screen comes into focus
@@ -589,10 +587,7 @@ export function HomeScreen({ navigation, route }: Props) {
     } else {
       await softDeletePublished(target.id);
     }
-    const all = await getDrafts();
-    setDrafts(all.filter(r => r.status === 'draft'));
-    setPublished(all.filter(r => r.status === 'published' && !r.isReceived));
-    setReceived(all.filter(r => r.isReceived));
+    loadData();
   };
 
   const handleDeleteCancel = () => setDeleteTarget(null);
@@ -602,12 +597,18 @@ export function HomeScreen({ navigation, route }: Props) {
     loadData();
   }, [loadData]);
 
-  const showDrafts    = filter === 'all' || filter === 'draft';
-  const showPublished = filter === 'all' || filter === 'published';
-  const showReceived  = filter === 'all' || filter === 'received';
+  const isEmpty     = recipes.length === 0;
+  const allNonDraft = useMemo(() => recipes.filter(r => r.status === 'published' || r.isReceived), [recipes]);
 
-  const allNonDraft = useMemo(() => [...published, ...received], [published, received]);
-  const isEmpty = drafts.length === 0 && published.length === 0 && received.length === 0;
+  const filteredRecipes = useMemo(() => {
+    if (filter === 'all')       return recipes;
+    if (filter === 'draft')     return recipes.filter(r => r.status === 'draft' && !r.isReceived);
+    if (filter === 'published') return recipes.filter(r => r.status === 'published' && !r.isReceived);
+    return recipes.filter(r => r.isReceived);
+  }, [recipes, filter]);
+
+  // In reorder mode show all items regardless of active filter
+  const displayRecipes = isReorderMode ? recipes : filteredRecipes;
 
   const listExtraData = useMemo(
     () => [selectionMode, selectedIds, isReorderMode],
@@ -684,112 +685,40 @@ export function HomeScreen({ navigation, route }: Props) {
           {isEmpty ? (
             <EmptyState />
           ) : (
-            <>
-              {showDrafts && drafts.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
-                  <NestedReorderableList
-                    data={drafts}
-                    keyExtractor={item => item.id}
-                    dragEnabled
-                    onReorder={({ from, to }) => {
-                      const next = reorderItems(drafts, from, to);
-                      setDrafts(next);
-                      saveOrder('drafts', next.map(r => r.id));
-                    }}
-                    renderItem={({ item }) => (
-                      <ReorderableItemWrapper
-                        recipe={item}
-                        selectionMode={selectionMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onPress={() => {
-                          if (selectionMode) { toggleSelect(item.id); return; }
-                          navigation.navigate('Form', { recipe: item });
-                        }}
-                        onLongPress={() => handleLongPress(item)}
-                        onToggleFavorite={() => handleToggleFavorite(item)}
-                        isReorderMode
-                      />
-                    )}
-                    scrollEnabled={false}
-                    style={styles.nestedList}
-                    initialNumToRender={10}
-                    maxToRenderPerBatch={5}
-                    updateCellsBatchingPeriod={50}
-                    extraData={listExtraData}
-                  />
-                </>
+            <NestedReorderableList
+              data={displayRecipes}
+              keyExtractor={item => item.id}
+              dragEnabled
+              onReorder={({ from, to }) => {
+                const next = reorderItems(displayRecipes, from, to);
+                setRecipes(next);
+                saveOrder('all', next.map(r => r.id));
+              }}
+              renderItem={({ item }) => (
+                <ReorderableItemWrapper
+                  recipe={item}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(item.id)}
+                  onPress={() => {
+                    if (selectionMode) { toggleSelect(item.id); return; }
+                    if (item.status === 'draft' && !item.isReceived) {
+                      navigation.navigate('Form', { recipe: item });
+                    } else {
+                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                    }
+                  }}
+                  onLongPress={() => handleLongPress(item)}
+                  onToggleFavorite={() => handleToggleFavorite(item)}
+                  isReorderMode
+                />
               )}
-
-              {showPublished && published.length > 0 && (
-                <>
-                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
-                  <NestedReorderableList
-                    data={published}
-                    keyExtractor={item => item.id}
-                    dragEnabled
-                    onReorder={({ from, to }) => {
-                      const next = reorderItems(published, from, to);
-                      setPublished(next);
-                      saveOrder('published', next.map(r => r.id));
-                    }}
-                    renderItem={({ item }) => (
-                      <ReorderableItemWrapper
-                        recipe={item}
-                        selectionMode={selectionMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onPress={() => {
-                          if (selectionMode) { toggleSelect(item.id); return; }
-                          navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                        }}
-                        onLongPress={() => handleLongPress(item)}
-                        onToggleFavorite={() => handleToggleFavorite(item)}
-                        isReorderMode
-                      />
-                    )}
-                    scrollEnabled={false}
-                    style={styles.nestedList}
-                    initialNumToRender={10}
-                    maxToRenderPerBatch={5}
-                    updateCellsBatchingPeriod={50}
-                    extraData={listExtraData}
-                  />
-                </>
-              )}
-
-              {showReceived && received.length > 0 && (
-                <>
-                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
-                  <NestedReorderableList
-                    data={received}
-                    keyExtractor={item => item.id}
-                    dragEnabled
-                    onReorder={({ from, to }) => {
-                      const next = reorderItems(received, from, to);
-                      setReceived(next);
-                      saveOrder('received', next.map(r => r.id));
-                    }}
-                    renderItem={({ item }) => (
-                      <ReorderableItemWrapper
-                        recipe={item}
-                        selectionMode={selectionMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onPress={() => {
-                          if (selectionMode) { toggleSelect(item.id); return; }
-                          navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                        }}
-                        onLongPress={() => handleLongPress(item)}
-                        onToggleFavorite={() => handleToggleFavorite(item)}
-                        isReorderMode
-                      />
-                    )}
-                    scrollEnabled={false}
-                    style={styles.nestedList}
-                    extraData={listExtraData}
-                  />
-                </>
-              )}
-            </>
+              scrollEnabled={false}
+              style={styles.nestedList}
+              initialNumToRender={10}
+              maxToRenderPerBatch={5}
+              updateCellsBatchingPeriod={50}
+              extraData={listExtraData}
+            />
           )}
         </ScrollViewContainer>
       ) : (
@@ -804,70 +733,29 @@ export function HomeScreen({ navigation, route }: Props) {
             <EmptyState />
           ) : (
             <>
-              {showDrafts && drafts.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>{t.sectionDrafts}</Text>
-                  {drafts.map(item => (
-                    <DraftListItem
-                      key={item.id}
-                      recipe={item}
-                      selectionMode={selectionMode}
-                      isSelected={selectedIds.has(item.id)}
-                      onPress={() => {
-                        if (selectionMode) { toggleSelect(item.id); return; }
-                        navigation.navigate('Form', { recipe: item });
-                      }}
-                      onLongPress={() => handleLongPress(item)}
-                      onToggleFavorite={() => handleToggleFavorite(item)}
-                    />
-                  ))}
-                </>
-              )}
-
-              {showPublished && published.length > 0 && (
-                <>
-                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionPublished}</Text>
-                  {published.map(item => (
-                    <DraftListItem
-                      key={item.id}
-                      recipe={item}
-                      selectionMode={selectionMode}
-                      isSelected={selectedIds.has(item.id)}
-                      onPress={() => {
-                        if (selectionMode) { toggleSelect(item.id); return; }
-                        navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                      }}
-                      onLongPress={() => handleLongPress(item)}
-                      onToggleFavorite={() => handleToggleFavorite(item)}
-                    />
-                  ))}
-                </>
-              )}
-
-              {showReceived && received.length > 0 && (
-                <>
-                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.sectionReceived}</Text>
-                  {received.map(item => (
-                    <DraftListItem
-                      key={item.id}
-                      recipe={item}
-                      selectionMode={selectionMode}
-                      isSelected={selectedIds.has(item.id)}
-                      onPress={() => {
-                        if (selectionMode) { toggleSelect(item.id); return; }
-                        navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                      }}
-                      onLongPress={() => handleLongPress(item)}
-                      onToggleFavorite={() => handleToggleFavorite(item)}
-                    />
-                  ))}
-                </>
-              )}
+              {displayRecipes.map(item => (
+                <DraftListItem
+                  key={item.id}
+                  recipe={item}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(item.id)}
+                  onPress={() => {
+                    if (selectionMode) { toggleSelect(item.id); return; }
+                    if (item.status === 'draft' && !item.isReceived) {
+                      navigation.navigate('Form', { recipe: item });
+                    } else {
+                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                    }
+                  }}
+                  onLongPress={() => handleLongPress(item)}
+                  onToggleFavorite={() => handleToggleFavorite(item)}
+                />
+              ))}
 
               {/* Filter-specific empty states */}
-              {!isEmpty && filter === 'draft'     && drafts.length === 0    && <FilterEmptyState title={t.filterEmptyDraftsTitle}    sub={t.filterEmptyDraftsSub} />}
-              {!isEmpty && filter === 'published' && published.length === 0 && <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />}
-              {!isEmpty && filter === 'received'  && received.length === 0  && <FilterEmptyState title={t.filterEmptyReceivedTitle}  sub={t.filterEmptyReceivedSub} />}
+              {!isEmpty && filter !== 'all' && filteredRecipes.length === 0 && filter === 'draft'     && <FilterEmptyState title={t.filterEmptyDraftsTitle}    sub={t.filterEmptyDraftsSub} />}
+              {!isEmpty && filter !== 'all' && filteredRecipes.length === 0 && filter === 'published' && <FilterEmptyState title={t.filterEmptyPublishedTitle} sub={t.filterEmptyPublishedSub} />}
+              {!isEmpty && filter !== 'all' && filteredRecipes.length === 0 && filter === 'received'  && <FilterEmptyState title={t.filterEmptyReceivedTitle}  sub={t.filterEmptyReceivedSub} />}
             </>
           )}
         </ScrollView>
@@ -1163,18 +1051,6 @@ const styles = StyleSheet.create({
   },
   filterPillTextActive: {
     color: '#FFFFFF',
-  },
-
-  sectionLabel: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 10,
-    letterSpacing: 2,
-    color: C.muted,
-    marginBottom: 10,
-    textTransform: 'uppercase',
-  },
-  sectionLabelSpaced: {
-    marginTop: 28,
   },
 
   // Recipe row

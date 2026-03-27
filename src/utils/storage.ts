@@ -11,14 +11,21 @@ interface SectionOrder {
   drafts: string[];
   published: string[];
   received: string[];
+  all: string[];
 }
 
 export async function loadOrder(): Promise<SectionOrder> {
   try {
     const raw = await AsyncStorage.getItem(ORDER_KEY);
-    return raw ? JSON.parse(raw) : { drafts: [], published: [], received: [] };
+    const parsed = raw ? JSON.parse(raw) : {};
+    return {
+      drafts: parsed.drafts ?? [],
+      published: parsed.published ?? [],
+      received: parsed.received ?? [],
+      all: parsed.all ?? [],
+    };
   } catch {
-    return { drafts: [], published: [], received: [] };
+    return { drafts: [], published: [], received: [], all: [] };
   }
 }
 
