@@ -16,9 +16,10 @@ const SCHEME = 'recipecards';
 
 Deno.serve((req: Request) => {
   const url = new URL(req.url);
-  // Path looks like /functions/v1/r/{id}. Take the last segment.
+  // Path is /functions/v1/r/{id}. Require the id segment explicitly;
+  // do not fall back to the function name when the id is missing.
   const segments = url.pathname.split('/').filter(Boolean);
-  const id = segments[segments.length - 1] ?? '';
+  const id = segments.length >= 4 ? segments[3] : '';
 
   if (!ID_PATTERN.test(id)) {
     return new Response('Not found', { status: 404 });
