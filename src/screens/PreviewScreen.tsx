@@ -22,6 +22,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { markPublishedLocally, saveDraft, syncToCloud, toggleFavorite } from '../utils/storage';
+import { buildShareLink } from '../utils/shareLink';
 import { useSound } from '../utils/useSound';
 
 const CELEBRATE_LOTTIE = require('../../assets/celebrate.json');
@@ -101,7 +102,7 @@ export function PreviewScreen({ route, navigation }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [recipe.id, recipe.status, animateCountPop]);
 
-  const webUrl = `${process.env.EXPO_PUBLIC_SERVER_URL}/card/${recipe.id}`;
+  const webUrl = buildShareLink(recipe.id);
 
   const handleToggleFavorite = async () => {
     const becomingFavorite = !recipe.isFavorite;
