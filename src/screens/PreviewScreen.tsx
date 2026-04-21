@@ -102,7 +102,7 @@ export function PreviewScreen({ route, navigation }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [recipe.id, recipe.status, animateCountPop]);
 
-  const webUrl = buildShareLink(recipe.id);
+  const webUrl = recipe.id ? buildShareLink(recipe.id) : '';
 
   const handleToggleFavorite = async () => {
     const becomingFavorite = !recipe.isFavorite;
