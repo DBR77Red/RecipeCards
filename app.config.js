@@ -4,6 +4,7 @@ module.exports = {
   expo: {
     name: "Recipe Cards",
     slug: "RecipeCards",
+    scheme: "recipecards",
     version: "1.0.0",
     orientation: "portrait",
     icon: isProd ? "./assets/icon-prod.png" : "./assets/icon.png",

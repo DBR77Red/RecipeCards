@@ -44,3 +44,9 @@ yarn-error.*
 
 # git worktrees
 .claude/worktrees/
+
+# Claude Code local settings (machine-specific tool permissions)
+.claude/settings.local.json
+
+# Supabase CLI cache
+supabase/.temp/

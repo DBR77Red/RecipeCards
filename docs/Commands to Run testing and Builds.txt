@@ -1,0 +1,15 @@
+PS C:\Users\Camelo\RecipeCards\server> node index.js
+
+**start server**
+
+PS C:\Users\Camelo\RecipeCards\> npx expo start --clear  
+
+**Start app on Expo Go**
+
+
+------To trigger the build
+PS C:\Users\Camelo\RecipeCards\android> $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+
+PS C:\Users\Camelo\RecipeCards\android> ./gradlew assembleReleas
+
+
