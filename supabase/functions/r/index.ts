@@ -16,10 +16,14 @@ const SCHEME = 'recipecards';
 
 Deno.serve((req: Request) => {
   const url = new URL(req.url);
-  // Path is /functions/v1/r/{id}. Require the id segment explicitly;
-  // do not fall back to the function name when the id is missing.
+  // Supabase Edge Runtime may pass either the full external path
+  // (/functions/v1/r/{id}) or a stripped internal path (/r/{id}).
+  // Locate the function-name segment and require exactly one id
+  // segment after it so /r/foo/bar does not match as id="bar".
   const segments = url.pathname.split('/').filter(Boolean);
-  const id = segments.length >= 4 ? segments[3] : '';
+  const rIndex = segments.lastIndexOf('r');
+  const id =
+    rIndex >= 0 && segments.length === rIndex + 2 ? segments[rIndex + 1] : '';
 
   if (!ID_PATTERN.test(id)) {
     return new Response('Not found', { status: 404 });
