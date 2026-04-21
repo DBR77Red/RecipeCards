@@ -31,6 +31,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 import { getDrafts, markPublishedLocally, saveDraft, saveReceivedCard, syncToCloud, toggleFavorite } from '../utils/storage';
+import { buildShareLink } from '../utils/shareLink';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardView'>;
 
@@ -331,7 +332,7 @@ export function CardViewScreen({ route, navigation }: Props) {
         visible={showQRModal}
         recipeTitle={displayRecipe?.title ?? ''}
         qrUrl={displayRecipe?.shareUrl ?? `recipecards://card/${displayRecipe?.id ?? ''}`}
-        shareUrl={`${process.env.EXPO_PUBLIC_SERVER_URL}/card/${displayRecipe?.id ?? ''}`}
+        shareUrl={displayRecipe?.id ? buildShareLink(displayRecipe.id) : ''}
         creatorName={displayRecipe?.creatorName ?? ''}
         onClose={() => setShowQRModal(false)}
       />
