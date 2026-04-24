@@ -1,5 +1,5 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useState } from 'react';
 import {
@@ -15,10 +15,10 @@ import Svg, { Path } from 'react-native-svg';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList, TabStackParamList } from '../types/navigation';
 import { getDrafts, toggleFavorite } from '../utils/storage';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Favorites'>;
+type Props = NativeStackScreenProps<TabStackParamList, 'Favorites'>;
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +33,8 @@ const C = {
   sage:       '#2D7A4F',
   cardBg:     '#FFFFFF',
   photoBg:    '#F2E9D8',
+  panel:      '#1C0F06',
+  panelText:  '#F5EDD9',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -132,7 +134,8 @@ function EmptyState() {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export function FavoritesScreen({ navigation }: Props) {
+export function FavoritesScreen() {
+  const navigation = useNavigation<any>();
   const { t } = useLanguage();
   const [favorites, setFavorites] = useState<RecipeData[]>([]);
 
@@ -190,22 +193,26 @@ export function FavoritesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: C.panel,
   },
   header: {
+    backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 35,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
-    color: C.title,
+    color: C.panelText,
     letterSpacing: -1,
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 12,
+    paddingBottom: 100,
+    backgroundColor: C.bg,
+    minHeight: '100%',
   },
   row: {
     flexDirection: 'row',

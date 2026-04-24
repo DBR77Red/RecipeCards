@@ -9,9 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../i18n/translations';
-import { RootStackParamList } from '../types/navigation';
+import { TabStackParamList } from '../types/navigation';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
+type Props = NativeStackScreenProps<TabStackParamList, 'Settings'>;
 
 const C = {
   bg:      '#FAF5EE',
@@ -21,6 +21,8 @@ const C = {
   label:   '#C4A882',
   divider: '#E0D0B8',
   btnBg:   '#E8521A',
+  panel:   '#1C0F06',
+  panelText: '#F5EDD9',
 };
 
 const LANGS: { code: Language; label: string; name: string }[] = [
@@ -40,7 +42,7 @@ export function SettingsScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.contentWrapper}>
-      <View style={styles.content}>
+        <View style={styles.content}>
         <Text style={styles.sectionLabel}>{t.profileLanguageLabel}</Text>
         <View style={styles.card}>
           {LANGS.map(({ code, label, name }, i) => (
@@ -75,24 +77,25 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
-  contentWrapper: { flex: 1 },
+  screen: { flex: 1, backgroundColor: C.panel },
+  contentWrapper: { flex: 1, backgroundColor: C.bg },
 
   header: {
+    backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 35,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
-    color: C.title,
+    color: C.panelText,
     letterSpacing: -1,
   },
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 16,
   },
 
   sectionLabel: {

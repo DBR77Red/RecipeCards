@@ -1,5 +1,5 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -27,11 +27,11 @@ import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { ErrorModal } from '../components/ErrorModal';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList, TabStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
 import { applyOrder, deleteDraft, getDrafts, loadOrder, saveOrder, softDeletePublished, toggleFavorite } from '../utils/storage';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = NativeStackScreenProps<any, 'Home'>;
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -464,7 +464,9 @@ function SyncToast({ message }: { message: string | null }) {
 
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
-export function HomeScreen({ navigation, route }: Props) {
+export function HomeScreen({ navigation: navProps, route }: Props) {
+  const navigation = useNavigation<NativeStackNavigationProp<TabStackParamList>>();
+  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
   const [recipes, setRecipes] = useState<RecipeData[]>([]);
   const [showCodeModal, setShowCodeModal] = useState(false);
@@ -562,7 +564,7 @@ export function HomeScreen({ navigation, route }: Props) {
   const handleQRScanned = (data: string) => {
     const match = data.match(/^recipecards:\/\/card\/([\w-]{1,64})$/);
     if (match) {
-      navigation.navigate('Receive', { cardId: match[1] });
+      rootNav.navigate('Receive', { cardId: match[1] });
     } else {
       setErrorModal({ title: t.qrInvalidTitle, body: t.qrInvalidBody });
     }
@@ -705,14 +707,14 @@ export function HomeScreen({ navigation, route }: Props) {
                   recipe={item}
                   selectionMode={selectionMode}
                   isSelected={selectedIds.has(item.id)}
-                  onPress={() => {
-                    if (selectionMode) { toggleSelect(item.id); return; }
-                    if (item.status === 'draft' && !item.isReceived) {
-                      navigation.navigate('Form', { recipe: item });
-                    } else {
-                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                    }
-                  }}
+onPress={() => {
+                     if (selectionMode) { toggleSelect(item.id); return; }
+                     if (item.status === 'draft' && !item.isReceived) {
+                       navigation.getParent()?.navigate('Form', { recipe: item });
+                     } else {
+                       navigation.getParent()?.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                     }
+                   }}
                   onLongPress={() => handleLongPress(item)}
                   onToggleFavorite={() => handleToggleFavorite(item)}
                   isReorderMode
@@ -748,9 +750,9 @@ export function HomeScreen({ navigation, route }: Props) {
                   onPress={() => {
                     if (selectionMode) { toggleSelect(item.id); return; }
                     if (item.status === 'draft' && !item.isReceived) {
-                      navigation.navigate('Form', { recipe: item });
-                    } else {
-                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+rootNav.navigate('Form', { recipe: item });
+                     } else {
+                       rootNav.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
                     }
                   }}
                   onLongPress={() => handleLongPress(item)}
@@ -809,7 +811,7 @@ export function HomeScreen({ navigation, route }: Props) {
                 const id = cardCode.trim();
                 setShowCodeModal(false);
                 setCardCode('');
-                navigation.navigate('Receive', { cardId: id });
+                rootNav.navigate('Receive', { cardId: id });
               }}
               disabled={!cardCode.trim()}
             >
@@ -1032,8 +1034,9 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 8,
+    height: 42,
     paddingRight: 4,
-    paddingBottom: 8,
+    paddingBottom: 0,
   },
   filterPill: {
     height: 34,

@@ -70,7 +70,7 @@ export function OnboardingScreen({ navigation }: Props) {
     Keyboard.dismiss();
     await setUserName(trimmed);
     await AsyncStorage.setItem(ONBOARDING_KEY, '1');
-    navigation.replace('Home');
+    navigation.replace('_tabs');
   };
 
   const canFinish = name.trim().length > 0;

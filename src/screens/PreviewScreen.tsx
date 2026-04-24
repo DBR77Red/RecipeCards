@@ -198,7 +198,7 @@ export function PreviewScreen({ route, navigation }: Props) {
         style={styles.backBtn}
         onPress={() =>
           recipe.status === 'published'
-            ? navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
+            ? navigation.reset({ index: 0, routes: [{ name: '_tabs' }] })
             : navigation.goBack()
         }
       >

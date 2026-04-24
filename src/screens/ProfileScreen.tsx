@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -14,10 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { useLanguage } from '../context/LanguageContext';
-import { RootStackParamList } from '../types/navigation';
+import { TabStackParamList } from '../types/navigation';
 import { getUserName, setUserName } from '../utils/storage';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
+type Props = NativeStackScreenProps<TabStackParamList, 'Profile'>;
 
 const C = {
   bg:      '#FAF5EE',
@@ -28,6 +29,8 @@ const C = {
   divider: '#E0D0B8',
   btnBg:   '#E8521A',
   btnText: '#FFFFFF',
+  panel:   '#1C0F06',
+  panelText: '#F5EDD9',
 };
 
 export function ProfileScreen({ navigation }: Props) {
@@ -118,24 +121,27 @@ export function ProfileScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
+  screen: { flex: 1, backgroundColor: C.panel },
   flex:   { flex: 1 },
 
   header: {
+    backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 35,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
-    color: C.title,
+    color: C.panelText,
     letterSpacing: -1,
   },
 
   content: {
+    flex: 1,
+    backgroundColor: C.bg,
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 16,
   },
 
   sectionLabel: {

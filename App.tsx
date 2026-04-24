@@ -31,13 +31,14 @@ import { PreviewScreen }     from './src/screens/PreviewScreen';
 import { ProfileScreen }     from './src/screens/ProfileScreen';
 import { SettingsScreen }    from './src/screens/SettingsScreen';
 import { ReceiveScreen }     from './src/screens/ReceiveScreen';
-import { RootStackParamList } from './src/types/navigation';
+import { RootStackParamList, TabStackParamList } from './src/types/navigation';
 import { purgeDeletedRecipes } from './src/utils/storage';
 import { retryPendingSyncs } from './src/utils/syncQueue';
 
 enableScreens();
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const TabStack = createNativeStackNavigator<TabStackParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const linking = {
   prefixes: ['recipecards://'],
@@ -47,6 +48,17 @@ const linking = {
     },
   },
 };
+
+function TabNavigator() {
+  return (
+    <TabStack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
+      <TabStack.Screen name="Home"      component={HomeScreen} />
+      <TabStack.Screen name="Favorites" component={FavoritesScreen} />
+      <TabStack.Screen name="Profile"   component={ProfileScreen} />
+      <TabStack.Screen name="Settings"  component={SettingsScreen} />
+    </TabStack.Navigator>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -58,14 +70,14 @@ export default function App() {
     Poppins_700Bold,
   });
 
-  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Home' | null>(null);
+  const [initialRoute, setInitialRoute] = useState<'Onboarding' | '_tabs' | null>(null);
 
   useEffect(() => {
     async function init() {
       purgeDeletedRecipes();
       retryPendingSyncs();
       const done = await AsyncStorage.getItem(ONBOARDING_KEY);
-      setInitialRoute(done ? 'Home' : 'Onboarding');
+      setInitialRoute(done ? '_tabs' : 'Onboarding');
     }
     init();
 
@@ -82,18 +94,15 @@ export default function App() {
     <LanguageProvider>
     <SafeAreaProvider>
       <NavigationContainer linking={linking}>
-        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: '#FAF5EE' } }}>
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false, contentStyle: { backgroundColor: '#1C0F06' } }} />
-          <Stack.Screen name="Home"      component={HomeScreen}       options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
-          <Stack.Screen name="Favorites" component={FavoritesScreen}  />
-          <Stack.Screen name="Profile"   component={ProfileScreen}    />
-          <Stack.Screen name="Settings"  component={SettingsScreen}   />
-          <Stack.Screen name="Form"      component={FormScreen}       />
-          <Stack.Screen name="Preview"   component={PreviewScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
-          <Stack.Screen name="CardView"  component={CardViewScreen}   options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
-          <Stack.Screen name="Deck"      component={DeckScreen}       options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
-          <Stack.Screen name="Receive"   component={ReceiveScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
-        </Stack.Navigator>
+<RootStack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: '#FAF5EE' } }}>
+          <RootStack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false, contentStyle: { backgroundColor: '#1C0F06' } }} />
+          <RootStack.Screen name="_tabs" component={TabNavigator} />
+          <RootStack.Screen name="Form"      component={FormScreen}       />
+          <RootStack.Screen name="Preview"   component={PreviewScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
+          <RootStack.Screen name="CardView"  component={CardViewScreen}   options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
+          <RootStack.Screen name="Deck"      component={DeckScreen}       options={{ contentStyle: { backgroundColor: '#0f0d0b' } }} />
+          <RootStack.Screen name="Receive"   component={ReceiveScreen}    options={{ contentStyle: { backgroundColor: '#1C0F06' } }} />
+        </RootStack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
     </LanguageProvider>
