@@ -81,29 +81,7 @@ export function SettingsScreen({}: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView style={styles.contentWrapper} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.sectionLabel}>{t.profileNameSub}</Text>
-          <View style={styles.card}>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder={t.profileNamePlaceholder}
-              placeholderTextColor={C.label}
-              returnKeyType="done"
-              onSubmitEditing={handleSave}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.saveBtn, !name.trim() && styles.saveBtnDisabled]}
-            onPress={handleSave}
-            disabled={!name.trim()}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.saveBtnText}>{t.save}</Text>
-          </TouchableOpacity>
-
-          <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.profileLanguageLabel}</Text>
+          <Text style={styles.sectionLabel}>{t.profileLanguageLabel}</Text>
           <View style={styles.card}>
             {LANGS.map(({ code, label, name: langName }, i) => (
               <TouchableOpacity
@@ -128,6 +106,28 @@ export function SettingsScreen({}: Props) {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>{t.profileNameSub}</Text>
+          <View style={styles.card}>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder={t.profileNamePlaceholder}
+              placeholderTextColor={C.label}
+              returnKeyType="done"
+              onSubmitEditing={handleSave}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveBtn, !name.trim() && styles.saveBtnDisabled]}
+            onPress={handleSave}
+            disabled={!name.trim()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.saveBtnText}>{t.save}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -158,11 +158,12 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 54,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
+    lineHeight: 42,
     color: C.panelText,
     letterSpacing: -1,
   },

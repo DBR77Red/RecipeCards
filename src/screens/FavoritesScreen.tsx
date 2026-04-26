@@ -198,11 +198,12 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 54,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
+    lineHeight: 42,
     color: C.panelText,
     letterSpacing: -1,
   },
