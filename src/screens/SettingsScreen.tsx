@@ -14,13 +14,15 @@ import { RootStackParamList } from '../types/navigation';
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 const C = {
-  bg:      '#FAF5EE',
-  card:    '#FFFFFF',
-  title:   '#1C0A00',
-  muted:   '#8B6444',
-  label:   '#C4A882',
-  divider: '#E0D0B8',
-  btnBg:   '#E8521A',
+  bg:       '#FAF5EE',
+  card:     '#FFFFFF',
+  title:    '#1C0A00',
+  muted:    '#8B6444',
+  label:    '#C4A882',
+  divider:  '#E0D0B8',
+  btnBg:    '#E8521A',
+  panel:    '#1C0F06',
+  panelText:'#F5EDD9',
 };
 
 const LANGS: { code: Language; label: string; name: string }[] = [
@@ -75,10 +77,11 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
-  contentWrapper: { flex: 1 },
+  screen: { flex: 1, backgroundColor: C.panel },
+  contentWrapper: { flex: 1, backgroundColor: C.bg },
 
   header: {
+    backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
-    color: C.title,
+    color: C.panelText,
     letterSpacing: -1,
   },
 

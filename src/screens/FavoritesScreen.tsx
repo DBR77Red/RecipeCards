@@ -33,6 +33,8 @@ const C = {
   sage:       '#2D7A4F',
   cardBg:     '#FFFFFF',
   photoBg:    '#F2E9D8',
+  panel:      '#1C0F06',
+  panelText:  '#F5EDD9',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -166,6 +168,7 @@ export function FavoritesScreen({ navigation }: Props) {
         <Text style={styles.headerTitle}>{t.favoritesTitle}</Text>
       </View>
 
+      <View style={styles.listWrapper}>
       <FlatList
         data={favorites}
         keyExtractor={item => item.id}
@@ -180,6 +183,7 @@ export function FavoritesScreen({ navigation }: Props) {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      </View>
       <BottomTabBar activeTab="Favorites" />
     </SafeAreaView>
   );
@@ -190,9 +194,10 @@ export function FavoritesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: C.panel,
   },
   header: {
+    backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
@@ -200,8 +205,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
-    color: C.title,
+    color: C.panelText,
     letterSpacing: -1,
+  },
+  listWrapper: {
+    flex: 1,
+    backgroundColor: C.bg,
   },
   listContent: {
     paddingHorizontal: 20,
