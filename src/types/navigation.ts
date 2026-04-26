@@ -4,7 +4,6 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Home: { openExchange?: boolean } | undefined;
   Favorites: undefined;
-  Profile: undefined;
   Settings: undefined;
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData; celebrate?: boolean };

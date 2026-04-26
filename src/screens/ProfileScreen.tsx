@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BottomTabBar } from '../components/BottomTabBar';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 import { getUserName, setUserName } from '../utils/storage';
@@ -64,7 +63,7 @@ export function ProfileScreen({ navigation }: Props) {
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [48, 0] });
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -114,7 +113,6 @@ export function ProfileScreen({ navigation }: Props) {
           </Animated.View>
         </Animated.View>
       </Modal>
-      <BottomTabBar activeTab="Profile" />
     </SafeAreaView>
   );
 }

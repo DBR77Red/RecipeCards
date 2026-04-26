@@ -22,11 +22,11 @@ import {
 } from 'react-native-reorderable-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { BottomTabBar } from '../components/BottomTabBar';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { ErrorModal } from '../components/ErrorModal';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
+import { useTabBar } from '../context/TabBarContext';
 import { RootStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
 import { applyOrder, deleteDraft, getDrafts, loadOrder, saveOrder, softDeletePublished, toggleFavorite } from '../utils/storage';
@@ -466,6 +466,7 @@ function SyncToast({ message }: { message: string | null }) {
 
 export function HomeScreen({ navigation, route }: Props) {
   const { t } = useLanguage();
+  const { register, unregister } = useTabBar();
   const [recipes, setRecipes] = useState<RecipeData[]>([]);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -518,6 +519,17 @@ export function HomeScreen({ navigation, route }: Props) {
       loadData(() => active);
       return () => { active = false; };
     }, [loadData])
+  );
+
+  // Register tab bar callbacks while this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      register({
+        onHomePress: () => listScrollRef.current?.scrollTo({ y: 0, animated: true }),
+        onExchange: () => setShowQRScanner(true),
+      });
+      return () => unregister();
+    }, [register, unregister])
   );
 
   const enterSelectionMode = useCallback((firstId: string) => {
@@ -616,22 +628,11 @@ export function HomeScreen({ navigation, route }: Props) {
   );
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {/* Dark espresso header */}
       <View style={styles.darkHeader}>
         <View style={styles.darkHeaderTop}>
           <Text style={styles.darkHeaderTitle}>{t.homeTitle} <Text style={styles.darkHeaderAccent}>{t.homeTitleAccent}</Text></Text>
-          <View style={styles.darkHeaderActions}>
-            {!isReorderMode && (
-              <TouchableOpacity
-                style={styles.darkHeaderAvatar}
-                onPress={() => navigation.navigate('Profile')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.darkHeaderAvatarText}>👤</Text>
-              </TouchableOpacity>
-            )}
-          </View>
         </View>
         <ScrollView
           horizontal
@@ -767,14 +768,6 @@ export function HomeScreen({ navigation, route }: Props) {
         </ScrollView>
       )}
 
-      <BottomTabBar
-        activeTab="Home"
-        onHomePress={() => {
-          listScrollRef.current?.scrollTo({ y: 0, animated: true });
-        }}
-        onExchange={() => setShowQRScanner(true)}
-      />
-
       <QRScannerModal
         visible={showQRScanner}
         onScanned={(data) => { setShowQRScanner(false); handleQRScanned(data); }}
@@ -889,17 +882,6 @@ const styles = StyleSheet.create({
     color: C.panelText,
     letterSpacing: 1.5,
   },
-  darkHeaderAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: 'rgba(232,82,26,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  darkHeaderAvatarText: {
-    fontSize: 16,
-  },
   darkHeaderTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
@@ -912,11 +894,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#E8521A',
     fontStyle: 'italic',
-  },
-  darkHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   reorderPill: {
     flexDirection: 'row',
