@@ -6,6 +6,18 @@ All implementation plans must be saved at `docs/superpowers/plans/YYYY-MM-DD-<fe
 
 ---
 
+## Git Branching
+
+```
+feature/xxx  →  develop  →  master
+```
+
+- **master**: release-ready only. Never commit directly to master.
+- **develop**: integration branch. Merge feature branches here first; verify the app works as a whole before promoting to master.
+- **feature branches**: cut from `develop`, merged back into `develop` when complete.
+
+---
+
 ## Modal Design Standard
 
 **All modals must use a custom component. Never use `Alert.alert` for user-facing confirmations or action sheets.**
