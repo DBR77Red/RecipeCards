@@ -1,16 +1,17 @@
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
-import { TabStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../types/navigation';
 
-type Nav = NativeStackNavigationProp<TabStackParamList>;
-export type ActiveTab = 'Home' | 'Favorites' | 'Settings' | 'Profile';
+export type ActiveTab = 'Home' | 'Favorites' | 'Settings';
 
 interface Props {
   activeTab: ActiveTab;
+  navigate: (screen: keyof RootStackParamList, params?: any) => void;
+  /** HomeScreen only: scroll list to top when Home tab is tapped while already on Home */
   onHomePress?: () => void;
+  /** HomeScreen only: open QR scanner */
   onExchange?: () => void;
 }
 
@@ -76,16 +77,16 @@ function ProfileIcon({ color }: { color: string }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
-  const navigation = useNavigation<Nav>();
+export function BottomTabBar({ activeTab, navigate, onHomePress, onExchange }: Props) {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => activeTab === 'Home' ? onHomePress?.() : navigation.navigate('Home')}
+        onPress={() => activeTab === 'Home' ? onHomePress?.() : navigate('Home')}
       >
         <View style={[styles.iconWrap, activeTab === 'Home' && styles.iconWrapActive]}>
           <HomeIcon color={activeTab === 'Home' ? ACTIVE : INACTIVE} />
@@ -98,7 +99,7 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate('Favorites')}
+        onPress={() => navigate('Favorites')}
       >
         <View style={[styles.iconWrap, activeTab === 'Favorites' && styles.iconWrapActive]}>
           <FavoritesIcon color={activeTab === 'Favorites' ? ACTIVE : INACTIVE} />
@@ -111,7 +112,7 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <View style={styles.tabItemCenter}>
         <TouchableOpacity
           style={styles.tabCenterBtn}
-          onPress={() => navigation.getParent()?.navigate('Form', {})}
+          onPress={() => navigate('Form', {})}
           activeOpacity={0.85}
         >
           <Text style={styles.tabCenterPlus}>+</Text>
@@ -121,7 +122,7 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => onExchange ? onExchange() : navigation.navigate('Home', { openExchange: true })}
+        onPress={() => onExchange ? onExchange() : navigate('Home', { openExchange: true })}
       >
         <View style={styles.iconWrap}>
           <ExchangeIcon color={INACTIVE} />
@@ -132,12 +133,12 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
       <TouchableOpacity
         style={styles.tabItem}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate('Settings')}
+        onPress={() => navigate('Settings')}
       >
-        <View style={[styles.iconWrap, (activeTab === 'Settings' || activeTab === 'Profile') && styles.iconWrapActive]}>
-          <ProfileIcon color={(activeTab === 'Settings' || activeTab === 'Profile') ? ACTIVE : INACTIVE} />
+        <View style={[styles.iconWrap, activeTab === 'Settings' && styles.iconWrapActive]}>
+          <ProfileIcon color={activeTab === 'Settings' ? ACTIVE : INACTIVE} />
         </View>
-        <Text style={[styles.tabLabel, (activeTab === 'Settings' || activeTab === 'Profile') && styles.tabLabelActive]}>
+        <Text style={[styles.tabLabel, activeTab === 'Settings' && styles.tabLabelActive]}>
           {t.tabSettings}
         </Text>
       </TouchableOpacity>
@@ -149,9 +150,9 @@ export function BottomTabBar({ activeTab, onHomePress, onExchange }: Props) {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#1C0F06',
     flexDirection: 'row',
     alignItems: 'flex-end',
+    backgroundColor: '#1C0F06',
     borderTopWidth: 0,
     paddingBottom: 8,
     paddingTop: 6,

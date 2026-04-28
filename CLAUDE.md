@@ -1,5 +1,11 @@
 # RecipeCards — Claude Instructions
 
+## Plans
+
+All implementation plans must be saved at `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md` inside the `RecipeCards` project directory. Never save plans outside this directory.
+
+---
+
 ## Modal Design Standard
 
 **All modals must use a custom component. Never use `Alert.alert` for user-facing confirmations or action sheets.**
@@ -101,11 +107,11 @@ The app has two palettes. Do not mix them across contexts.
 ## RecipeCard Rules
 
 - Card width: always `CARD_W = 320`
-- Front height: always `CARD_H = 518` (golden ratio: 320 × 1.618 = 517.8) — same for draft and published, no layout shift
-- Back height: content-driven — measured via `onLayout`, stored in a `ref` (not state) so `handleFlip` always reads the latest value without stale-closure issues. Minimum clamped to `frontH`.
-- **Flip trigger**: the entire front face is a single `Pressable` — tapping anywhere on the front (photo zone or bottom panel) flips the card. The inner `TouchableOpacity` buttons (Share, Publish) absorb their own touch events so they still fire correctly. The entire back face is also a `Pressable` for flip-back.
-- Both face shells use `pointerEvents="none"` when hidden (opacity 0) to prevent invisible views from intercepting touches.
-- Never re-introduce a JS-driver spring on card height — this was the root cause of lag and Android back-face rendering failures.
+- Card height: content-driven — photo zone (384px) + stats/CTA panel (fixed padding) + recipe content (grows with ingredients/directions). No fixed height constant.
+- **Layout**: single face — photo zone with gradient scrim (title/creator overlay) → dark espresso stats+CTA panel → cream recipe content (ingredients + directions). No flip.
+- The recipe content section (`RecipeContent` sub-component) renders `null` when both `ingredients` and `directions` are empty (draft with no content yet).
+- Stats/CTA panel (`bottomZone`) uses explicit padding rather than `flex: 1` — height is self-contained.
+- **No `Pressable` on the card** — the card itself is not interactive. Action buttons (Share, Publish) inside the bottom panel absorb their own touches.
 
 ---
 
@@ -184,6 +190,7 @@ These were intentionally removed. Do not bring them back without an explicit ins
 - **Confetti**: `react-native-confetti-cannon` removed due to stuck particles. A Lottie-based approach was considered but not started. Do not add any confetti effect.
 - **Card fold/unfold mechanic**: the accordion flap + crease line that extended the back face was removed and replaced with a plain content-driven height via `onLayout`. Do not re-introduce the fold metaphor, the dashed crease line, or the translate-scale flip workaround associated with it.
 - **Home screen deck view**: Attempted to show horizontal deck of cards at top of home screen (like back face preview). Implementation was reverted as it didn't work well. Do not attempt again without explicit user request with clear UX specs.
+- **Card flip mechanic**: The two-face flip animation (`CardBack`, `RecipeCardRef`, `handleFlip`, all flip `Animated` state) was removed and replaced with a single scrollable front face that shows all content inline. Do not re-introduce the flip mechanic.
 
 ---
 

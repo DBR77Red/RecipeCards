@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -13,24 +12,23 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BottomTabBar } from '../components/BottomTabBar';
 import { useLanguage } from '../context/LanguageContext';
-import { TabStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../types/navigation';
 import { getUserName, setUserName } from '../utils/storage';
 
-type Props = NativeStackScreenProps<TabStackParamList, 'Profile'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 const C = {
-  bg:      '#FAF5EE',
-  card:    '#FFFFFF',
-  title:   '#1C0A00',
-  muted:   '#8B6444',
-  label:   '#C4A882',
-  divider: '#E0D0B8',
-  btnBg:   '#E8521A',
-  btnText: '#FFFFFF',
-  panel:   '#1C0F06',
-  panelText: '#F5EDD9',
+  bg:       '#FAF5EE',
+  card:     '#FFFFFF',
+  title:    '#1C0A00',
+  muted:    '#8B6444',
+  label:    '#C4A882',
+  divider:  '#E0D0B8',
+  btnBg:    '#E8521A',
+  btnText:  '#FFFFFF',
+  panel:    '#1C0F06',
+  panelText:'#F5EDD9',
 };
 
 export function ProfileScreen({ navigation }: Props) {
@@ -65,7 +63,7 @@ export function ProfileScreen({ navigation }: Props) {
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [48, 0] });
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -115,7 +113,6 @@ export function ProfileScreen({ navigation }: Props) {
           </Animated.View>
         </Animated.View>
       </Modal>
-      <BottomTabBar activeTab="Profile" />
     </SafeAreaView>
   );
 }
@@ -128,7 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 35,
+    paddingBottom: 16,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
@@ -141,7 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 8,
   },
 
   sectionLabel: {

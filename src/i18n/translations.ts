@@ -175,7 +175,6 @@ export interface Translations {
   cardPublishHint: string;
   cardPublishing: string;
   cardPublishBtn: string;
-  cardTapToFlip: string;
   cardIngredients: string;
   cardInstructions: string;
 
@@ -186,7 +185,6 @@ export interface Translations {
 
   // Deck screen
   deckPosition: (current: number, total: number) => string;
-  deckTapHint: string;
 
   // Receive screen
   receiveBack: string;
@@ -360,7 +358,6 @@ const en: Translations = {
   cardPublishHint: 'Publish to get your QR code',
   cardPublishing: 'Publishing…',
   cardPublishBtn: 'Publish to Share',
-  cardTapToFlip: 'Tap to flip back',
   cardIngredients: 'Ingredients',
   cardInstructions: 'Instructions',
 
@@ -369,7 +366,6 @@ const en: Translations = {
   cardViewNotFound: 'Recipe not found.',
 
   deckPosition: (c, t) => `${c} of ${t}`,
-  deckTapHint: 'Tap to flip · swipe to browse',
 
   receiveBack: '← Back',
   receiveLoading: 'Loading recipe…',
@@ -541,7 +537,6 @@ const pt: Translations = {
   cardPublishHint: 'Publique para obter seu QR code',
   cardPublishing: 'Publicando…',
   cardPublishBtn: 'Publicar e Compartilhar',
-  cardTapToFlip: 'Toque para virar',
   cardIngredients: 'Ingredientes',
   cardInstructions: 'Instruções',
 
@@ -550,7 +545,6 @@ const pt: Translations = {
   cardViewNotFound: 'Receita não encontrada.',
 
   deckPosition: (c, t) => `${c} de ${t}`,
-  deckTapHint: 'Toque para virar · deslize para navegar',
 
   receiveBack: '← Voltar',
   receiveLoading: 'Carregando receita…',
@@ -722,7 +716,6 @@ const de: Translations = {
   cardPublishHint: 'Veröffentlichen für QR-Code',
   cardPublishing: 'Wird veröffentlicht…',
   cardPublishBtn: 'Veröffentlichen & Teilen',
-  cardTapToFlip: 'Tippe zum Zurückdrehen',
   cardIngredients: 'Zutaten',
   cardInstructions: 'Anleitung',
 
@@ -731,7 +724,6 @@ const de: Translations = {
   cardViewNotFound: 'Rezept nicht gefunden.',
 
   deckPosition: (c, t) => `${c} von ${t}`,
-  deckTapHint: 'Tippen zum Wenden · Wischen zum Blättern',
 
   receiveBack: '← Zurück',
   receiveLoading: 'Rezept wird geladen…',
@@ -903,7 +895,6 @@ const es: Translations = {
   cardPublishHint: 'Publica para obtener tu código QR',
   cardPublishing: 'Publicando…',
   cardPublishBtn: 'Publicar y Compartir',
-  cardTapToFlip: 'Toca para voltear',
   cardIngredients: 'Ingredientes',
   cardInstructions: 'Instrucciones',
 
@@ -912,7 +903,6 @@ const es: Translations = {
   cardViewNotFound: 'Receta no encontrada.',
 
   deckPosition: (c, t) => `${c} de ${t}`,
-  deckTapHint: 'Toca para voltear · desliza para explorar',
 
   receiveBack: '← Volver',
   receiveLoading: 'Cargando receta…',

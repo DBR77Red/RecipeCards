@@ -1,10 +1,7 @@
-import React, { useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-  Animated,
-  Easing,
   Image,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -40,7 +37,7 @@ export interface RecipeData {
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  bg:         '#F5EDD9',   // parchment cream — photo zone & back face
+  bg:         '#F5EDD9',   // parchment cream
   border:     '#E8D8B8',   // warm beige border
   amber:      '#D4780A',   // amber accent labels
   darkText:   '#1C0A00',   // deep warm black
@@ -53,12 +50,9 @@ const C = {
   panelDiv:   'rgba(255,255,255,0.15)', // divider on dark
 };
 
-const CARD_W      = 320;
-const CARD_H      = 518; // golden ratio: 320 × 1.618 = 517.8
-const CARD_H_PUB  = CARD_H; // both states same height — no layout shift on publish
-const PHOTO_H     = 384; // photo dominant at 74% of card height
-const RADIUS      = 16;
-const P           = 1400;
+const CARD_W  = 320;
+const PHOTO_H = 384; // photo dominant at 74% of card height
+const RADIUS  = 16;
 
 // ─── Stat column ─────────────────────────────────────────────────────────────
 
@@ -71,19 +65,54 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+// ─── Recipe content ───────────────────────────────────────────────────────────
+
+function RecipeContent({ recipe }: { recipe: RecipeData }) {
+  const { t } = useLanguage();
+  const ingredients = recipe.ingredients.filter(i => i.trim());
+  const directions  = recipe.directions.filter(s => s.trim());
+  if (ingredients.length === 0 && directions.length === 0) return null;
+  return (
+    <View style={styles.recipeContent}>
+      {ingredients.length > 0 && (
+        <>
+          <Text style={styles.sectionHeading}>{t.cardIngredients}</Text>
+          {ingredients.map((ing, i) => (
+            <View key={i} style={styles.bulletRow}>
+              <View style={styles.bulletDot} />
+              <Text style={styles.bulletText}>{ing}</Text>
+            </View>
+          ))}
+        </>
+      )}
+      {directions.length > 0 && (
+        <>
+          <Text style={[styles.sectionHeading, ingredients.length > 0 && { marginTop: 14 }]}>
+            {t.cardInstructions}
+          </Text>
+          {directions.map((step, i) => (
+            <View key={i} style={styles.stepRow}>
+              <Text style={styles.stepNum}>{i + 1}.</Text>
+              <Text style={styles.stepText}>{step}</Text>
+            </View>
+          ))}
+        </>
+      )}
+    </View>
+  );
+}
+
 // ─── Front face ───────────────────────────────────────────────────────────────
 
 function CardFront({
-  recipe, onFlip, onShare, onPublish, publishing,
+  recipe, onShare, onPublish, publishing,
 }: {
   recipe: RecipeData;
-  onFlip: () => void;
   onShare?: () => void;
   onPublish?: () => void;
   publishing?: boolean;
 }) {
   const { t } = useLanguage();
-  const shareUrl = recipe.shareUrl ?? `recipecards://card/${recipe.id}`;
   const published = recipe.status === 'published';
   const photoSource = useMemo(
     () => recipe.photo ? { uri: recipe.photo } : null,
@@ -91,8 +120,8 @@ function CardFront({
   );
 
   return (
-    <Pressable onPress={onFlip} style={styles.face}>
-      {/* Photo zone — plain View; parent Pressable handles flip */}
+    <View>
+      {/* Photo zone */}
       <View style={styles.photoZone}>
         {photoSource ? (
           <Image source={photoSource} style={styles.photo} resizeMode="cover" />
@@ -137,7 +166,7 @@ function CardFront({
         </View>
       </View>
 
-      {/* Bottom zone — plain View; share/publish button absorbs its own touch */}
+      {/* Bottom zone */}
       <View style={styles.bottomZone}>
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
@@ -171,134 +200,26 @@ function CardFront({
           </TouchableOpacity>
         )}
       </View>
-    </Pressable>
-  );
-}
 
-// ─── Back face ────────────────────────────────────────────────────────────────
-
-function CardBack({ recipe, onFlip, onMeasured }: {
-  recipe: RecipeData;
-  onFlip: () => void;
-  onMeasured: (h: number) => void;
-}) {
-  const { t } = useLanguage();
-
-  return (
-    <Pressable onPress={onFlip} onLayout={e => onMeasured(e.nativeEvent.layout.height)} style={{ minHeight: CARD_H }}>
-      {/* Header */}
-      <View style={styles.backHeader}>
-        <Text style={styles.backTitle} numberOfLines={2}>{recipe.title}</Text>
-        <Text style={styles.backHint}>{t.cardTapToFlip}</Text>
-      </View>
-
-      {/* Content */}
-      <View style={styles.backContentInner}>
-        <Text style={styles.sectionHeading}>{t.cardIngredients}</Text>
-        {recipe.ingredients.filter(ing => ing.trim()).map((ing, i) => (
-          <View key={i} style={styles.bulletRow}>
-            <View style={styles.bulletDot} />
-            <Text style={styles.bulletText}>{ing}</Text>
-          </View>
-        ))}
-
-        <Text style={[styles.sectionHeading, { marginTop: 14 }]}>{t.cardInstructions}</Text>
-        {recipe.directions.filter(step => step.trim()).map((step, i) => (
-          <View key={i} style={styles.stepRow}>
-            <Text style={styles.stepNum}>{i + 1}.</Text>
-            <Text style={styles.stepText}>{step}</Text>
-          </View>
-        ))}
-
-        <Text style={[styles.backHint, { textAlign: 'center', marginTop: 16 }]}>{t.cardTapToFlip}</Text>
-      </View>
-    </Pressable>
+      <RecipeContent recipe={recipe} />
+    </View>
   );
 }
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 
-export interface RecipeCardRef {
-  flip: () => void;
-}
-
-export const RecipeCard = React.forwardRef<RecipeCardRef, {
+export function RecipeCard({ recipe, onShare, onPublish, publishing }: {
   recipe: RecipeData;
   onShare?: () => void;
   onPublish?: () => void;
   publishing?: boolean;
-}>(function RecipeCard({ recipe, onShare, onPublish, publishing }, ref) {
-  const frontH = CARD_H_PUB; // always the same height regardless of status
-
-  const [flipped,    setFlipped]    = useState(false);
-  const [cardHeight, setCardHeight] = useState(frontH);
-  const flipAnim                    = useRef(new Animated.Value(0)).current;
-  const isAnimating                 = useRef(false);
-  // Ref so handleFlip always reads the latest measured value,
-  // even if the React state update hasn't flushed yet.
-  const backHRef                    = useRef(CARD_H);
-  // State drives faceShellBack height so it re-renders after first onLayout.
-  const [backHState, setBackHState] = useState(CARD_H);
-
-  const handleMeasured = (h: number) => {
-    const newH = Math.max(h, frontH);
-    backHRef.current = newH;
-    setBackHState(newH);
-    if (flipped) setCardHeight(newH);
-  };
-
-  const handleFlip = () => {
-    if (isAnimating.current) return;
-    isAnimating.current = true;
-    const toBack = !flipped;
-    setCardHeight(toBack ? backHRef.current : frontH);
-    setFlipped(toBack);
-
-    Animated.timing(flipAnim, {
-      toValue:         toBack ? 1 : 0,
-      duration:        380,
-      easing:          Easing.bezier(0.42, 0, 0.58, 1),
-      useNativeDriver: true,
-    }).start(() => { isAnimating.current = false; });
-  };
-
-  useImperativeHandle(ref, () => ({ flip: handleFlip }));
-
-  const frontSpin    = useMemo(() => flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg',    '180deg'] }), [flipAnim]);
-  const backSpin     = useMemo(() => flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg']   }), [flipAnim]);
-  const frontOpacity = useMemo(() => flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [1, 0], extrapolate: 'clamp' }), [flipAnim]);
-  const backOpacity  = useMemo(() => flipAnim.interpolate({ inputRange: [0.45, 0.55], outputRange: [0, 1], extrapolate: 'clamp' }), [flipAnim]);
-
+}) {
   return (
-    <View style={[styles.wrapper, { height: cardHeight }]}>
-      {/* Front face */}
-      <Animated.View
-        pointerEvents={flipped ? 'none' : 'auto'}
-        style={[styles.faceShell, {
-          height: frontH,
-          backfaceVisibility: 'hidden',
-          opacity:   frontOpacity,
-          transform: [{ perspective: P }, { rotateY: frontSpin }],
-        }]}
-      >
-        <CardFront recipe={recipe} onFlip={handleFlip} onShare={onShare} onPublish={onPublish} publishing={publishing} />
-      </Animated.View>
-
-      {/* Back face — height matches content */}
-      <Animated.View
-        pointerEvents={flipped ? 'auto' : 'none'}
-        style={[styles.faceShellBack, {
-          height: backHState,
-          backfaceVisibility: 'hidden',
-          opacity:   backOpacity,
-          transform: [{ perspective: P }, { rotateY: backSpin }],
-        }]}
-      >
-        <CardBack recipe={recipe} onFlip={handleFlip} onMeasured={handleMeasured} />
-      </Animated.View>
+    <View style={styles.wrapper}>
+      <CardFront recipe={recipe} onShare={onShare} onPublish={onPublish} publishing={publishing} />
     </View>
   );
-});
+}
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -306,8 +227,11 @@ const styles = StyleSheet.create({
   // ── Shell ──
   wrapper: {
     width: CARD_W,
-    // height is animated — no static value here
     borderRadius: RADIUS,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    backgroundColor: C.bg,
+    overflow: 'hidden',
     ...Platform.select({
       web: { boxShadow: '0px 32px 64px rgba(28,10,0,0.35)' },
       default: {
@@ -318,32 +242,6 @@ const styles = StyleSheet.create({
         elevation: 24,
       },
     }),
-  },
-  faceShell: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: CARD_W,
-    height: CARD_H,
-    backgroundColor: C.bg,
-    borderRadius: RADIUS,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    overflow: 'hidden',
-  },
-  faceShellBack: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: CARD_W,
-    backgroundColor: C.bg,
-    borderRadius: RADIUS,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    overflow: 'hidden',
-  },
-  face: {
-    flex: 1,
   },
 
   // ── Front: photo zone ──
@@ -397,16 +295,13 @@ const styles = StyleSheet.create({
 
   // ── Front: bottom zone (dark espresso panel) ──
   bottomZone: {
-    flex: 1,
     backgroundColor: C.panel,
     borderTopWidth: 2,
     borderTopColor: C.panelAmber,
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 18,
-    gap: 0,
   },
   statsRow: {
     flexDirection: 'row',
@@ -483,42 +378,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // ── Back: header ──
-  backHeader: {
+  // ── Recipe content section ──
+  recipeContent: {
     paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 10,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
-  backTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontStyle: 'italic',
-    fontSize: 18,
-    lineHeight: 25,
-    color: C.darkText,
-    textAlign: 'center',
-    marginBottom: 3,
-  },
-  backHint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 10,
-    fontStyle: 'italic',
-    color: C.bodyText,
-  },
-
-  // ── Back: content ──
-  backContentInner: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   sectionHeading: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 12,
     color: C.amber,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
     marginBottom: 8,
   },
   bulletRow: {

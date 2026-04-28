@@ -1,5 +1,5 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -22,16 +22,16 @@ import {
 } from 'react-native-reorderable-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { BottomTabBar } from '../components/BottomTabBar';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { ErrorModal } from '../components/ErrorModal';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
-import { RootStackParamList, TabStackParamList } from '../types/navigation';
+import { useTabBar } from '../context/TabBarContext';
+import { RootStackParamList } from '../types/navigation';
 import { onSyncComplete } from '../utils/notifications';
 import { applyOrder, deleteDraft, getDrafts, loadOrder, saveOrder, softDeletePublished, toggleFavorite } from '../utils/storage';
 
-type Props = NativeStackScreenProps<any, 'Home'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -464,10 +464,9 @@ function SyncToast({ message }: { message: string | null }) {
 
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
-export function HomeScreen({ navigation: navProps, route }: Props) {
-  const navigation = useNavigation<NativeStackNavigationProp<TabStackParamList>>();
-  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+export function HomeScreen({ navigation, route }: Props) {
   const { t } = useLanguage();
+  const { register, unregister } = useTabBar();
   const [recipes, setRecipes] = useState<RecipeData[]>([]);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -522,6 +521,17 @@ export function HomeScreen({ navigation: navProps, route }: Props) {
     }, [loadData])
   );
 
+  // Register tab bar callbacks while this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      register({
+        onHomePress: () => listScrollRef.current?.scrollTo({ y: 0, animated: true }),
+        onExchange: () => setShowQRScanner(true),
+      });
+      return () => unregister();
+    }, [register, unregister])
+  );
+
   const enterSelectionMode = useCallback((firstId: string) => {
     setIsReorderMode(false);
     setSelectionMode(true);
@@ -564,7 +574,7 @@ export function HomeScreen({ navigation: navProps, route }: Props) {
   const handleQRScanned = (data: string) => {
     const match = data.match(/^recipecards:\/\/card\/([\w-]{1,64})$/);
     if (match) {
-      rootNav.navigate('Receive', { cardId: match[1] });
+      navigation.navigate('Receive', { cardId: match[1] });
     } else {
       setErrorModal({ title: t.qrInvalidTitle, body: t.qrInvalidBody });
     }
@@ -618,22 +628,11 @@ export function HomeScreen({ navigation: navProps, route }: Props) {
   );
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {/* Dark espresso header */}
       <View style={styles.darkHeader}>
         <View style={styles.darkHeaderTop}>
           <Text style={styles.darkHeaderTitle}>{t.homeTitle} <Text style={styles.darkHeaderAccent}>{t.homeTitleAccent}</Text></Text>
-          <View style={styles.darkHeaderActions}>
-            {!isReorderMode && (
-              <TouchableOpacity
-                style={styles.darkHeaderAvatar}
-                onPress={() => navigation.navigate('Profile')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.darkHeaderAvatarText}>👤</Text>
-              </TouchableOpacity>
-            )}
-          </View>
         </View>
         <ScrollView
           horizontal
@@ -707,14 +706,14 @@ export function HomeScreen({ navigation: navProps, route }: Props) {
                   recipe={item}
                   selectionMode={selectionMode}
                   isSelected={selectedIds.has(item.id)}
-onPress={() => {
-                     if (selectionMode) { toggleSelect(item.id); return; }
-                     if (item.status === 'draft' && !item.isReceived) {
-                       navigation.getParent()?.navigate('Form', { recipe: item });
-                     } else {
-                       navigation.getParent()?.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
-                     }
-                   }}
+                  onPress={() => {
+                    if (selectionMode) { toggleSelect(item.id); return; }
+                    if (item.status === 'draft' && !item.isReceived) {
+                      navigation.navigate('Form', { recipe: item });
+                    } else {
+                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                    }
+                  }}
                   onLongPress={() => handleLongPress(item)}
                   onToggleFavorite={() => handleToggleFavorite(item)}
                   isReorderMode
@@ -750,9 +749,9 @@ onPress={() => {
                   onPress={() => {
                     if (selectionMode) { toggleSelect(item.id); return; }
                     if (item.status === 'draft' && !item.isReceived) {
-rootNav.navigate('Form', { recipe: item });
-                     } else {
-                       rootNav.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
+                      navigation.navigate('Form', { recipe: item });
+                    } else {
+                      navigation.navigate('CardView', { cardId: item.id, recipes: allNonDraft });
                     }
                   }}
                   onLongPress={() => handleLongPress(item)}
@@ -768,14 +767,6 @@ rootNav.navigate('Form', { recipe: item });
           )}
         </ScrollView>
       )}
-
-      <BottomTabBar
-        activeTab="Home"
-        onHomePress={() => {
-          listScrollRef.current?.scrollTo({ y: 0, animated: true });
-        }}
-        onExchange={() => setShowQRScanner(true)}
-      />
 
       <QRScannerModal
         visible={showQRScanner}
@@ -811,7 +802,7 @@ rootNav.navigate('Form', { recipe: item });
                 const id = cardCode.trim();
                 setShowCodeModal(false);
                 setCardCode('');
-                rootNav.navigate('Receive', { cardId: id });
+                navigation.navigate('Receive', { cardId: id });
               }}
               disabled={!cardCode.trim()}
             >
@@ -891,17 +882,6 @@ const styles = StyleSheet.create({
     color: C.panelText,
     letterSpacing: 1.5,
   },
-  darkHeaderAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: 'rgba(232,82,26,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  darkHeaderAvatarText: {
-    fontSize: 16,
-  },
   darkHeaderTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
@@ -914,11 +894,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#E8521A',
     fontStyle: 'italic',
-  },
-  darkHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   reorderPill: {
     flexDirection: 'row',
@@ -1034,9 +1009,8 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 8,
-    height: 42,
     paddingRight: 4,
-    paddingBottom: 0,
+    paddingBottom: 8,
   },
   filterPill: {
     height: 34,

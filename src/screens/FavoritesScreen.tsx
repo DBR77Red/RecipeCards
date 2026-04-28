@@ -1,5 +1,5 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useState } from 'react';
 import {
@@ -12,13 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { BottomTabBar } from '../components/BottomTabBar';
 import { RecipeData } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
-import { RootStackParamList, TabStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../types/navigation';
 import { getDrafts, toggleFavorite } from '../utils/storage';
 
-type Props = NativeStackScreenProps<TabStackParamList, 'Favorites'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Favorites'>;
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -134,8 +133,7 @@ function EmptyState() {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export function FavoritesScreen() {
-  const navigation = useNavigation<any>();
+export function FavoritesScreen({ navigation }: Props) {
   const { t } = useLanguage();
   const [favorites, setFavorites] = useState<RecipeData[]>([]);
 
@@ -163,12 +161,13 @@ export function FavoritesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.favoritesTitle}</Text>
       </View>
 
+      <View style={styles.listWrapper}>
       <FlatList
         data={favorites}
         keyExtractor={item => item.id}
@@ -183,7 +182,7 @@ export function FavoritesScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-      <BottomTabBar activeTab="Favorites" />
+      </View>
     </SafeAreaView>
   );
 }
@@ -199,20 +198,22 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 35,
+    paddingBottom: 54,
   },
   headerTitle: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 36,
+    lineHeight: 42,
     color: C.panelText,
     letterSpacing: -1,
   },
+  listWrapper: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 100,
-    backgroundColor: C.bg,
-    minHeight: '100%',
+    paddingBottom: 40,
   },
   row: {
     flexDirection: 'row',
