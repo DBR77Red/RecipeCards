@@ -398,7 +398,6 @@ export function CardViewScreen({ route, navigation }: Props) {
                   onShare={handleShare}
                   publishing={publishing}
                 />
-                <Text style={styles.hintText}>{t.deckTapHint}</Text>
               </ScrollView>
             </Animated.View>
           </GestureDetector>
@@ -477,7 +476,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 24,
     paddingBottom: 48,
   },
@@ -508,13 +506,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     marginTop: 80,
-  },
-  hintText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.18)',
-    letterSpacing: 0.3,
-    marginTop: 16,
   },
   saveCollectionBtn: {
     marginTop: 20,
