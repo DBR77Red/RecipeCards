@@ -1,14 +1,10 @@
 import { RecipeData } from '../components/RecipeCard';
 
-export type TabStackParamList = {
+export type RootStackParamList = {
+  Onboarding: undefined;
   Home: { openExchange?: boolean } | undefined;
   Favorites: undefined;
   Settings: undefined;
-};
-
-export type RootStackParamList = {
-  Onboarding: undefined;
-  _tabs: undefined;
   Form: { recipe?: RecipeData };
   Preview: { recipe: RecipeData; celebrate?: boolean };
   CardView: { cardId: string; recipes?: RecipeData[] };

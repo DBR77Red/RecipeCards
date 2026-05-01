@@ -57,7 +57,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
       await saveReceivedCard(recipe);
       setSaved(true);
       setTimeout(() => {
-        navigation.reset({ index: 0, routes: [{ name: '_tabs' }] });
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }, 900);
     } catch {
       setSaveError(true);
@@ -72,7 +72,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
 
       <TouchableOpacity
         style={styles.backBtn}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: '_tabs' }] })}
+        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
       >
         <Text style={styles.backBtnText}>{t.receiveBack}</Text>
       </TouchableOpacity>
@@ -91,7 +91,7 @@ export function ReceiveScreen({ route, navigation }: Props) {
           <Text style={styles.errorSub}>{t.receiveNotFoundBody}</Text>
           <TouchableOpacity
             style={styles.backHomeBtn}
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: '_tabs' }] })}
+            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
           >
             <Text style={styles.backHomeBtnText}>{t.receiveBackHome}</Text>
           </TouchableOpacity>

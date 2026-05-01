@@ -343,7 +343,7 @@ export function CardViewScreen({ route, navigation }: Props) {
           onPress={() =>
             navigation.canGoBack()
               ? navigation.goBack()
-              : navigation.reset({ index: 0, routes: [{ name: '_tabs' }] })
+              : navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
           }
           hitSlop={12}
         >

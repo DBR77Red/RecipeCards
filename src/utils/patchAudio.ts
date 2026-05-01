@@ -17,8 +17,11 @@ import AudioModule from 'expo-audio/build/AudioModule';
 export function patchAudioModule() {
   if (Constants.appOwnership !== 'expo') return;
 
-  const OrigClass = AudioModule.AudioPlayer;
-  AudioModule.AudioPlayer = new Proxy(OrigClass, {
+  const mutableAudioModule = AudioModule as typeof AudioModule & {
+    AudioPlayer: typeof AudioModule.AudioPlayer;
+  };
+  const OrigClass = mutableAudioModule.AudioPlayer;
+  mutableAudioModule.AudioPlayer = new Proxy(OrigClass, {
     construct(target: any, args: any[]) {
       return Reflect.construct(target, args.slice(0, 3));
     },
