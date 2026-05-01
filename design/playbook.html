@@ -442,7 +442,7 @@
   }
 
   .recipe-card-mockup {
-    width: 300px;
+    width: 320px;
     border-radius: 28px;
     overflow: hidden;
     box-shadow: 0 32px 80px rgba(28,10,0,0.30), 0 8px 24px rgba(28,10,0,0.15);
@@ -450,7 +450,7 @@
     position: relative;
   }
   .card-photo-zone {
-    height: 220px;
+    height: 244px;
     background: linear-gradient(160deg, #F5EDD9 0%, #E8D8B8 100%);
     display: flex;
     align-items: center;
@@ -476,7 +476,7 @@
   }
   .card-info-panel {
     background: var(--panel);
-    padding: 22px 24px 28px;
+    padding: 22px 24px 24px;
     position: relative;
   }
   .card-info-panel::before {
@@ -502,6 +502,12 @@
     line-height: 1.15;
     letter-spacing: -0.3px;
     margin-bottom: 10px;
+  }
+  .card-recipe-meta {
+    font-size: 13px;
+    color: var(--text-inv-muted);
+    line-height: 1.4;
+    margin-bottom: 14px;
   }
   .card-stats-row {
     display: flex;
@@ -1305,8 +1311,8 @@
 <!-- ══════════════════════════════════════════════ CARDS ══ -->
 <section>
   <p class="section-label">05 — Recipe Cards</p>
-  <h2 class="section-title">Card Design</h2>
-  <p class="section-sub">Cream top, espresso bottom. The orange hairline is the brand's heartbeat. Both variants live in the same family.</p>
+  <h2 class="section-title">Front-Only Card Design</h2>
+  <p class="section-sub">One face only: photo up top, espresso identity panel below. The title lives in the panel, not over the image, so every card reads consistently.</p>
 
   <div class="cards-showcase">
     <!-- Card 1: Standard -->
@@ -1317,25 +1323,21 @@
         <span class="card-photo-placeholder">📸</span>
       </div>
       <div class="card-info-panel">
-        <div class="card-recipe-label">Italian · Pasta</div>
+        <div class="card-recipe-label">Shared recipe</div>
         <div class="card-recipe-title">Spaghetti Amatriciana</div>
-        <div style="font-size:13px;color:var(--text-inv-muted);line-height:1.55;">Guanciale, San Marzano tomatoes, Pecorino Romano — the holy trinity.</div>
+        <div class="card-recipe-meta">By Camelo · saved by 12 cooks</div>
         <div class="card-stats-row">
-          <div class="card-stat">
-            <span class="card-stat-val">30′</span>
-            <span class="card-stat-label">Prep</span>
-          </div>
-          <div class="card-stat">
-            <span class="card-stat-val">20′</span>
-            <span class="card-stat-label">Cook</span>
-          </div>
           <div class="card-stat">
             <span class="card-stat-val">4</span>
             <span class="card-stat-label">Serves</span>
           </div>
-          <div class="card-stat" style="margin-left:auto;">
-            <span class="card-stat-val">★ Easy</span>
-            <span class="card-stat-label">Level</span>
+          <div class="card-stat">
+            <span class="card-stat-val">30 min</span>
+            <span class="card-stat-label">Prep</span>
+          </div>
+          <div class="card-stat">
+            <span class="card-stat-val">20 min</span>
+            <span class="card-stat-label">Cook</span>
           </div>
         </div>
       </div>
@@ -1344,26 +1346,26 @@
     <!-- Card 2: Accent gradient variant -->
     <div class="recipe-card-mockup accent">
       <div class="card-accent-bar" style="background:linear-gradient(90deg,#D4780A,#E8521A);"></div>
-      <div class="card-photo-zone" style="background:linear-gradient(160deg,#F0E8D8,#DCC99A);height:200px;">
+      <div class="card-photo-zone" style="background:linear-gradient(160deg,#F0E8D8,#DCC99A);">
         <div class="card-top-badge"><span class="badge badge-draft">Draft</span></div>
         <span class="card-photo-placeholder">🥧</span>
       </div>
       <div class="card-info-panel" style="background:linear-gradient(160deg,#2D1A0A,#120700);">
-        <div class="card-recipe-label">French · Pastry</div>
-        <div class="card-recipe-title" style="font-family:'Playfair Display',serif;font-style:italic;">Tarte Tatin</div>
-        <div style="font-size:13px;color:var(--text-inv-muted);line-height:1.55;">Caramelised apples, buttery pastry, upside-down perfection.</div>
+        <div class="card-recipe-label">Private draft</div>
+        <div class="card-recipe-title">Tarte Tatin</div>
+        <div class="card-recipe-meta">By Camelo</div>
         <div class="card-stats-row">
-          <div class="card-stat">
-            <span class="card-stat-val">25′</span>
-            <span class="card-stat-label">Prep</span>
-          </div>
-          <div class="card-stat">
-            <span class="card-stat-val">40′</span>
-            <span class="card-stat-label">Cook</span>
-          </div>
           <div class="card-stat">
             <span class="card-stat-val">6</span>
             <span class="card-stat-label">Serves</span>
+          </div>
+          <div class="card-stat">
+            <span class="card-stat-val">25 min</span>
+            <span class="card-stat-label">Prep</span>
+          </div>
+          <div class="card-stat">
+            <span class="card-stat-val">40 min</span>
+            <span class="card-stat-label">Cook</span>
           </div>
         </div>
       </div>

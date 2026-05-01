@@ -51,8 +51,8 @@ const C = {
 };
 
 const CARD_W  = 320;
-const PHOTO_H = 384; // photo dominant at 74% of card height
-const RADIUS  = 16;
+const PHOTO_H = 244;
+const RADIUS  = 28;
 
 // ─── Stat column ─────────────────────────────────────────────────────────────
 
@@ -121,6 +121,8 @@ function CardFront({
 
   return (
     <View>
+      <View style={styles.accentBar} />
+
       {/* Photo zone */}
       <View style={styles.photoZone}>
         {photoSource ? (
@@ -147,27 +149,36 @@ function CardFront({
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#scrimGradient)" />
         </Svg>
 
-        <View style={styles.scrimText} pointerEvents="none">
-          <Text style={styles.photoTitle} numberOfLines={2}>{recipe.title}</Text>
-          <View style={styles.photoMetaRow}>
-            <Text style={styles.photoMeta}>{t.cardBy} {recipe.creatorName}</Text>
-            {recipe.receiveCount !== undefined && (
-            <View style={styles.photoMetaCount}>
-              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ marginRight: 4 }}>
-                <Circle cx="9" cy="7" r="3" stroke="#ffffff" strokeWidth="2" />
-                <Path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                <Circle cx="18" cy="8" r="2.2" stroke="#ffffff" strokeWidth="2" />
-                <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-              </Svg>
-              <Text style={styles.photoMetaCountText}>{recipe.receiveCount}</Text>
-            </View>
-          )}
-          </View>
+        <View style={[styles.statusBadge, published ? styles.statusBadgePub : styles.statusBadgeDraft]}>
+          <View style={[styles.statusDot, published ? styles.statusDotPub : styles.statusDotDraft]} />
+          <Text style={[styles.statusText, published ? styles.statusTextPub : styles.statusTextDraft]}>
+            {published ? t.filterPublished : t.filterDrafts}
+          </Text>
         </View>
       </View>
 
       {/* Bottom zone */}
       <View style={styles.bottomZone}>
+        <View style={styles.panelHairline} />
+        <Text style={styles.recipeLabel} numberOfLines={1}>
+          {published ? t.filterPublished : t.filterDrafts}
+        </Text>
+        <Text style={styles.panelTitle} numberOfLines={2}>{recipe.title}</Text>
+        <View style={styles.panelMetaRow}>
+          <Text style={styles.panelMeta} numberOfLines={1}>{t.cardBy} {recipe.creatorName}</Text>
+          {recipe.receiveCount !== undefined && (
+            <View style={styles.panelMetaCount}>
+              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ marginRight: 4 }}>
+                <Circle cx="9" cy="7" r="3" stroke={C.panelMuted} strokeWidth="2" />
+                <Path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1" stroke={C.panelMuted} strokeWidth="2" strokeLinecap="round" />
+                <Circle cx="18" cy="8" r="2.2" stroke={C.panelMuted} strokeWidth="2" />
+                <Path d="M21 21v-.5a4.5 4.5 0 0 0-3-4.24" stroke={C.panelMuted} strokeWidth="2" strokeLinecap="round" />
+              </Svg>
+              <Text style={styles.panelMetaCountText}>{recipe.receiveCount}</Text>
+            </View>
+          )}
+        </View>
+
         <View style={styles.statsRow}>
           <Stat label={t.cardServes} value={recipe.servings} />
           <View style={styles.statDivider} />
@@ -243,6 +254,11 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  accentBar: {
+    height: 4,
+    width: '100%',
+    backgroundColor: '#E8521A',
+  },
 
   // ── Front: photo zone ──
   photoZone: {
@@ -256,52 +272,103 @@ const styles = StyleSheet.create({
   },
   photoPlaceholder: {
   },
-  scrimText: {
+  statusBadge: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 18,
+    top: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 28,
+    borderRadius: 100,
     zIndex: 1,
   },
-  photoTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontStyle: 'italic',
-    fontSize: 21,
-    lineHeight: 28,
-    color: C.white,
-    marginBottom: 4,
+  statusBadgePub: {
+    backgroundColor: 'rgba(45,122,79,0.14)',
   },
-  photoMeta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+  statusBadgeDraft: {
+    backgroundColor: 'rgba(232,82,26,0.14)',
   },
-  photoMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
-  photoMetaCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statusDotPub: {
+    backgroundColor: '#2D7A4F',
   },
-  photoMetaCountText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+  statusDotDraft: {
+    backgroundColor: '#E8521A',
+  },
+  statusText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.4,
+  },
+  statusTextPub: {
+    color: '#2D7A4F',
+  },
+  statusTextDraft: {
+    color: '#E8521A',
   },
 
   // ── Front: bottom zone (dark espresso panel) ──
   bottomZone: {
     backgroundColor: C.panel,
-    borderTopWidth: 2,
-    borderTopColor: C.panelAmber,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 18,
+    paddingHorizontal: 24,
+    paddingTop: 22,
+    paddingBottom: 24,
+    position: 'relative',
+  },
+  panelHairline: {
+    position: 'absolute',
+    top: 0,
+    left: 24,
+    right: 24,
+    height: 1,
+    backgroundColor: 'rgba(232,82,26,0.5)',
+  },
+  recipeLabel: {
+    alignSelf: 'stretch',
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 10,
+    color: C.panelAmber,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  panelTitle: {
+    alignSelf: 'stretch',
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 22,
+    lineHeight: 26,
+    color: C.panelText,
+    marginBottom: 8,
+  },
+  panelMetaRow: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  panelMeta: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    color: C.panelMuted,
+  },
+  panelMetaCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  panelMetaCountText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: C.panelMuted,
   },
   statsRow: {
     flexDirection: 'row',
@@ -334,8 +401,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 1,
     backgroundColor: C.panelDiv,
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 14,
+    marginBottom: 14,
   },
   ctaBtn: {
     flexDirection: 'row',
