@@ -32,7 +32,7 @@ const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 // Card dimensions — match RecipeCard exactly
 const CARD_W     = 320;
 const CARD_H_PUB = 760;
-const RADIUS     = 28;
+const RADIUS     = 16;
 
 // Scale the full card to fit the screen with breathing room
 const HEADER_FOOTER = 180;
@@ -52,9 +52,9 @@ const FLY_DURATION        = 220;
 // Palette
 const BG_DARK = '#0f0d0b';
 const BG_GLOW = '#271e17';
-const AMBER   = '#D4780A';
-const CREAM   = '#F5EDD9';
-const BORDER  = '#E8D8B8';
+const AMBER   = '#d4820a';
+const CREAM   = '#fdf8f0';
+const BORDER  = '#e8d5b0';
 
 // ─── Card shell (behind cards for stack depth) ───────────────────────────────
 
@@ -72,7 +72,7 @@ const shellStyles = StyleSheet.create({
     borderColor: BORDER,
     ...Platform.select({
       default: {
-        shadowColor: '#1C0A00',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
