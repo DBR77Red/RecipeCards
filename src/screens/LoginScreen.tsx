@@ -1,6 +1,5 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -43,12 +42,7 @@ export function LoginScreen() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
 
-  // Expo Go doesn't register the app's custom scheme, so let expo-auth-session
-  // auto-detect the correct exp:// URI. Standalone builds use recipecards://.
-  const isExpoGo = Constants.executionEnvironment === 'storeClient';
-  const redirectUri = AuthSession.makeRedirectUri(
-    isExpoGo ? {} : { scheme: 'recipecards' }
-  );
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'recipecards' });
 
   const handleSignIn = async () => {
     setInviteError(null);
