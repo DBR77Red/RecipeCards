@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import Constants from 'expo-constants';
 import { AppState, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
@@ -55,6 +56,7 @@ const TAB_SCREENS = new Set(['Home', 'Favorites', 'Settings']);
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, isValidated, loading } = useAuth();
+  if (Constants.executionEnvironment === 'storeClient') return <>{children}</>;
   if (loading) return null;
   if (!session || !isValidated) return <LoginScreen />;
   return <>{children}</>;
