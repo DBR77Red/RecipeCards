@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   KeyboardAvoidingView,
   Modal,
@@ -13,6 +14,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { InviteShareCard } from '../components/InviteShareCard';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../i18n/translations';
 import { RootStackParamList } from '../types/navigation';
@@ -42,9 +45,13 @@ const LANGS: { code: Language; label: string; name: string }[] = [
 
 export function SettingsScreen({}: Props) {
   const { t, language, setLanguage } = useLanguage();
+  const { session, signOut } = useAuth();
   const [name, setName] = useState('');
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [inviteData, setInviteData] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
+  const inviteAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     getUserName().then(setName);
@@ -57,6 +64,44 @@ export function SettingsScreen({}: Props) {
       useNativeDriver: true,
     }).start();
   }, [confirmVisible]);
+
+  useEffect(() => {
+    Animated.timing(inviteAnim, {
+      toValue: inviteData ? 1 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [inviteData]);
+
+  const handleGenerateInvite = async () => {
+    if (!session) return;
+    setGeneratingInvite(true);
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/generate-invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const json = await res.json();
+      if (json.error === 'limit_reached') {
+        Alert.alert(
+          'Invite limit reached',
+          `You already have ${json.limit} active invites. Wait for them to be used or expire before generating more.`,
+        );
+        return;
+      }
+      if (json.code) {
+        setInviteData({ code: json.code, expiresAt: json.expiresAt });
+      }
+    } catch {
+      Alert.alert('Error', 'Could not generate invite. Please try again.');
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -128,8 +173,36 @@ export function SettingsScreen({}: Props) {
           >
             <Text style={styles.saveBtnText}>{t.save}</Text>
           </TouchableOpacity>
+
+          <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>Account</Text>
+          <TouchableOpacity
+            style={[styles.saveBtn, generatingInvite && styles.saveBtnDisabled]}
+            onPress={handleGenerateInvite}
+            disabled={generatingInvite}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.saveBtnText}>{generatingInvite ? 'Generating…' : 'Invite someone'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.signOutBtn} onPress={signOut} activeOpacity={0.7}>
+            <Text style={styles.signOutText}>Sign out</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={!!inviteData} transparent animationType="none" onRequestClose={() => setInviteData(null)}>
+        <Animated.View style={[modalStyles.overlay, { opacity: inviteAnim }]}>
+          <Animated.View style={[modalStyles.sheet, { transform: [{ translateY: inviteAnim.interpolate({ inputRange: [0, 1], outputRange: [48, 0] }) }] }]}>
+            {inviteData && (
+              <InviteShareCard
+                code={inviteData.code}
+                expiresAt={inviteData.expiresAt}
+                onDismiss={() => setInviteData(null)}
+              />
+            )}
+          </Animated.View>
+        </Animated.View>
+      </Modal>
 
       <Modal visible={confirmVisible} transparent animationType="none" onRequestClose={() => setConfirmVisible(false)}>
         <Animated.View style={[modalStyles.overlay, { opacity: anim }]}>
@@ -223,6 +296,16 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
     color: C.btnText,
+  },
+  signOutBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 4,
+  },
+  signOutText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: C.label,
   },
 
   langRow: {
