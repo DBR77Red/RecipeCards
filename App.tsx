@@ -21,6 +21,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActiveTab, BottomTabBar } from './src/components/BottomTabBar';
+import { AuthProvider } from './src/context/AuthContext';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { TabBarProvider, useTabBar } from './src/context/TabBarContext';
 import { CardViewScreen }     from './src/screens/CardViewScreen';
@@ -142,6 +143,7 @@ export default function App() {
   if (!fontsLoaded || !initialRoute) return null;
 
   return (
+    <AuthProvider>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LanguageProvider>
         <TabBarProvider>
@@ -162,5 +164,6 @@ export default function App() {
         </TabBarProvider>
       </LanguageProvider>
     </GestureHandlerRootView>
+    </AuthProvider>
   );
 }
