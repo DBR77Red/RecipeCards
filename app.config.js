@@ -53,6 +53,7 @@ module.exports = {
         },
       ],
       "expo-font",
+      "expo-web-browser",
       [
         "expo-camera",
         {
