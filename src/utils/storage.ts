@@ -1,11 +1,14 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { RecipeData } from '../components/RecipeCard';
 import { supabase } from '../lib/supabase';
 
-const DRAFTS_KEY = '@recipecards/drafts';
-const USER_NAME_KEY = '@recipecards/userName';
-const ORDER_KEY = '@recipecards/order';
+let _userId: string | null = null;
+export function setCurrentUserId(id: string | null) { _userId = id; }
+
+const draftsKey  = () => _userId ? `@recipecards/drafts/${_userId}`  : '@recipecards/drafts';
+const userNameKey = () => _userId ? `@recipecards/userName/${_userId}` : '@recipecards/userName';
+const orderKey   = () => _userId ? `@recipecards/order/${_userId}`   : '@recipecards/order';
 
 interface SectionOrder {
   drafts: string[];
@@ -16,7 +19,7 @@ interface SectionOrder {
 
 export async function loadOrder(): Promise<SectionOrder> {
   try {
-    const raw = await AsyncStorage.getItem(ORDER_KEY);
+    const raw = await AsyncStorage.getItem(orderKey());
     const parsed = raw ? JSON.parse(raw) : {};
     return {
       drafts: parsed.drafts ?? [],
@@ -36,7 +39,7 @@ export async function saveOrder(
   try {
     const current = await loadOrder();
     current[section] = orderedIds;
-    await AsyncStorage.setItem(ORDER_KEY, JSON.stringify(current));
+    await AsyncStorage.setItem(orderKey(), JSON.stringify(current));
   } catch {}
 }
 
@@ -50,7 +53,7 @@ export function applyOrder(recipes: RecipeData[], savedIds: string[]): RecipeDat
 }
 
 // Serialized queue to prevent concurrent read-modify-write races on AsyncStorage.
-// Every function that reads→modifies→writes DRAFTS_KEY must go through this lock.
+// Every function that readsâ†’modifiesâ†’writes draftsKey() must go through this lock.
 let _lock = Promise.resolve();
 function withLock<T>(fn: () => Promise<T>): Promise<T> {
   const next = _lock.then(fn, fn);
@@ -58,7 +61,7 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
   return next;
 }
 
-/** Safely parse drafts JSON — returns [] on any parse error to prevent crashes from corrupted data. */
+/** Safely parse drafts JSON â€” returns [] on any parse error to prevent crashes from corrupted data. */
 function safeParseDrafts(raw: string | null): RecipeData[] {
   if (!raw) return [];
   try {
@@ -70,7 +73,7 @@ function safeParseDrafts(raw: string | null): RecipeData[] {
 
 export async function getUserName(): Promise<string> {
   try {
-    return (await AsyncStorage.getItem(USER_NAME_KEY)) || '';
+    return (await AsyncStorage.getItem(userNameKey())) || '';
   } catch {
     return '';
   }
@@ -78,22 +81,22 @@ export async function getUserName(): Promise<string> {
 
 export async function setUserName(name: string): Promise<void> {
   try {
-    await AsyncStorage.setItem(USER_NAME_KEY, name);
+    await AsyncStorage.setItem(userNameKey(), name);
   } catch { /* best-effort */ }
 }
 
 /** Returns all stored drafts sorted newest-updated first. Returns [] on any error. */
 export async function getDrafts(): Promise<RecipeData[]> {
   try {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
-    // Backfill: cards with sourceCardId are received cards — ensure the flag is set
+    // Backfill: cards with sourceCardId are received cards â€” ensure the flag is set
     // so they appear in the Received tab even if saved before isReceived was introduced.
     const patched = drafts.map(d =>
       d.sourceCardId && !d.isReceived ? { ...d, isReceived: true } : d
     );
     const needsWrite = patched.some((d, i) => d !== drafts[i]);
-    if (needsWrite) await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(patched));
+    if (needsWrite) await AsyncStorage.setItem(draftsKey(), JSON.stringify(patched));
     return patched
       .filter(d => !d.deletedAt)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -110,7 +113,7 @@ export async function getDrafts(): Promise<RecipeData[]> {
 export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
   return withLock(async () => {
     const now = new Date().toISOString();
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
 
     let saved: RecipeData;
@@ -130,19 +133,19 @@ export async function saveDraft(recipe: RecipeData): Promise<RecipeData> {
       drafts.push(saved);
     }
 
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
     return saved;
   });
 }
 
 /**
  * Step 1 of publishing: marks the recipe as published in local storage only.
- * Always succeeds — guarantees the QR code appears even if cloud sync fails.
+ * Always succeeds â€” guarantees the QR code appears even if cloud sync fails.
  */
 export async function markPublishedLocally(id: string): Promise<RecipeData> {
   return withLock(async () => {
     const now = new Date().toISOString();
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
     const idx = drafts.findIndex(d => d.id === id);
     if (idx < 0) throw new Error('Recipe not found');
@@ -154,7 +157,7 @@ export async function markPublishedLocally(id: string): Promise<RecipeData> {
       cloudSyncStatus: 'pending',
     };
     drafts[idx] = published;
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
     return published;
   });
 }
@@ -206,7 +209,7 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
   if (dbError) throw new Error(`Database sync failed: ${dbError.message}`);
 
   // Initialise receive_count to 1 (the creator) on first publish only.
-  // Atomic: only sets to 1 if currently 0 — never overwrites a higher value.
+  // Atomic: only sets to 1 if currently 0 â€” never overwrites a higher value.
   const { error: countError } = await supabase
     .from('recipes')
     .update({ receive_count: 1 })
@@ -217,12 +220,12 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
   // Update local storage with the public cloud photo URL and mark as synced
   const synced: RecipeData = { ...recipe, photo: photoUrl, updatedAt: now, cloudSyncStatus: 'synced' };
   await withLock(async () => {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
     const idx = drafts.findIndex(d => d.id === recipe.id);
     if (idx >= 0) {
       drafts[idx] = synced;
-      await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+      await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
     }
   });
   return synced;
@@ -230,7 +233,7 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
 
 /**
  * Increments the receive_count on a Supabase recipe row atomically.
- * Best-effort — silently ignores errors.
+ * Best-effort â€” silently ignores errors.
  */
 export async function incrementReceiveCount(id: string): Promise<void> {
   try {
@@ -243,7 +246,7 @@ export async function incrementReceiveCount(id: string): Promise<void> {
 
 /**
  * Saves a card received from another user as a read-only published record.
- * Never editable — always has isReceived: true and sourceCardId pointing to the
+ * Never editable â€” always has isReceived: true and sourceCardId pointing to the
  * original Supabase card ID. Deduplicates: if this card was already saved,
  * returns the existing record and does NOT increment the count again.
  */
@@ -253,10 +256,10 @@ export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> 
 
   const saved = await withLock(async () => {
     const now = new Date().toISOString();
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
 
-    // Deduplication — soft-deleted records are excluded so a user who deleted their
+    // Deduplication â€” soft-deleted records are excluded so a user who deleted their
     // own card can still receive a shared copy, and a user who deleted a received
     // card can receive it again.
     //
@@ -293,7 +296,7 @@ export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> 
       updatedAt: now,
     };
     drafts.push(newRecord);
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
     return newRecord;
   });
 
@@ -305,13 +308,13 @@ export async function saveReceivedCard(recipe: RecipeData): Promise<RecipeData> 
 /** Toggles isFavorite on a recipe. Returns the new value, or false if not found. */
 export async function toggleFavorite(id: string): Promise<boolean> {
   return withLock(async () => {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
     const idx = drafts.findIndex(d => d.id === id);
     if (idx < 0) return false;
     const newValue = !drafts[idx].isFavorite;
     drafts[idx] = { ...drafts[idx], isFavorite: newValue };
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
     return newValue;
   });
 }
@@ -319,9 +322,9 @@ export async function toggleFavorite(id: string): Promise<boolean> {
 /** Removes a draft by id. Silently does nothing if the id is not found. */
 export async function deleteDraft(id: string): Promise<void> {
   return withLock(async () => {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts.filter(d => d.id !== id)));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts.filter(d => d.id !== id)));
   });
 }
 
@@ -329,12 +332,12 @@ export async function deleteDraft(id: string): Promise<void> {
  *  AsyncStorage until purgeDeletedRecipes() runs on next app startup. */
 export async function softDeletePublished(id: string): Promise<void> {
   return withLock(async () => {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+    const raw = await AsyncStorage.getItem(draftsKey());
     const drafts = safeParseDrafts(raw);
     const idx = drafts.findIndex(d => d.id === id);
     if (idx < 0) return;
     drafts[idx] = { ...drafts[idx], deletedAt: new Date().toISOString() };
-    await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    await AsyncStorage.setItem(draftsKey(), JSON.stringify(drafts));
   });
 }
 
@@ -342,11 +345,11 @@ export async function softDeletePublished(id: string): Promise<void> {
 export async function purgeDeletedRecipes(): Promise<void> {
   try {
     await withLock(async () => {
-      const raw = await AsyncStorage.getItem(DRAFTS_KEY);
+      const raw = await AsyncStorage.getItem(draftsKey());
       const drafts = safeParseDrafts(raw);
       const cleaned = drafts.filter(d => !d.deletedAt);
       if (cleaned.length !== drafts.length) {
-        await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(cleaned));
+        await AsyncStorage.setItem(draftsKey(), JSON.stringify(cleaned));
       }
     });
   } catch { /* best-effort */ }

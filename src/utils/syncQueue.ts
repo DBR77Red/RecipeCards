@@ -1,9 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RecipeData } from '../components/RecipeCard';
 import { emitSyncComplete } from './notifications';
-import { syncToCloud } from './storage';
-
-const DRAFTS_KEY = '@recipecards/drafts';
+import { getDrafts, syncToCloud } from './storage';
 
 let retrying = false;
 
@@ -17,10 +14,7 @@ export async function retryPendingSyncs(): Promise<void> {
   if (retrying) return;
   retrying = true;
   try {
-    const raw = await AsyncStorage.getItem(DRAFTS_KEY);
-    if (!raw) return;
-
-    const drafts: RecipeData[] = JSON.parse(raw);
+    const drafts: RecipeData[] = await getDrafts();
     const pending = drafts.filter(
       d => d.status === 'published' && d.cloudSyncStatus === 'pending' && !d.isReceived,
     );

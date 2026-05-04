@@ -45,7 +45,7 @@ const LANGS: { code: Language; label: string; name: string }[] = [
 
 export function SettingsScreen({}: Props) {
   const { t, language, setLanguage } = useLanguage();
-  const { session, signOut } = useAuth();
+  const { session, user, signOut } = useAuth();
   const [name, setName] = useState('');
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [inviteData, setInviteData] = useState<{ code: string; expiresAt: string } | null>(null);
@@ -175,6 +175,14 @@ export function SettingsScreen({}: Props) {
           </TouchableOpacity>
 
           <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>Account</Text>
+          {user && (
+            <View style={styles.accountCard}>
+              <Text style={styles.accountName}>
+                {user.user_metadata?.full_name ?? user.user_metadata?.name ?? 'Signed in'}
+              </Text>
+              <Text style={styles.accountEmail}>{user.email}</Text>
+            </View>
+          )}
           <TouchableOpacity
             style={[styles.saveBtn, generatingInvite && styles.saveBtnDisabled]}
             onPress={handleGenerateInvite}
@@ -296,6 +304,29 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
     color: C.btnText,
+  },
+  accountCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 2,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  accountName: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: C.title,
+  },
+  accountEmail: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: C.muted,
   },
   signOutBtn: {
     alignItems: 'center',
