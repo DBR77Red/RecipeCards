@@ -51,33 +51,30 @@ export function LoginScreen() {
     setInviteError(null);
     const trimmedCode = inviteCode.trim();
 
-    if (!trimmedCode) {
-      setInviteError('Please enter your invite code before signing in.');
-      return;
-    }
-
-    // Step 1: Pre-validate invite code server-side before opening Google OAuth.
-    // This is a UX check only — real enforcement is in consume-invite.
-    setValidating(true);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/validate-invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-        body: JSON.stringify({ code: trimmedCode }),
-      });
-      const json = await res.json();
-      if (!json.valid) {
-        setInviteError(ERROR_MESSAGES[json.error] ?? 'Invalid invite code.');
+    // Pre-validate invite code only when one is provided.
+    // Returning users (already invite_validated) skip this and go straight to OAuth.
+    if (trimmedCode) {
+      setValidating(true);
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/validate-invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+          body: JSON.stringify({ code: trimmedCode }),
+        });
+        const json = await res.json();
+        if (!json.valid) {
+          setInviteError(ERROR_MESSAGES[json.error] ?? 'Invalid invite code.');
+          return;
+        }
+      } catch {
+        setInviteError('Could not validate invite code. Check your connection and try again.');
         return;
+      } finally {
+        setValidating(false);
       }
-    } catch {
-      setInviteError('Could not validate invite code. Check your connection and try again.');
-      return;
-    } finally {
-      setValidating(false);
     }
 
-    // Step 2: Open Google OAuth
+    // Open Google OAuth
     setSigningIn(true);
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -113,9 +110,6 @@ export function LoginScreen() {
         return;
       }
 
-      // Step 3: Consume the invite server-side.
-      // Sets invite_validated = true in app_metadata via service role.
-      // On failure, sign out immediately so the user gets a clean retry state.
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         Alert.alert('Sign-in error', 'Session not found after authentication.');
@@ -123,6 +117,22 @@ export function LoginScreen() {
         return;
       }
 
+      // Returning user: already validated — just refresh the session and we're done.
+      if (session.user.app_metadata?.invite_validated === true) {
+        await supabase.auth.refreshSession();
+        return;
+      }
+
+      // New user: must have provided an invite code to proceed.
+      if (!trimmedCode) {
+        await supabase.auth.signOut();
+        setInviteError('You need an invite code to join. Ask a current member.');
+        return;
+      }
+
+      // Consume the invite server-side.
+      // Sets invite_validated = true in app_metadata via service role.
+      // On failure, sign out immediately so the user gets a clean retry state.
       const consumeRes = await fetch(`${SUPABASE_URL}/functions/v1/consume-invite`, {
         method: 'POST',
         headers: {
@@ -169,7 +179,7 @@ export function LoginScreen() {
 
       {/* Cream body */}
       <View style={styles.body}>
-        <Text style={styles.sectionLabel}>Your invite code</Text>
+        <Text style={styles.sectionLabel}>Invite code · new members only</Text>
 
         <InviteCodeInput
           value={inviteCode}
@@ -190,7 +200,7 @@ export function LoginScreen() {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          Don't have a code? Ask a current RecipeCards member.
+          Already a member? Just tap Continue — no code needed.
         </Text>
       </View>
     </SafeAreaView>
