@@ -40,23 +40,9 @@ Deno.serve(async (req) => {
       .eq('code', normalizedCode)
       .single()
 
-    if (error || !data) {
+    if (error || !data || data.used_at || new Date(data.expires_at) < new Date()) {
       return new Response(
-        JSON.stringify({ valid: false, error: 'not_found' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      )
-    }
-
-    if (data.used_at) {
-      return new Response(
-        JSON.stringify({ valid: false, error: 'already_used' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      )
-    }
-
-    if (new Date(data.expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ valid: false, error: 'expired' }),
+        JSON.stringify({ valid: false, error: 'invalid_code' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }

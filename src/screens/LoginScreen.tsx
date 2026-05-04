@@ -1,5 +1,6 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -31,11 +32,8 @@ const C = {
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
-  not_found:      'Invite code not found.',
-  already_used:   'This invite code has already been used.',
-  expired:        'This invite code has expired.',
+  invalid_code:   'This invite code is not valid or has already been used.',
   invalid_format: 'Invalid code format — paste the full code you received.',
-  missing_code:   'Please enter your invite code.',
   race_condition: 'This code was just used by someone else.',
 };
 
@@ -45,7 +43,12 @@ export function LoginScreen() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
 
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'recipecards' });
+  // Expo Go doesn't register the app's custom scheme, so let expo-auth-session
+  // auto-detect the correct exp:// URI. Standalone builds use recipecards://.
+  const isExpoGo = Constants.executionEnvironment === 'storeClient';
+  const redirectUri = AuthSession.makeRedirectUri(
+    isExpoGo ? {} : { scheme: 'recipecards' }
+  );
 
   const handleSignIn = async () => {
     setInviteError(null);
