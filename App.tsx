@@ -21,8 +21,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActiveTab, BottomTabBar } from './src/components/BottomTabBar';
-import { AuthProvider } from './src/context/AuthContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { LoginScreen } from './src/screens/LoginScreen';
 import { TabBarProvider, useTabBar } from './src/context/TabBarContext';
 import { CardViewScreen }     from './src/screens/CardViewScreen';
 import { DeckScreen }        from './src/screens/DeckScreen';
@@ -52,6 +53,13 @@ const linking = {
 
 const TAB_SCREENS = new Set(['Home', 'Favorites', 'Settings']);
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { session, isValidated, loading } = useAuth();
+  if (loading) return null;
+  if (!session || !isValidated) return <LoginScreen />;
+  return <>{children}</>;
+}
+
 // Rendered inside NavigationContainer so it can access TabBarContext
 function InnerLayout({
   initialRoute,
@@ -76,6 +84,7 @@ function InnerLayout({
   }, [callbacksRef]);
 
   return (
+    <AuthGate>
     <View style={{ flex: 1 }}>
       <Stack.Navigator
         initialRouteName={initialRoute}
@@ -100,6 +109,7 @@ function InnerLayout({
         />
       )}
     </View>
+    </AuthGate>
   );
 }
 
