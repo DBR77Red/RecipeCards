@@ -87,7 +87,14 @@ export async function getDrafts(): Promise<RecipeData[]> {
   try {
     const raw = await AsyncStorage.getItem(DRAFTS_KEY);
     const drafts = safeParseDrafts(raw);
-    return [...drafts]
+    // Backfill: cards with sourceCardId are received cards — ensure the flag is set
+    // so they appear in the Received tab even if saved before isReceived was introduced.
+    const patched = drafts.map(d =>
+      d.sourceCardId && !d.isReceived ? { ...d, isReceived: true } : d
+    );
+    const needsWrite = patched.some((d, i) => d !== drafts[i]);
+    if (needsWrite) await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(patched));
+    return patched
       .filter(d => !d.deletedAt)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   } catch {
