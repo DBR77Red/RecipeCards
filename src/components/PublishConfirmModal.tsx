@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
 const C = {

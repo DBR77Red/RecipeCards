@@ -73,7 +73,7 @@ export function FormScreen({ route, navigation }: Props) {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [recipe, initialized]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [recipe, initialized]);
 
   // Clean up status timer on unmount
   useEffect(() => () => {

@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { Translations } from '../i18n/translations';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
@@ -162,6 +162,7 @@ const IngredientRow = React.forwardRef<TextInput, {
     </View>
   );
 });
+IngredientRow.displayName = 'IngredientRow';
 
 const DirectionRow = React.forwardRef<TextInput, {
   value: string; onChange: (v: string) => void; onRemove: () => void;
@@ -198,6 +199,7 @@ const DirectionRow = React.forwardRef<TextInput, {
     </View>
   );
 });
+DirectionRow.displayName = 'DirectionRow';
 
 function AddRowButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (

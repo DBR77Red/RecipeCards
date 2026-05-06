@@ -1,10 +1,25 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { RecipeData } from '../components/RecipeCard';
 import { supabase } from '../lib/supabase';
 
 let _userId: string | null = null;
-export function setCurrentUserId(id: string | null) { _userId = id; }
+export function setCurrentUserId(id: string | null) {
+  _userId = id;
+  if (id) migrateLegacyData().catch(() => {});
+}
+
+async function migrateLegacyData(): Promise<void> {
+  const LEGACY_KEY = '@recipecards/drafts';
+  try {
+    const results = await AsyncStorage.multiGet([LEGACY_KEY, draftsKey()]);
+    const legacyData = safeParseDrafts(results[0][1]);
+    const userData = safeParseDrafts(results[1][1]);
+    if (userData.length === 0 && legacyData.length > 0) {
+      await AsyncStorage.setItem(draftsKey(), JSON.stringify(legacyData));
+    }
+  } catch {}
+}
 
 const draftsKey  = () => _userId ? `@recipecards/drafts/${_userId}`  : '@recipecards/drafts';
 const userNameKey = () => _userId ? `@recipecards/userName/${_userId}` : '@recipecards/userName';
@@ -205,6 +220,7 @@ export async function syncToCloud(recipe: RecipeData): Promise<RecipeData> {
     created_at: recipe.createdAt,
     updated_at: now,
     share_url: recipe.shareUrl,
+    user_id: _userId,
   });
   if (dbError) throw new Error(`Database sync failed: ${dbError.message}`);
 
@@ -353,4 +369,49 @@ export async function purgeDeletedRecipes(): Promise<void> {
       }
     });
   } catch { /* best-effort */ }
+}
+
+/**
+ * Fetches the current user's published recipes from Supabase and merges any
+ * missing ones into local storage. Safe to call on every login — merge is
+ * idempotent (deduplicates by id). Best-effort: silently ignores errors.
+ */
+export async function restoreFromCloud(): Promise<void> {
+  if (!_userId) return;
+  try {
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('user_id', _userId);
+    if (error || !data || data.length === 0) return;
+
+    await withLock(async () => {
+      const raw = await AsyncStorage.getItem(draftsKey());
+      const local = safeParseDrafts(raw);
+      const localIds = new Set(local.map(r => r.id));
+
+      const toAdd: RecipeData[] = data
+        .filter(row => !localIds.has(row.id))
+        .map(row => ({
+          id: row.id,
+          status: 'published' as const,
+          title: row.title ?? '',
+          creatorName: row.creator_name ?? '',
+          photo: row.photo_url ?? null,
+          servings: row.servings ?? '',
+          prepTime: row.prep_time ?? '',
+          cookTime: row.cook_time ?? '',
+          ingredients: row.ingredients ?? [],
+          directions: row.directions ?? [],
+          createdAt: row.created_at ?? new Date().toISOString(),
+          updatedAt: row.updated_at ?? new Date().toISOString(),
+          shareUrl: row.share_url ?? undefined,
+          cloudSyncStatus: 'synced' as const,
+        }));
+
+      if (toAdd.length > 0) {
+        await AsyncStorage.setItem(draftsKey(), JSON.stringify([...local, ...toAdd]));
+      }
+    });
+  } catch {}
 }

@@ -43,7 +43,7 @@ const LANGS: { code: Language; label: string; name: string }[] = [
   { code: 'es', label: 'ES', name: 'Español'   },
 ];
 
-export function SettingsScreen({}: Props) {
+export function SettingsScreen(_: Props) {
   const { t, language, setLanguage } = useLanguage();
   const { session, user, signOut } = useAuth();
   const [name, setName] = useState('');

@@ -155,9 +155,11 @@ export function FavoritesScreen({ navigation }: Props) {
   };
 
   const handlePress = (recipe: RecipeData) => {
-    recipe.isReceived
-      ? navigation.navigate('CardView', { cardId: recipe.id })
-      : navigation.navigate('Preview', { recipe });
+    if (recipe.isReceived) {
+      navigation.navigate('CardView', { cardId: recipe.id });
+    } else {
+      navigation.navigate('Preview', { recipe });
+    }
   };
 
   return (
@@ -213,6 +215,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 40,
   },
   row: {

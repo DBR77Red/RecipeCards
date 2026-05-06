@@ -22,8 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { RecipeCard } from '../components/RecipeCard';
-import { RecipeData } from '../components/RecipeCard';
+import { RecipeCard, RecipeData } from '../components/RecipeCard';
 import { ErrorModal } from '../components/ErrorModal';
 import { PublishConfirmModal } from '../components/PublishConfirmModal';
 import { ShareQRModal } from '../components/ShareQRModal';

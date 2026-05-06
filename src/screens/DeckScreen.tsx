@@ -21,7 +21,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { RecipeCard, RecipeData } from '../components/RecipeCard';
+import { RecipeCard } from '../components/RecipeCard';
 import { useLanguage } from '../context/LanguageContext';
 import { RootStackParamList } from '../types/navigation';
 
