@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { setCurrentUserId } from '../utils/storage';
+import { restoreFromCloud, setCurrentUserId } from '../utils/storage';
 
 type AuthState = {
   session: Session | null;
@@ -22,17 +22,27 @@ const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const restoredForRef = useRef<string | null>(null);
+
+  const triggerRestore = (userId: string | null) => {
+    if (!userId || userId === restoredForRef.current) return;
+    restoredForRef.current = userId;
+    restoreFromCloud().catch(() => {});
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setCurrentUserId(session?.user?.id ?? null);
+      triggerRestore(session?.user?.id ?? null);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setCurrentUserId(session?.user?.id ?? null);
+      triggerRestore(session?.user?.id ?? null);
+      if (!session) restoredForRef.current = null;
     });
 
     return () => subscription.unsubscribe();
