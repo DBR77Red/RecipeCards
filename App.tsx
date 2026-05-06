@@ -71,8 +71,12 @@ function InnerLayout({
   }, [callbacksRef]);
 
   const handleExchange = useCallback(() => {
-    callbacksRef.current.onExchange?.();
-  }, [callbacksRef]);
+    if (callbacksRef.current.onExchange) {
+      callbacksRef.current.onExchange();
+    } else {
+      navigate('Home', { openExchange: true });
+    }
+  }, [callbacksRef, navigate]);
 
   return (
     <View style={{ flex: 1 }}>
